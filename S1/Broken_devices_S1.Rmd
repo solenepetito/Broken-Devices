@@ -1,0 +1,701 @@
+---
+title: 'Project : Broken devices S1'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-06-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+getwd()
+```
+
+```{r include=FALSE}
+
+# Chargement des librairies
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot)
+
+```
+
+# **SEMAINE DU 3 JUIN 2024 au 7 JUIN 2024 :**
+
+**OBJECTIF :** *Se familiariser avec la base de données* 
+
+## **DÉCOUVERTE ET ANALYSE DE LA BASE DE DONNÉES**
+
+### **I ) Import**
+
+```{r}
+# Import des données
+
+data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names = 1) # base de données sur laquelle on va appliquer tous les changements
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names = 1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 1005 
+
+# nombre de variables 
+nb_var <- ncol(data) # 163
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
+
+
+### **II ) Summary**
+
+La fonction ***summary()*** en R fournit un résumé statistique de base pour chaque colonne d'un DataFrame. Ce résumé est utile pour obtenir une vue d'ensemble rapide des données et peut inclure des statistiques descriptives différentes selon le type de données des colonnes (numériques ou catégorielles).
+
+```{r echo=FALSE}
+summary(data)
+```
+
+Au vu de ce summary, on remarque que certaines variables sont concidérées comme étant numériques, mais leurs interprétations avec le summary n'ont pas de sens, il faut donc changer leur type, afin d'avoir des informations sur celles-ci bien plus claires et exploitables. On remarque aussi qu'une variable contient des données manquantes, il s'agit de ***COHABITATION_DYSFONCTION_A17***, qui correspond au temps de cohabitation avec le dysfonctionnement : Problème de vibreur. Dans la suite du traitement de la base, il sera donc préférable de la supprimer.
+
+### **III ) Transformation des variables catégorielles en facteur**
+
+Dans la base de données il y a 6 qui sont catégorielles (qualitatives). Les variables catégorielles représentent des catégories ou des groupes distincts et prennent un nombre limité de valeurs distinctes (niveaux). Il y a donc :
+
+-   **Le genre (*SEXE*)** : variable catégorielle avec deux niveaux (masculin et féminin).
+
+-   **Les départements (*DEP*)** : variable catégorielle, car elle prend des valeurs distinctes représentant les différentes divisions administratives.
+
+-   **Les régions (*UDA9*)** : variable catégorielle, car elle représente des régions distinctes.
+
+-   **L'habitat (*HAB7*)** : les catégories sont qualitatives et décrivent des types de zones de résidence.
+
+-   **L'activité professionelle (*INACTIFS* ou *QACTIFS*)** : l'activité professionnelle représente les différentes occupations ou statuts professionnels des individus, ses catégories sont distinctes et qualitatives.
+
+-   **Les catégories socio-professionelles (*CSP9* ET *CSP5*)** : variables catégorielles, car elles classent les individus en groupes distincts basés sur leur profession, leur statut professionnel, etc.
+
+-   **Le niveau d'études (*NIVETUDES*)** : les catégories décrivent des niveaux d'éducation distincts.
+
+-   **La maitrîse d'internet (APPETENCEDIGIT)** : les catégories décrivent des niveaux de compétence distincts et qualitatifs.
+
+-   **La qualification de l'ancien téléphone (*QUALIFANCIENTEL*)** : les catégories décrivent des types ou des états de téléphones distincts.
+
+-   **L'usage principal du smartphone (*CONTEXTE_USAGE_SMARTPHONE*)** : variable catégorielle, car elle décrit des catégories d'utilisation.
+
+-   **La marque du mobile principal (*MARQMOB1*)** : variable catégorielle, car elle représente des catégories de marques.
+
+-   **Le système d'exploitation (*OS*)** : variable catégorielle, car elle représente différents systèmes d'exploitation.
+
+-   **L'obtention du smartphone (*ACQUISITIONTEL*)** : les catégories décrivent des moyens distincts d'acquisition du téléphone.
+
+On les tranforme donc en facteurs afin de faciliter l'étude de ces variables et leurs visualisations pour plus tard. Ces distinctions sont importantes pour choisir les méthodes d'analyse appropriées et pour coder correctement les données dans R. On obtient le summary suivant pour les variables catégorielles listées, qui est bien compréhensible et exploitable que le premier summary obtenu pour ces mêmes variables.
+
+```{r echo=FALSE}
+variables_categorielles <- c("SEXE","DEP","UDA9","HAB7","INACTIFS","QACTIF","CSP9","CSP5","NIVETUDES","APPETENCEDIGIT","QUALIFANCIENTEL","CONTEXTE_USAGE_SMARTPHONE","MARQMOB1","OS","ACQUISITIONTEL")
+data[,variables_categorielles] <- lapply(data[,variables_categorielles], as.factor)
+print(summary(data[variables_categorielles]))
+```
+
+### **IV ) Étude des valeurs manquantes** 
+
+#### **1 ) Moyenne des valeurs manquantes par colonnes**
+
+Le graphe intéractif (affiche le numéro de la colonne et le nombre de valeurs manquantes lorsqu'on passe notre curseur sur un point) ci-dessous permet de visualiser le nombre de valeurs manquantes pour chaques colonnes de notre jeu de données :
+ 
+```{r include=FALSE}
+# Nombre de valeurs manquantes pour chaques colonnes du dataframe
+colsums_na<-sapply(data, function(x) sum(is.na(x)))
+
+# Moyenne de valeurs manquantes par colonnes
+mean <- floor(mean(colsums_na)) # 781
+
+# Variable avec le plus de valeurs manquantes
+max <- max(colsums_na) # 1005
+
+# Variable avec le moins de valeurs manquantes
+min <- min(colsums_na) # 0
+
+# Création d'un dataframe avec 2 colonnes, l'une correspondant aux numéros des variables et l'autre à leur nombre de valeurs manquantes
+df_na <- data.frame(
+  obs = 1:ncol(data),
+  na_count = colsums_na
+)
+
+# Représentation graphique du nombre de valeurs manquantes par colonnes
+ggplot(df_na)+ aes(x = obs, y = na_count) +
+  geom_point(col="skyblue") +
+  geom_line(aes(y = mean, color = "Moyenne de valeurs manquantes"), linewidth = 1.5) +  
+  scale_color_manual(name = "Légende", values = c("Moyenne de valeurs manquantes" = "red")) +
+  theme_minimal() +
+  labs(
+    title = "Nombre de valeurs manquantes par colonnes",
+    x = "Numéro de la colonne",
+    y = "Nombre de valeurs manquantes") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),  
+        axis.title.y = element_text(face = "bold"))
+```
+
+```{r echo=FALSE}
+# Même graphe que ci-dessus mais intéractif
+# Le graphe intéractif (affiche le numéro de la colonne et le nombre de valeurs manquantes lorsqu'on passe notre curseur sur un point) ci-dessous permet de visualiser le nombre de valeurs manquantes pour chaques colonnes de notre jeu de données :
+
+# Représentation graphique du nombre de valeurs manquantes par colonnes
+p <- ggplot(df_na)+ aes(x = obs, y = na_count) +
+  geom_point(col="skyblue") +
+  geom_line(aes(y = mean, color = "Moyenne de valeurs manquantes"), linewidth = 1.5) +  
+  scale_color_manual(name = "Légende", values = c("Moyenne de valeurs manquantes" = "red")) +
+  theme_minimal() +
+  labs(
+    title = "Nombre de valeurs manquantes par colonnes",
+    x = "Numéro de la colonne",
+    y = "Nombre de valeurs manquantes") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),  
+        axis.title.y = element_text(face = "bold"))
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif
+```
+
+
+```{r echo=FALSE}
+# Trouver les noms des colonnes avec le nombre de valeurs manquantes souhaité
+na_count = max
+column_names <- names(data)[which(colsums_na >= na_count)]
+
+# Afficher les noms des colonnes
+print(paste("Noms des colonnes avec",na_count, "valeurs manquantes :"))
+print(column_names)
+```
+
+```{r echo=FALSE}
+# Trouver les noms des colonnes avec le nombre de valeurs manquantes souhaité
+na_count = 1000
+column_names <- names(data)[which(colsums_na >= na_count)]
+
+# Afficher les noms des colonnes
+print(paste("Noms des colonnes avec plus de",na_count, "valeurs manquantes :"))
+print(column_names)
+```
+
+#### **2 ) Moyenne des valeurs manquantes par lignes**
+
+Le graphe intéractif (affiche le numéro de l'observation et le nombre de valeurs manquantes lorsqu'on passe notre curseur sur un point) ci-dessous permet de visualiser le nombre de valeurs manquantes pour chaques lignes de notre jeu de données :
+ 
+```{r include=FALSE}
+# Nombre de valeurs manquantes pour chaques observations 
+rowsums_na<-apply(data,1, function(x) sum(is.na(x)))
+
+# Moyenne de valeurs manquantes par observations 
+mean <- floor(mean(rowsums_na)) # 126
+
+# Observation avec le plus de valeurs manquantes
+max <- max(rowsums_na) # 139
+
+# Observation avec le moins de valeurs manquantes 
+min <- min(rowsums_na) # 68
+
+# Création d'un dataframe avec 2 colonnes, l'une correspondant aux observations et l'autre à leur nombre de valeurs manquantes
+df_na <- data.frame(
+  obs = 1:nrow(data),
+  na_count = rowsums_na
+)
+
+# Représentation graphique du nombre de valeurs manquantes pour chaques lignes
+ggplot(df_na)+ aes(x = obs, y = na_count) + 
+  theme_minimal() +
+  geom_point(col="darkgreen") +
+  geom_line(aes(y = mean, color = "Moyenne de valeurs manquantes"), linewidth = 1.5) +  
+  scale_color_manual(name = "Légende", values = c("Moyenne de valeurs manquantes" = "red")) +
+  labs(
+    title = "Nombre de valeurs manquantes par lignes",
+    x = "Numéro de l'observation",
+    y = "Nombre de valeurs manquantes") + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),  
+        axis.title.y = element_text(face = "bold"))
+
+```
+
+```{r echo=FALSE}
+# Même graphe que ci-dessus mais intéractif 
+# Le graphe intéractif (affiche le numéro de l'observation et le nombre de valeurs manquantes lorsqu'on passe notre curseur sur un point) ci-dessous permet de visualiser le nombre de valeurs manquantes pour chaques lignes de notre jeu de données :
+
+# Représentation graphique du nombre de valeurs manquantes pour chaques lignes
+p <- ggplot(df_na)+ aes(x = obs, y = na_count) + 
+  theme_minimal() +
+  geom_point(col="darkgreen") +
+  geom_line(aes(y = mean, color = "Moyenne de valeurs manquantes"), linewidth = 1.5) +  
+  scale_color_manual(name = "Légende", values = c("Moyenne de valeurs manquantes" = "red")) +
+  labs(
+    title = "Nombre de valeurs manquantes par lignes",
+    x = "Numéro de l'observation",
+    y = "Nombre de valeurs manquantes") + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),  
+        axis.title.y = element_text(face = "bold"))
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif
+```
+
+
+```{r echo=FALSE}
+# Trouver les indices des lignes avec le nombre de valeurs manquantes souhaité
+line_numbers <- which(rowsums_na == max)
+
+# Afficher les numéros des lignes
+print(paste("Numéros des observations avec", max, "valeurs manquantes :"))
+print(line_numbers)
+```
+
+**Remarque :** Au vu des graphes obtenus, le mieux est de commencer par supprimer les variables contenant 1005 valeurs manquantes et les observations contenant 163 valeurs manquantes, car leur présence n'a peu d'intérêt dans la base de données. En tout c'est pas moins de 127329 données manquantes dans la base de données. Soit 77% de données manquantes dans toute la base.
+
+```{r include=FALSE}
+
+# Nombre total de valeurs manquantes de toute la base de données
+somme_Nas <- sum(is.na(data)) # 127329
+
+# Nombre total de données
+total_des_donnees <- nrow(data)*ncol(data) # 163815
+
+# Pourcentage de valeurs manquantes dans la base de données 
+ round((somme_Nas * 100)/total_des_donnees,2) # 77,7 % 
+```
+
+## **NETTOYAGE DE LA BASE DE DONNÉES**
+
+### **I ) Suppression des variables aux données manquantes**
+
+On supprime la variable ***COHABITATION_DYSFONCTION_A17*** de notre jeu de données car elle ne contient aucunes réponses.
+
+```{r}
+# data[,"COHABITATION_DYSFONCTION_A17"]<-list(NULL)
+
+# Finalement il a été vu que la suppression de cette variable n'était pas nécessaire, on la garde donc dans notre jeu de données ! 
+
+```
+
+### **II ) Supression des variables redondantes**
+
+En variable redondantes, j'en ai listé 3 : ***Hommes_Age*** et ***Femmes_Age***, elles contiennent de nombreuses valeurs manquantes car elles dependent du genre de la personne mais la colonne ***Tag5***, fait déjà tout le travail en regroupant ces deux mêmes colonnes en une seule. On peut donc les supprimer pour alléger la base de données. L'autre colonne est celle de l'activité professionelle, elle précise si l'activité professionelle de la personne est active (1) ou inactive (2), sauf que les colonnes qui suivent précisent le niveau d'inactivité (***INACTIFS***) ou d'activité (***QACTIFS***). La colonne ***ACTIVITE*** peut donc être supprimée. Avant de les supprimer, il a été vérifié en amont que les informations qu'elles contiennent sont bien renseignées en totalité dans les autres colonnes listées.
+
+```{r}
+# On supprime donc ces variables :
+
+data[,c("Hommes_Age","Femmes_Age","ACTIVITE")]<-list(NULL)
+
+```
+
+
+### **III ) Remplacement du nom des équipements (*REQUIPEMENT*) par leur numéros correspondant (dans le dictionnaire de données)**
+
+Le but de cette étape est de passer de ce type de représentation : "Un ordinateur portable,Une tablette tactile,Un smartphone," à ce type de représentation : "050602". Afin de faciliter la datavisualisation et l'étude de cette variable. Après avoir réalisé ce changement, on obtient la colonne du dessous :
+
+```{r include=FALSE}
+################### TEST 
+
+chaine <- "Un ordinateur portable,Une tablette tactile,Un smartphone,"
+liste <- c("Un téléphone mobile","Un smartphone","Aucun de ces équipements","Un ordinateur fixe","Un ordinateur portable","Une tablette tactile")
+new_chaine <- str_split(chaine, ",", simplify = TRUE)
+dim=length(new_chaine)
+new_chaine=new_chaine[-dim]
+
+chr=list()
+for (i in seq_along(new_chaine)){
+  mot1 <- new_chaine[i]
+  index <- which(liste == mot1)
+  chr <- append(chr, as.list(index))
+}
+
+# Extraire les éléments des sous-listes et les convertir en caractères
+vecteur_caracteres <- sapply(chr, function(x) paste0(x, collapse=""))
+
+# Concaténer tous les éléments en une seule chaîne de caractères, avec un 0 au début et un 0 entre chaques numéros distincts
+chaine_finale <- paste(vecteur_caracteres, collapse="0")
+chaine_finale <- paste0("0",chaine_finale)
+
+# Afficher la chaîne de caractères résultante
+print(chaine_finale)
+```
+
+```{r echo=FALSE}
+############### PROGRAMME 
+
+# Variable REQUIPEMENT du jeu de données 
+REQUIPEMENT = data[,"REQUIPEMENT"]
+
+# Liste de tous les noms des équipements 
+liste <- c("Une téléphone mobile (non smartphone)","Un smartphone","Aucun de ces équipements","Un ordinateur fixe","Un ordinateur portable","Une tablette tactile")
+
+new_variable=list()
+
+for (i in 1:length(REQUIPEMENT)){
+  chaine <- REQUIPEMENT[i]
+  new_chaine <- str_split(chaine, ",", simplify = TRUE)
+  dim=length(new_chaine)
+  new_chaine=new_chaine[-dim]
+  chr=list()
+  for (j in seq_along(new_chaine)){
+    mot1 <- new_chaine[j]
+    index <- which(liste == mot1)
+    chr <- append(chr, as.list(index))
+    vecteur_caracteres <- sapply(chr, function(x) paste0(x, collapse=""))
+    chaine_finale <- paste(vecteur_caracteres, collapse="0")
+    chaine_finale <- paste0("0",chaine_finale)
+  }
+  new_variable[i]=chaine_finale
+}
+
+# Le type de la variable est sous forme de liste, on le change donc sous forme de charactères
+n=length(new_variable)
+REQUIPEMENT_NUM <- c()
+for (i in 1:n){
+  REQUIPEMENT_NUM[i]<- new_variable[[i]]
+}
+
+# Ajout de cette nouvelle colonne que l'on nomme "REQUIPEMENT_NUM" au dataframe aprés la colonne REQUIPEMENT
+data <- add_column(data, "REQUIPEMENT_NUM" = REQUIPEMENT_NUM, .after = "REQUIPEMENT")
+print(head(data[, c("REQUIPEMENT", "REQUIPEMENT_NUM")],6))
+```
+
+### **IV ) Suppression du point apparaissant après certaines valeurs dans certaines colonnes**
+
+#### 1 ) Variable "*RIDENTIFICATION PROBLÈME*"
+
+```{r}
+data$RIDENTIFICATION_PROBLEMES <- sapply(data$RIDENTIFICATION_PROBLEMES, function(x) gsub("\\.", "", x))
+```
+
+Données avant formattage :
+
+```{r echo=FALSE}
+head(Broken_Devices_Data$RIDENTIFICATION_PROBLEMES)
+```
+
+Données après formattage : 
+
+```{r echo=FALSE}
+head(data$RIDENTIFICATION_PROBLEMES)
+```
+
+#### 2 ) Variable "*RETAT_ANCIEN_TEL*"
+
+```{r}
+data$RETAT_ANCIEN_TEL <- sapply(data$RETAT_ANCIEN_TEL, function(x) gsub("\\.", "", x))
+```
+
+Données avant formattage :
+
+```{r echo=FALSE}
+head(Broken_Devices_Data$RETAT_ANCIEN_TEL)
+```
+
+Données après formattage : 
+
+```{r echo=FALSE}
+head(data$RETAT_ANCIEN_TEL)
+```
+
+#### 3 ) Variable "*RMOTIV_SMART*"
+
+La variable RMOTIV_SMART est représentée de 3 manières différentes, en terme de valeurs : ex : "51.", "3.." et "...". Il faut donc la formatter afin d'avoir une lecture plus simplifiée et compréhensible de la valeur. La valeur "51." correspond à un choix multiple, au vue du formattage des autres variables à choix multiples dans la base de données on peut transformer ce "51." en un "0501". Pour la valeur "3.", le formattage serait le même afin d'obtenir un "03". Et pout la valeur "...", qui correpondrait à pas de réponses, et donc à une valeur manquante, le mieux est de mettre la raison numéro 6 , qui correspond à la motivation "Autre" dans le dictionnaire des données, correspondant à la variable. Elle passerait donc de "..." à "06"
+
+On commence tout d'abord par enlever les points pour faciliter le formatage de la variable pour la suite :
+
+```{r}
+data$RMOTIV_SMART <- sapply(data$RMOTIV_SMART, function(x) gsub("\\.", "", x))
+# ex : "51." devient "51"
+# ex : "3." devient "3"
+# ex : "..." devient "" (une chaine de caractères vides)
+```
+
+Données avant formattage :
+
+```{r echo=FALSE}
+head(Broken_Devices_Data$RMOTIV_SMART[28:32])
+```
+
+Données après formattage : 
+
+```{r echo=FALSE}
+head(data$RMOTIV_SMART[28:32])
+```
+
+Avant de réaliser le programme finale, je fais des premiers tests, sur un échantillon de valeurs de la variable, et je prends les lignes 28 à 32, qui contiennet les 3 types de représentations différentes :
+
+```{r}
+################### TEST 
+
+ligne <- data$RMOTIV_SMART[28:32] # ligne 28 à 32 qui donne : "51" "5"  "5"  "1"  "" 
+variable = list()
+
+for (i in 1:length(ligne)){
+  choix <- ligne[i]
+  if (choix==""){
+    choix="06" # si la valeur vaut "" on met la raison "06" comme nouvelle valeur
+  }
+  else {
+  # Diviser la chaîne en un vecteur de caractères : On passe de "51" à "5" et "1"
+  choix <- unlist(strsplit(choix, split = ""))
+
+  # Insérer un "0" entre chaque paire de caractères et un 0 au début de la chaine de caractères
+  choix <- paste(choix, collapse = "0")
+  choix <- paste0("0",choix)
+  }
+  variable[i]=choix
+}
+
+# Afficher la ligne finale
+print(variable)
+```
+
+J'ai bien obtenu ce que je voulais et dans le format souhaité, je réalise donc le programme finale qui va s'appliquer à toutes les valeurs de la variable :
+
+```{r}
+################### PROGRAMME
+
+RMOTIV_SMART <- data$RMOTIV_SMART
+variable = list()
+
+for (i in 1:length(RMOTIV_SMART)){
+  choix <- RMOTIV_SMART[i]
+  if (choix==""){
+    choix="06"
+  }
+  else {
+  choix <- unlist(strsplit(choix, split = ""))
+  choix <- paste(choix, collapse = "0")
+  choix <- paste0("0",choix)
+  }
+  variable[i]=choix
+}
+head(variable)
+
+# Le type de la variable est sous forme de liste, on le change donc sous forme de charactères
+n=length(variable)
+RMOTIV_SMART_FORM <- c()
+for (i in 1:n){
+  RMOTIV_SMART_FORM[i]<- variable[[i]]
+}
+
+# Ajout de cette nouvelle colonne que l'on nomme "RMOTIV_SMART_FORM" au dataframe, après la colonne RMOTIV_SMART
+data <- add_column(data, "RMOTIV_SMART_FORM" = RMOTIV_SMART_FORM, .after = "RMOTIV_SMART")
+print(head(data[, c("RMOTIV_SMART", "RMOTIV_SMART_FORM")],6))
+
+```
+
+#### 4 ) Variable "*RAISON_UTIL_PB"*
+
+Aprés avoir formattée la variable, on obtient la colonne de droite :
+
+```{r include=FALSE}
+#sum(is.na(data$RRAISON_UTIL_PB)) # 819 valeurs manquantes, ce qui est beaucoup  
+#class(data$RRAISON_UTIL_PB) # valeur de type numériques
+
+# on change la variable en charactères
+data$RRAISON_UTIL_PB <- as.character(data$RRAISON_UTIL_PB)
+#class(data$RRAISON_UTIL_PB) # désormais variable de type character
+
+head(data$RRAISON_UTIL_PB)
+
+```
+
+```{r echo=FALSE}
+RRAISON_UTIL_PB <- data$RRAISON_UTIL_PB
+
+# On remplace les NA par la raison "14" (Non renseignée) pour l'instant
+RRAISON_UTIL_PB[is.na(RRAISON_UTIL_PB)] <- "14"
+
+# On rajoute un 
+RRAISON_UTIL_PB_FORM <- list()
+for (i in 1:length(RRAISON_UTIL_PB) ){
+  liste_raisons=RRAISON_UTIL_PB[i]
+  sep_raisons=unlist(strsplit(liste_raisons, split = ""))
+  if (length(sep_raisons)%%2==1){
+    liste_raisons <- paste0("0",liste_raisons)
+  }
+  RRAISON_UTIL_PB_FORM[i]= liste_raisons
+  
+}
+
+# Le type de la variable est sous forme de liste, on le change donc sous forme de charactères
+n=length(RRAISON_UTIL_PB_FORM)
+chr <- c()
+for (i in 1:n){
+  chr[i]<- RRAISON_UTIL_PB_FORM[[i]]
+}
+
+# Ajout de cette nouvelle colonne que l'on nomme "RRAISON_UTIL_PB_FORM" au dataframe, après la colonne RRAISON_UTIL_PB
+data <- add_column(data, "RRAISON_UTIL_PB_FORM" = chr , .after = "RRAISON_UTIL_PB")
+print(head(data[, c("RRAISON_UTIL_PB", "RRAISON_UTIL_PB_FORM")],6))
+```
+
+
+#### 6 ) Variable "*SOLUTION_ALTERNATIVE_PB*"
+
+Aprés avoir formatter la variable, on obtient la colonne de droite : 
+
+```{r include=FALSE}
+sum(is.na(data$RSOLUTION_ALTERNATIVE_PB)) # 819 valeurs manquantes pour cette variable, ce qui est beaucoup  
+class(data$RSOLUTION_ALTERNATIVE_PB) # variable de type integer (entier)
+
+# on change la variable en type charactère
+data$RSOLUTION_ALTERNATIVE_PB <- as.character(data$RSOLUTION_ALTERNATIVE_PB)
+class(data$RSOLUTION_ALTERNATIVE_PB) # désormais variable de type character
+
+head(data$RSOLUTION_ALTERNATIVE_PB)
+```
+
+```{r echo=FALSE}
+RSOLUTION_ALTERNATIVE_PB <- data$RSOLUTION_ALTERNATIVE_PB
+
+# On remplace les NA par la raison "8" (Non renseignée) pour l'instant
+RSOLUTION_ALTERNATIVE_PB[is.na(RSOLUTION_ALTERNATIVE_PB)] <- "8"
+
+RSOLUTION_ALTERNATIVE_PB_FORM = list()
+
+for (i in 1:length(RSOLUTION_ALTERNATIVE_PB)){
+  choix <- RSOLUTION_ALTERNATIVE_PB[i]
+  choix <- unlist(strsplit(choix, split = ""))
+  choix <- paste(choix, collapse = "0")
+  choix <- paste0("0",choix)
+  RSOLUTION_ALTERNATIVE_PB_FORM[i]=choix
+}
+
+# Le type de la variable est sous forme de liste, on le change donc sous forme de charactères
+n=length(RSOLUTION_ALTERNATIVE_PB_FORM)
+l <- c()
+for (i in 1:n){
+  l[i]<- RSOLUTION_ALTERNATIVE_PB_FORM[[i]]
+}
+
+# Ajout de cette nouvelle colonne que l'on nomme "RSOLUTION_ALTERNATIVE_PB_FORM" au dataframe, après la colonne RSOLUTION_ALTERNATIVE_PB
+data <- add_column(data, "RSOLUTION_ALTERNATIVE_PB_FORM" =l, .after = "RSOLUTION_ALTERNATIVE_PB")
+print(head(data[, c("RSOLUTION_ALTERNATIVE_PB", "RSOLUTION_ALTERNATIVE_PB_FORM")],6))
+```
+
+#### 7 ) Variable "*RIMPACT_PB*"
+
+```{r}
+data$RIMPACT_PB <- sapply(data$RIMPACT_PB, function(x) gsub("\\.", "", x))
+# ex : "51." devient "51"
+# ex : ".." devient " "
+```
+
+Données avant formattage :
+
+```{r echo=FALSE}
+head(Broken_Devices_Data$RIMPACT_PB)
+```
+
+Données après formattage : 
+
+```{r echo=FALSE}
+head(data$RIMPACT_PB)
+```
+
+
+## **TRAITEMENT DE LA BASE DE DONNÉES**
+
+### **I ) Créations de fonctions :**
+
+#### 1 ) Fonction Count_VCM
+
+Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+```{r echo = FALSE}
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+1
+        }
+      }
+    }
+  }
+  return(mat)
+}
+```
+
+On teste ensuite cette fonction sur la variable ***REQUIPEMENT_NUM*** créée précédemment, qui représente les types d'équipements de chaques individus de la base, et cela nous donne la matrice suivante :
+
+```{r echo= FALSE}
+variable <- data$REQUIPEMENT_NUM
+nb_de_modalites <- 6
+print(Count_VCM(variable,nb_de_modalites))
+```
+
+Grâce à la fonction on peut représenter par la suite l'histogramme suivant, qui est intéractif : 
+
+```{r include=FALSE}
+matrice=Count_VCM(variable,nb_de_modalites)
+x=matrice[1,]
+y=matrice[2,]
+df <- data.frame(x=x,y=y)
+ggplot(df) +
+  aes(x=factor(x),y=y) +
+  geom_bar(stat ='identity',fill = "cyan3", color = "cyan3") +
+  theme_minimal() +
+  labs(title = "Histogramme de la variable REQUIPEMENT_NUM",
+       x = "Numéro de la modalité",
+       y = "Fréquence") +
+  #scale_x_continuous(limits = c(1, 6),breaks = seq(0, 7, by = 1)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "cyan3"),
+        axis.title.x = element_text(color = "cyan3", face = "bold"),  
+        axis.title.y = element_text(color = "cyan3", face = "bold")) 
+
+```
+
+```{r echo=FALSE}
+
+# Même histogramme que ci-dessus mais intéractif : 
+  
+  p <- ggplot(df) +
+  aes(x=x,y=y) +
+  geom_bar(stat='identity',fill = "cyan3", color = "cyan3") +
+  theme_minimal() +
+  labs(title = "Type d'équipement en fonction du nombre d'utilisateurs",
+       x = "Numéro de l'équipement",
+       y = "Nombre d'utlisateurs") +
+  #scale_x_continuous(limits = c(1, 6),breaks = seq(0, 7, by = 1)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "cyan3"),
+        axis.title.x = element_text(color = "cyan3", face = "bold"),  
+        axis.title.y = element_text(color = "cyan3", face = "bold")) 
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+
+
+# **SEMAINE DU 10 JUIN 2024 au 14 JUIN 2024 : (À venir)**
+
+Pour les semaines à venir, il sera préférable de travailler sur cette nouvelle base de données pour laquelle on a formatté de nombreuses variables. On l'exporte donc : 
+
+```{r}
+saveRDS(data, file = "data/data.rds")
+```
+
