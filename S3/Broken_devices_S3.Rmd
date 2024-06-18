@@ -1,0 +1,393 @@
+---
+title: 'Project : Broken devices S3'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-06-17"
+---
+
+# **SEMAINE DU 17 JUIN 2024 au 21 JUIN 2024 :**
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+1
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+```
+
+
+**OBJECTIF :** *Analyser la base de données*
+
+## **ANALYSE DE LA BASE DE DONNÉES**
+
+### **I ) Import de la nouvelle base de données formattée**
+
+```{r}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
+## **II ) Durée de possession du smartphone**
+
+Le graphique à barres suivant donne le nombre de personnes en pourcentage, dans la base de données, qui ont leur téléphone depuis 2000, depuis 2001... 
+
+```{r}
+valeurs <- t(as.matrix(table(data$DATEOBTENTIONSMART_1)))
+annees <- sort(unique(data$DATEOBTENTIONSMART_1))
+nb_individus <- nrow(data)
+mat=matrix(0,nrow=3,ncol=length(annees))
+mat[1,]=annees
+mat[2,]=valeurs
+for (i in 1:length(annees)){
+  df <- data[which(data$DATEOBTENTIONSMART_1==mat[1,i] & data$RIDENTIFICATION_PROBLEMES!="27"),]
+  nb_avec_pbs=nrow(df)
+  mat[3,i]=nb_avec_pbs
+
+  
+}
+
+print(mat)
+```
+
+```{r}
+
+df_T1 <- data.frame(Annee = mat[1,], valeurs = mat[3, ], Legende = "Dysfonctionnements")
+df_T2 <- data.frame(Annee = mat[1,], valeurs = mat[2, ], Legende = "Pas de dysfonctionnements")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Annee, y = valeurs, fill = Legende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
+  labs(title = "Dysfonctionnement rencontrés en fonction de l'année d'obtention",
+       x = "Année d'obtention",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+```
+
+On observe que la plupart  des dysfonctionnements ont lieu sur des années récentes d'obtention du smartphone, sur les 5 dernières années même.
+
+### 2 ) Années de possession en fonction des dysfonctionnements 
+Le but est de savoir combien de personnes dans la base ont leur téléphone depuis 2000, depuis 2001 ..., en fonction des années, on obtient la matrice suivante :
+```{r ehco=FALSE}
+
+# utilisation de la fonction table pour déterminer le nombre d'occurence de chaque année dans la variable
+
+print(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"DATEOBTENTIONSMART_1"]))
+
+```
+
+On remarque que la plupart des personnes l'ont depuis 2022 (108 personnes), 80 personnes depuis 2023 et 83 depuis 2021. 
+
+
+```{r}
+# Parmis les individus qui rencontrent un pb combien ont leur téléphone depuis 5 ans ?
+
+mat= t(as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"DATEOBTENTIONSMART_1"])))
+
+# Années de 2019 à 2023 = position 11 à position 15 de l'objet "mat"
+
+nb_individus_avec_pbs <- nrow(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]) # 400 individus qui rencontrent un pbs dans la base 
+pourcent1 <- round(sum(mat[11:15]) *100 / nb_individus_avec_pbs) # 91 %
+print(paste("Pourcentage de personnes parmis celles qui rencontrent un pbs qui ont leur smartphone depuis 5 ans :",pourcent1, "%"))
+
+# Parmis toute la base combien ont leur téléphone de depuis 5 ans et rencontrent un pb ?
+
+pourcent2 <- round(sum(mat[11:15]) *100 / nrow(data)) # 91 %
+print(paste("Pourcentage de personnes qui rencontrent un pbs et qui ont leur smartphone depuis 5 ans :",pourcent2, "%"))
+
+
+
+```
+
+Nuage de points représentant le nombre de dysfonctionnements rencontrés par chacun des propriétaires en fonction de l'année d'obtention de leur smartphone :
+
+```{r}
+annees <- c()
+dys <- c()
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+date=df$DATEOBTENTIONSMART_1
+pbs=df$RIDENTIFICATION_PROBLEMES
+for(i in 1:length(date)){
+  annees=c(annees,date[i])
+  liste_pbs=str_extract_all(pbs[i], ".{2}")[[1]]
+  dys=c(dys,length(liste_pbs))
+}
+
+dataframe <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys)
+
+Nb_personnes_concernees <- c()
+for (i in 1:nrow(dataframe)){
+  annee=dataframe[i,1]
+  dysfonc=dataframe[i,2]
+  don <- dataframe[which(dataframe$Obtention==annee & dataframe$Nb_dysfonctionnements==dysfonc),]
+  Nb_personnes_concernees <- c(Nb_personnes_concernees,nrow(don))
+}
+
+df2 <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys,Nb_personnes_concernees=Nb_personnes_concernees)
+
+```
+
+```{r}
+# Créer le graphique interactif
+p <- ggplot(df2, aes(x = Obtention, y = Nb_dysfonctionnements, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7) +
+  theme_minimal() +
+  labs(title = "Nombre de dysfonctionnements en fonction de l'année d'obtention",
+       x = "Année d'obtention",
+       y = "Nombre de dysfonctionnements",
+       size = "Nb de personnes concernées") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
+
+```
+
+
+Répartion des différentes propriétés du smartphone :
+
+```{r}
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen" )
+
+modalites <- sort(unique(data$ACQUISITIONTEL))
+val=as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES=="27"),"ACQUISITIONTEL"]))
+dys <- as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"ACQUISITIONTEL"]))
+matrice=matrix(0,nrow=3,ncol=length(modalites))
+matrice[1,]=modalites
+matrice[2,]=val
+matrice[3,]=dys
+
+Categorie <- factor(label_ACQUISITION, levels = label_ACQUISITION)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = matrice[3, ], Legende = "Dysfonctionnements")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2, ], Legende = "Pas de dysfonctionnements")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Legende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
+  labs(title = "Acquisition du téléphone",
+       x = "Acquisition",
+       y = "Nombre de personnes concernées") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+
+
+```
+
+
+Sous forme de nuage de points : 
+
+```{r}
+
+don2 <- data.frame(x=c(1:nrow(data)),y=data$ACQUISITIONTEL)
+ggplot(don2)+aes(x=x,y=y)+geom_point()+theme_minimal()
+```
+
+En terme de pourcentage, on obtient le tableau suivant : 
+
+```{r}
+table(data$ACQUISITIONTEL)
+valeurs = as.matrix(table(data$ACQUISITIONTEL))
+frame=data.frame(Acquisition=label_ACQUISITION,`Nombre de personnes`=valeurs , `Pourcentage de personnes` =round(valeurs*100/nrow(data),1))
+print(frame)
+```
+En terme de pourcentage combien de personnes pour chaque modalités rencontrent des problèmes : 
+
+```{r}
+modalites <- sort(unique(data$ACQUISITIONTEL))
+matrice <- matrix(0,nrow=3,ncol=length(modalites))
+matrice[1,]=modalites
+for(i in 1:length(modalites)){
+  df=data[which(data$ACQUISITIONTEL==modalites[i]),]
+  n=nrow(df)
+  personnes_pb=nrow(df[which(df$RIDENTIFICATION_PROBLEMES!="27"),])
+  pourcent=personnes_pb*100/n
+  matrice[2,i]=personnes_pb
+  matrice[3,i]=round(pourcent)
+}
+# rajouter cette colonne si on veut plus de précision sur le pourcentage : `Nombre de personnes avec un pb`=mat[2,] 
+
+frame=data.frame(Acquisition=label_ACQUISITION, `Pourcentage de personnes avec un pb` =mat[3,])
+print(frame)
+```
+
+88 % de ceux dont le smartphone a été fourni par l'employeur rencontrent un pb avec, 45% de ceux qui l'ont obtenu dans le cadre d'un contrat avec leur opérateur en rencontrent un aussi, et 41 % de ceux qui l'ont acheté en rencontrent.
+
+Parmis les 10 premiers pbs qui sont :
+
+```{r echo=FALSE}
+matrice=Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+n=nrow(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),])
+
+# Extraire les valeurs et les indices
+values <- matrice[2, ]
+indices <- matrice[1, ]
+
+# Ordonner les valeurs en ordre décroissant et récupérer les indices correspondants
+sorted_indices <- order(values, decreasing = TRUE)
+sorted_values <- values[sorted_indices]
+sorted_indices <- indices[sorted_indices]
+
+# Sélectionner les 10 premières valeurs et indices
+top_values <- sorted_values[1:10]
+top_indices <- sorted_indices[1:10]
+
+# Créer une nouvelle matrice avec les résultats
+top_mat <- matrix(c(top_indices, top_values), nrow = 2, byrow = TRUE)
+print(top_mat)
+
+# Conversion des matrices en data frames
+df <- data.frame(Dysfonctionnement=factor(label_RIDENTIFICATION_PROBLEME[top_indices], levels = label_RIDENTIFICATION_PROBLEME[top_indices]), Pourcentage = round(top_mat[2,]*100/n))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df, aes(x = Dysfonctionnement, y = Pourcentage)) +
+  geom_bar(stat = "identity",fill = "darkgreen") + # mettre position = "dodge" si on veut des barres côteà côte
+  labs(title = "10 principaux dysfonctionnements rencontrés ",
+       x = "Dysfonctionnements",
+       y = "Nombre de personnes (en %)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
+        axis.title.x = element_text(face = "bold",colour="darkgreen"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="darkgreen")) 
+
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif 
+
+```
+
+Combien ont été résolu ? 
+
+```{r}
+label_RIDENTIFICATION_PROBLEME[top_indices]
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

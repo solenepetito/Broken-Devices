@@ -1,0 +1,1319 @@
+---
+title: 'Project : Broken devices S2'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-06-10"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **SEMAINE DU 10 JUIN 2024 au 14 JUIN 2024 :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+getwd()
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+1
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+```
+
+**OBJECTIF :** *Analyser la base de données*
+
+## **ANALYSE DE LA BASE DE DONNÉES**
+
+### **I ) Import de la nouvelle base de données formattée**
+
+```{r}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data.rds") # base de données sur laquelle on va appliquer tous les changements
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 1005 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
+### **II ) Quantification des personnes non éligibles**
+
+Les personnes non éligibles sont celles qui n'ont pas indiqué si elles
+ont recontré un problème avec leur smartphone, dans la base de données,
+on les repère par le fait qu'elles n'ont pas indiqué un numéro de pb
+dans la colonne "RIDENTIFICATION_PROBLEMES", et que leur reponse apprait
+comme une chaine de caractères vide (""). N'ayant pas indiqué de raisons
+de dysfonctionnement, le reste des réponses qui suit dans la base est
+vide, ce qui parait logique. En tout, les personnes en question auront
+répondu à moins de 50% des questions du questionnaire, il est donc
+préférable de les enlever de la base pour la suite de l'analyse. Les
+autres personnes ayant répondu à 50% des questions sont celles ayant
+indiqué la raison 27 dans la colonne"RIDENTIFICATION_PROBLÈMES", mais il
+est nécessaire de les garder pour les futurs analyses à des fins de
+comparaisons entre individus.
+
+```{r}
+# Nombre total d'individus dans la base
+nb_individus=nrow(data)
+
+# Sélection des individus non éligibles
+individus_non_eligibles = data[which(data$RIDENTIFICATION_PROBLEMES == ""),]
+
+# Nombre d'individus non éligibles
+n=nrow(individus_non_eligibles)
+print(n) # 37
+
+# Part de personnes non éligibles : celles qui n'ont pas renseigné de pbs dans identification pbs 
+
+res <- 100*n/nb_individus
+print(round(res,1)) # 3.7 %
+
+# Repérer parmis ces individus ceux qui ont répondu à moins de 50% des réponses
+
+# Variables qui sont entièrement composées de valeurs manquantes parmis les individus non éligibles 
+colsums_na<-sapply(individus_non_eligibles, function(x) sum(is.na(x)))
+na_count=n 
+column_names <- names(individus_non_eligibles)[which(colsums_na == na_count)] # Quelles colonnes ont 37 valeurs manquantes ?
+
+# individus_non_eligibles[,column_names]<-list(NULL)
+
+# Nombre de colonnes concernées : 136 (sur 165 ce qui est beaucoup)
+ length(column_names)
+
+# Décommentez la ligne qui suit pour obtenir tous les noms de colonnes concernées
+# column_names 
+
+```
+
+```{r include=FALSE}
+# Repérer parmis ces individus ceux qui ont répondu à moins de 50% des réponses
+
+rowsums_na<-apply(individus_non_eligibles,1, function(x) sum(is.na(x)))
+
+# Nombre d'individus concernés : 37 (tous les individus non éligibles)
+length(which(rowsums_na > 0.5*ncol(data)))
+
+```
+
+On les supprime donc de la base :
+
+```{r}
+data <- data[data$RIDENTIFICATION_PROBLEMES != "", ]
+nb_individus=nrow(data)
+View(data)
+```
+
+On a désormais 968 individus dans notre base de données.
+
+### **III ) Combien de personnes n'ont pas rencontré de problèmes avec leur smarthphone ?**
+
+En tout, c'est 59% de personnes dans la base qui ont indiqué, qu'il ne
+rencontrait pas de problèmes avec leur smartphone :
+
+```{r echo=FALSE}
+
+# Nombre d'individus ayant recontré aucun problème (RIDENTIFICATION_PROBLEMES = 27 correspond au fait de ne pas avoir rencontré de problèmes avec son smartphone)
+individus_sans_pbs = length(which(data$RIDENTIFICATION_PROBLEMES == "27"))
+
+# Pourcentage de personnes n'ayant pas recontré de pbs avec leur smartphone  
+
+res <- 100*individus_sans_pbs/nb_individus
+print(round(res,1))
+```
+
+### **IV ) Statistiques descriptives basiques**
+
+Une partie des statistiques descriptives de base a déjà été réalisée
+grâce au summary réalisé précédemment.
+
+**A ) Variable "SEXE"**
+
+**Rappel :** Libellé modalité
+
+-   1 : Homme
+
+-   2 : Femme
+
+```{r echo=FALSE}
+df <- data.frame(x=data$SEXE)
+
+p <- ggplot(df) + aes(x = x)+  geom_bar(fill="skyblue") +
+  labs(title = "Répartition des hommes et des femmes", x = "Genre", y = "Nombre de personnes") +
+  theme_minimal()+ 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "skyblue"),
+        axis.title.x = element_text(color = "skyblue", face = "bold"),  
+        axis.title.y = element_text(color = "skyblue", face = "bold")) 
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+```
+
+```{r echo=FALSE}
+# En terme de pourcentage : 
+
+nb_femmes = nrow(data[which(data$SEXE==2),])
+nb_hommes = nrow(data[which(data$SEXE==1),])
+
+pourcent_femmes = round(nb_femmes*100 /nb_individus)
+pourcent_hommes = round(nb_hommes*100 /nb_individus)
+
+print(paste("Pourcentage de femmes dans la base :",pourcent_femmes,"%"))
+print(paste("Pourcentage d'hommes dans la base :",pourcent_hommes,"%"))
+
+
+
+```
+
+Dans la base de données, il y a donc 446 hommes et 522 femmes.
+
+**B ) Répartition des âges**
+
+**1 ) Variable "AGE"**
+
+```{r echo=FALSE}
+# Répartition des âges 
+
+df <- data.frame(Age= data$AGE)
+p <-ggplot(df)+aes(x=Age)+geom_histogram(bins=30,fill="skyblue")+
+  theme_minimal() +
+  labs(title = "Répartition des âges", x = "AGES", y = "Nombre de personnes") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "skyblue"),
+        axis.title.x = element_text(color = "skyblue", face = "bold"),  
+        axis.title.y = element_text(color = "skyblue", face = "bold")) 
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+On remarque que les personnes autour de 65 ans sont majoritaires dans la
+base de données et que les personnes autour de la vingtaine le sont
+aussi. Les âges vont de 15 à 80 ans.
+
+**2 ) Variable "TAG5" (par Tranche d'âges)**
+
+**Rappel :** Libellé modalité (Variable "Tag5")
+
+-   1 : 15-24 ans
+
+-   2 : 25-34 ans
+
+-   3 : 35-49 ans
+
+-   4 : 50-64 ans
+
+-   5 : 65-80 ans
+
+```{r echo=FALSE}
+df <- data.frame(Tranches_Age= data$Tage5)
+p <-ggplot(df)+aes(x=Tranches_Age)+geom_bar(fill="skyblue")+
+  theme_minimal() +
+  labs(title = "Nombre de personnes par tranches d'âges", x = "Tranche d'âges", y = "Nombre de personnes") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "skyblue"),
+        axis.title.x = element_text(color = "skyblue", face = "bold"),  
+        axis.title.y = element_text(color = "skyblue", face = "bold")) 
+
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+On remarque que les catégories majoritaires sont les 35-49 ans et les
+50-64 ans, comme ce que nous avait indiqué l'histogramme ci-dessous.
+
+**C ) Variable "CSP9"**
+
+**Rappel :** Libellé modalités (Variable "CSP9")
+
+-   1 : Agriculteurs
+
+-   2 : Artisans
+
+-   3 : Cadres
+
+-   4 : Professions Intermédiaires
+
+-   5 : Employés
+
+-   6 : Ouvriers
+
+-   7 : Retraités
+
+-   8 : Etudiants
+
+-   9 : Autres Inactifs
+
+```{r echo=FALSE}
+# Répartion des CSP en fonction du genre
+
+CSP_femmes <- data[which(data$SEXE==2),"CSP9"]
+mat_femmes <- table(CSP_femmes)
+
+CSP_hommes <- data[which(data$SEXE==1),"CSP9"]
+mat_hommes <- table(CSP_hommes)
+
+
+# Convertir les matrices en data frames
+df_femmes <- data.frame(categorie = c(1:9), valeurs = as.matrix(mat_femmes), Genre = "Femmes")
+df_hommes <- data.frame(categorie = c(1:9), valeurs = as.matrix(mat_hommes), Genre = "Hommes")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_femmes, df_hommes)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côte à côte
+  labs(title = "Genre en fonction de la CSP",
+       x = "CSP",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),  
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+```
+
+On a 3 catégories qui ressortent plus que d'autre, il s'agit de la 7
+(Retraités), de la 5 (Employés) et de la 3 (Cadres), avec les femmes qui
+sont majoritaires pour les catégories 7 et 5, et les hommes qui le sont
+pour la catégorie 3. Les agriculteurs (catégorie 1) eux sont trés peu
+représentés (5 personnes dans toutes la base).
+
+### **V ) Type de casse**
+
+#### **1 ) Répartition des différents types de casse**
+
+```{r echo=FALSE}
+# Diagramme à barres des différents problèmes rencontrés 
+
+# Matrice 
+variable=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"RIDENTIFICATION_PROBLEMES"]
+nb_de_modalites=26
+mat <- Count_VCM(variable,nb_de_modalites)
+
+# Conversion des matrices en data frames
+df <- data.frame(categorie=factor(label_RIDENTIFICATION_PROBLEME, levels = label_RIDENTIFICATION_PROBLEME), valeurs = mat[2,])
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df, aes(x = categorie, y = valeurs)) +
+  geom_bar(stat = "identity",fill = "darkgreen") + # mettre position = "dodge" si on veut des barres côteà côte
+  labs(title = "Répartition des différents problèmes rencontrés ",
+       x = "Dysfonctionnements",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
+        axis.title.x = element_text(face = "bold",colour="darkgreen"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="darkgreen")) 
+
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif 
+```
+
+```{r}
+as.numeric(df$categorie)
+```
+
+Les dysfonctionnements 10 (problème de batterie), 18 (stockage saturé)
+et 25 (problème de lenteur) sont ceux qui reviennent le plus chez les
+propriétaires des smartphones, avec 114 personnes pour le 10, 93
+personnes pour le 18, et 83 personnes pour le 25.
+
+#### **2 ) Incidence du genre du propriétaire sur les dysfonctionnements**
+
+Chez les hommes, c'est 43% des personnes qui rencontres un
+dysfonctionnment sur leur smartphone et donc 57% qui n'ne rencontrent
+pas. Les problèmes qui reviennet le plus sont le 10 (problème de
+batterie) avec 49 personnes, le 25 (problème de lenteur) avec 46
+personnes et le 18 (stockage saturé) avec 31 personnes. Comme nous le
+montre la matrice suivante, qui indique en ligne 1, le numéro du
+problème et en ligne 2, le nombre d'hommes le rencontrant :
+
+```{r echo=FALSE}
+# Sélection d'une base avec condition la variable "SEXE" qui vaut 1
+hommes <- data[(which(data$SEXE==1)),]
+
+# Nombre d'hommes dans la base rencontrant et ne rencontrant pas de dyfonctionnements avec leur smartphone
+nb_hommes_avec_pbs <- nrow(hommes) - length(which(hommes$RIDENTIFICATION_PROBLEMES == "27")) # résultat : 254
+nb_hommes_sans_pbs <- length(which(hommes$RIDENTIFICATION_PROBLEMES == "27")) # résultat : 192
+
+# Poucentage d'hommes dans la base rencontrant et ne rencontrant pas de dyfonctionnements avec leur smartphone
+pourcent_nb_hommes_avec_pbs <- round(100*nb_hommes_avec_pbs/nrow(hommes),2) # résultat : 43.05 %
+pourcent_nb_hommes_sans_pbs <- round(100*nb_hommes_sans_pbs/nrow(hommes),2) # résultat : 56.95 %
+
+# Pbs rencontrés chez les hommes : (utilisation de la fonction Count_VCM)
+
+variable=hommes$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=27
+print(Count_VCM(variable,nb_de_modalites))
+print(pourcent_nb_hommes_avec_pbs)
+
+
+```
+
+Chez les femmes, c'est 40% des personnes qui rencontres un
+dysfonctionnment sur leur smartphone et donc 57% qui n'en rencontrent
+pas. Les problèmes qui reviennent le plus sont le 10 (problème de
+batterie) avec 65 personnes, le 18 (stockage saturé) avec 62 personnes,
+et le 25 (problème de lenteur) avec 37 personnes. Comme nous le montre
+la matrice suivante, qui indique en ligne 1, le numéro du problème et en
+ligne 2, le nombre de femmes le rencontrant :
+
+```{r}
+# Sélection d'une base avec condition la variable "SEXE" qui vaut 2
+femmes <- data[(which(data$SEXE==2)),]
+
+# Nombre de femmes dans la base rencontrant et ne rencontrant pas de dyfonctionnements avec leur smartphone
+nb_femmes_avec_pbs <- nrow(femmes) - length(which(femmes$RIDENTIFICATION_PROBLEMES == "27")) # résultat : 208
+nb_femmes_sans_pbs <- length(which(femmes$RIDENTIFICATION_PROBLEMES == "27")) # résultat : 314
+
+# Poucentage de femmes dans la base rencontrant et ne rencontrant pas de dyfonctionnements avec leur smartphone
+pourcent_nb_femmes_avec_pbs <- round(100*nb_femmes_avec_pbs/nrow(femmes),2) # résultat : 39.85 %
+pourcent_nb_femmes_sans_pbs <- round(100*nb_femmes_sans_pbs/nrow(femmes),2) # résultat : 60.15 %
+
+# Pbs rencontrés chez les femmes : (utilisation de la fonction Count_VCM)
+
+variable=femmes$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=27
+print(Count_VCM(variable,nb_de_modalites))
+
+```
+
+Le diagramme à bars suivant permet de visualiser les valeurs obtenues
+par les deux matrices ci-dessus et de faire une comparaison entre les
+genres :
+
+```{r echo=FALSE}
+# Diagramme en bars empilées des problèmes rencontrés en fonction du genre 
+
+# Matrice des femmes 
+femmes = femmes[which(femmes$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=femmes$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_femmes <- Count_VCM(variable,nb_de_modalites)
+
+# Matrice des hommes
+hommes = hommes[which(hommes$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=hommes$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_hommes <- Count_VCM(variable,nb_de_modalites)
+
+# Conversion des matrices en data frames
+df_femmes <- data.frame(categorie = factor(label_RIDENTIFICATION_PROBLEME, levels = label_RIDENTIFICATION_PROBLEME), valeurs = mat_femmes[2, ], Genre = "Femmes")
+df_hommes <- data.frame(categorie = factor(label_RIDENTIFICATION_PROBLEME, levels = label_RIDENTIFICATION_PROBLEME), valeurs = mat_hommes[2, ], Genre = "Hommes")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_femmes, df_hommes)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côteà côte
+  labs(title = "Dysfonctionnements rencontrés en fonction du genre",
+       x = "Dysfonctionnements",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif 
+```
+
+**Remarque :** on observe que les 3 principaux problèmes rencontrés sont
+les mêmes dans les deux genres. En moyenne c'est deux types de
+dysfonctionnement rencontrés par les femmes sur leur smartphone et de
+même pour les hommes. Le genre du propriétaire ne semble donc avoir
+aucune incidence sur le nombre de dysfonctionnements rencontrés sur son
+smartphone.
+
+```{r include=FALSE}
+# Somme des pbs rencontrés pour chaque propriétaire femmes
+sum_pbs_femmes <- sum(df_femmes$valeurs) # 449
+
+# Moyenne de pbs recontrés par les femmes 
+moy_femmes <- round(sum_pbs_femmes / nrow(femmes))
+print(moy_femmes)
+
+# Somme des pbs rencontrés pour chaque propriétaire hommes
+sum_pbs_hommes <- sum(df_hommes$valeurs) # 383
+
+# Moyenne de pbs rencontrés par les hommes
+moy_hommes <- round(sum_pbs_hommes / nrow(hommes))
+print(moy_hommes)
+```
+
+#### **3 ) Incidence de la tranche d'âge sur les dysfonctionnements**
+
+Le diagramme suivant représente les différents dysfonctionnements
+rencontrés et les couleurs différentes sur chaque barres représente une
+tranche d'âge différente :
+
+```{r echo=FALSE}
+# Diagramme en bars empliées des problèmes rencontrés en fonction de la tranche d'âge 
+
+# T1 
+T1 <- data[(which(data$Tage5==1)),]
+T1 = T1[which(T1$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=T1$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_T1 <- Count_VCM(variable,nb_de_modalites)
+
+# T2 
+T2 <- data[(which(data$Tage5==2)),]
+T2 = T2[which(T2$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=T2$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_T2 <- Count_VCM(variable,nb_de_modalites)
+
+# T3 
+T3 <- data[(which(data$Tage5==3)),]
+T3 = T3[which(T3$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=T3$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_T3 <- Count_VCM(variable,nb_de_modalites)
+
+# T4 
+T4 <- data[(which(data$Tage5==4)),]
+T4 = T4[which(T4$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=T4$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_T4 <- Count_VCM(variable,nb_de_modalites)
+
+# T5
+T5 <- data[(which(data$Tage5==5)),]
+T5 = T5[which(T5$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=T5$RIDENTIFICATION_PROBLEMES
+nb_de_modalites=26
+mat_T5 <- Count_VCM(variable,nb_de_modalites)
+
+# Convertir les matrices en data frames
+
+categorie <- factor(label_RIDENTIFICATION_PROBLEME, levels = label_RIDENTIFICATION_PROBLEME)
+
+df_T1 <- data.frame(categorie = categorie, valeurs = mat_T1[2, ], Tranche_age = "15-24 ans")
+df_T2 <- data.frame(categorie = categorie, valeurs = mat_T2[2, ], Tranche_age = "25-34 ans")
+df_T3 <- data.frame(categorie = categorie, valeurs = mat_T3[2, ], Tranche_age = "35-49 ans")
+df_T4 <- data.frame(categorie = categorie, valeurs = mat_T4[2, ], Tranche_age = "50-64 ans")
+df_T5 <- data.frame(categorie = categorie, valeurs = mat_T5[2, ], Tranche_age = "65+ ans")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4, df_T5)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Tranche_age)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
+  labs(title = "Dysfonctionnement rencontrés en fonction de l'âge",
+       x = "Dysfonctionnements",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+```
+
+```{r include=FALSE}
+# Incidence de la tranche d'âge sur le nombre de dysfonctionnement
+
+value = sort(unique(data$Tage5))
+mat <- matrix(0,nrow=2,ncol=length(value))
+mat[1,]=value
+for (i in 1:length(value)){
+  df=data[which(data$Tage5==i),]
+  variable=df[which(df$RIDENTIFICATION_PROBLEMES!="27"),"RIDENTIFICATION_PROBLEMES"]
+  res <- Count_VCM(variable,26)
+  moy=round(sum(res[2,])/nrow(df))
+  mat[2,i]=moy
+}
+
+print(mat)
+
+```
+
+On remarque que les 15-24 ans sont assez majoritaires dans les personnes
+rencontrant les 3 dysfonctionnements les plus fréquents, alors qu'ils ne
+sont pas ceux étant le plus présents dans la base de données, ils sont
+suivis des 30-49 ans et des 50-64 ans, eux étant trés présents dans la
+base de données. La tranche de d'âge a aussi trés peu d'inlfuence sur le
+nombre de dysfonctionnment que notre smartphone pourrait rencontrer, en
+effet par tranche d'âge on observe une moyenne d'un dysfonctionnement
+rencontré. Seul les +65 ans ont une moyenne de 0 dysfonctionnement
+rencontré (0.38).
+
+#### **4 ) Incidence de la propriété sur les dysfonctionnements**
+
+**Rappel :** Libelle modalité (Variable "ACQUISITIONTEL")
+
+-   1 : Quelqu'un me l'a offert ou donné
+
+-   2 : Quelqu'un me l'a prêté
+
+-   3 : Je l'ai acheté
+
+-   4 : Je l'ai obtenu dans le cadre de mon contrat avec mon opérateur
+
+-   5 : Mon employeur me l'a fourni
+
+-   6 : Je l'ai loué
+
+-   7 : Je ne me souviens pas
+
+-   8 : Obtenu par un autre moyen
+
+La matrice suivante donne en ligne 1 la façon dont le téléphone a été
+obtenu, et ligne 2 le nombre total de dysfonctionnement rescensé pour ce
+type d'acquisition :
+
+```{r echo=FALSE}
+# PROGRAMME afin d'étudier l'incidence de la propriété sur le dysfonctionnement 
+
+data$ACQUISITIONTEL=as.numeric(data$ACQUISITIONTEL)
+
+val <- sort(unique(data$ACQUISITIONTEL))
+mat <- matrix(0, nrow = 2, ncol = length(val))
+mat[1, ] <- val
+
+# Parcourir chaque valeur distincte de ACQUISITIONTEL
+for (i in 1:length(val)) {
+  # Filtrer les données pour chaque valeur distincte de ACQUISITIONTEL
+  variable <- data[which(data$ACQUISITIONTEL == i), "RIDENTIFICATION_PROBLEMES"]
+  
+  # Parcourir chaque ligne de variable
+ for (j in 1:length(variable)) {
+    if (!is.na(variable[j]) && variable[j] != "") {
+      ligne <- str_extract_all(variable[j], ".{2}")[[1]]
+      if("27" %in% ligne){
+       mat[2, i] <- mat[2, i] + 0
+      } else {mat[2, i] <- mat[2, i] + length(ligne)}
+    }
+  }
+}
+
+print(mat)
+```
+
+On remarque qu'en terme de propriétés ceux qui ont acheté leur
+smartphone eux-mêmes sont ceux qui rencontrent le plus de
+dysfonctionnements avec 595 personnes dans ce cas,en deuxième position
+il y a ceux à qui on l'a offert ou donné, et en troisième position, ceux
+à qui ne l'ont pas obtenu dans le cadre de leur contrat avec leur
+opérateur. À contrario ceux l'ayant obtenu par un autre moyen et ceux ne
+se souvenant pas de la propriété ne rencontrent aucun dysfonctionnement.
+Le fait d'acheter un smartphone neuf semble donc avoir une influence sur
+le nombre de dysfonctionnement que l'on rencontrera par la suite.
+
+#### **5 ) Graphe présentant le nombre de dysfonctionnement moyen rencontrés en fonction du nombre d'années de possession du smartphone**
+
+La matrice suivante présente en ligne 1, l'année d'obtention du
+smartphone, et en ligne 2 le nombre moyen de dysfonctionnements
+rencontrés :
+
+```{r echo=FALSE}
+# PROGRAMME 
+
+annees_distinctes <- sort(unique(data$DATEOBTENTIONSMART_1))
+matrice = matrix(0,nrow=2,ncol=length(annees_distinctes))
+matrice[1,]=annees_distinctes
+valeurs=c()
+# matrice
+for (i in 1:length(annees_distinctes)){
+  nb_pbs=0
+  df=data[which(data$DATEOBTENTIONSMART_1==annees_distinctes[i]),]
+  df=df[which(df$RIDENTIFICATION_PROBLEMES!=""),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  liste <- numeric(length(variable))
+
+# Boucle sur chaque élément de 'variable'
+for (j in 1:length(variable)) {
+  # Extraire tous les sous-ensembles de 2 caractères
+  liste_pbs <- str_extract_all(variable[j], ".{2}")[[1]]
+  
+  # Vérifier si '27' est dans 'liste_pbs'
+  if ("27" %in% liste_pbs) {
+    nb_pbs <- 0
+  } else {
+    nb_pbs <- length(liste_pbs)
+  }
+  
+  # Stocker le résultat dans la liste
+  liste[j] <- nb_pbs
+}
+  valeurs[i]=round(mean(liste))
+  matrice[2,i]=valeurs[i]
+}
+
+matrice
+```
+
+On représente graphiquement ces valeurs avec le graphe suivant, qui
+donne en abscisse le nombre d'année de possession et en ordonnée le
+nombre de dysfonctionnement rencontrés :
+
+```{r echo=FALSE}
+# Graphe représentant le nombre d'année de possession et le nombre de problèmes rencontrés 
+
+dataframe= data.frame(X=2023-matrice[1,],Y=matrice[2,])
+p <- ggplot(dataframe)+aes(x=X,y=Y)+geom_line(col="coral",linewidth=2)+
+  labs(title = "Nb moyen de problèmes rencontrés en fonction des années de possession du smartphone",
+       x = "Nombre d'années de possession",
+       y = "Nombre de pbs rencontrés")+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="coral"),
+        axis.title.x = element_text( face = "bold",colour="coral"),  
+        axis.title.y = element_text(face = "bold",colour="coral")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+On remarque qu'en effet plus le smartphone est vieux plus les
+dysfonctionnements sont élévés avec une moyenne de 3 dysfonctionnements
+pour un smartphone de 19 ans, et de 2 dysfonctionnements pour un
+smartphone de 8 ans.
+
+### **VI ) Temps de cohabitation**
+
+#### **1 ) Temps de cohabitation moyen**
+
+**Rappel :** Libelle modalités (Variable
+"COHABITATION_DYSFONCTIONNEMENT_A...")
+
+-   1 : Dès que j'ai décelé le dysfonctionnement
+
+-   2 : Moins d'un mois
+
+-   3 : Entre 1 et 6 mois
+
+-   4 : Entre 6 mois et 2 ans
+
+-   5 : Plus de deux ans
+
+-   6 : Je ne sais pas
+
+La matrice suivante présente en ligne 1 les différents types de
+dysfonctionnements, et en ligne 2 une modalité moyenne, du temps de
+cohabitation, pour chaque type de dysfonctionnement :
+
+```{r echo=FALSE}
+# Temps de cohabitation
+
+# Utilisation de la fonction func1 crée précédemment 
+
+mat_cohabitation <- func1(data,"COHABITATION_DYSFONCTION_A")
+print(mat_cohabitation)
+
+```
+
+Le graphe suivant permet de visualiser cette matrice, la ligne rouge
+représente le temps moyen de cohabitation parmis tous les
+dysfonctionnements :
+
+```{r echo=FALSE}
+# Diagramme à barres du temps de cohabitation moyen en fonction des problèmes rencontrés 
+
+df2 <- data.frame(categorie=mat_cohabitation[1,],valeur=mat_cohabitation[2,])
+moy_temps_cohabitation <- round(mean(df2$valeur)) # moyenne d'une modalité de 2 (moins d'un mois)
+
+p <- ggplot(df2)+aes(x=factor(label_RIDENTIFICATION_PROBLEME[1:25], levels = label_RIDENTIFICATION_PROBLEME[1:25]),y=valeur)+geom_bar(stat='identity',fill="cyan3") + 
+  theme_minimal() +
+  geom_hline(aes(yintercept = moy_temps_cohabitation, color = "Temps de cohabitation moyen"), linewidth = 1.5) +  
+  scale_color_manual(name = "Légende", values = c("Temps de cohabitation moyen" = "red")) +
+  labs(
+    title = "Temps de cohabitation moyen en fonction des problèmes rencontrés",
+    x = "Dysfonctionnements",
+    y = "Numéro modalité (moyenne)") + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold"))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+On remarque que le temps de cohabitation moyen est de 2, c'est-à-dire
+qu'en moyenne les propriétaires cohabitent avec le problème moins d'un
+mois avant de le régler ou de changer de téléphone. Pour les
+dysfonctionnements 1 (Problème avec l'écran), 3 (Problème avec
+l'appareil photo), 4 (Problème avec la lampe torche ou le flash), 12
+(Problème de capteurs), 22 (Fonctionnalité qui ne marche plus), le temps
+de cohabitation moyen est de 3 (entre 1 et 6 mois). Les
+dysfonctionnements 5 (Problème avec le GPS) et 23 (Dysfonctionnement
+logiciel) se réglent en moyenne trés vite, dès que le dysfonctionnement
+est décelé.
+
+#### **2 ) Temps de cohabitation moyen en fonction du genre**
+
+Grâce à ce graphe, on va pouvoir observer si le genre a une influence
+sur le temps de cohabitation avec le dysfonctionnement :
+
+```{r echo=FALSE}
+# Diagramme en bars empilées du temps de cohabitation en fonction du genre 
+
+matrice_femmes <- func1(femmes,"COHABITATION_DYSFONCTION_A")
+
+matrice_hommes <- func1(hommes,"COHABITATION_DYSFONCTION_A")
+
+# Convertir les matrices en data frames
+
+categorie=factor(label_RIDENTIFICATION_PROBLEME[1:25], levels = label_RIDENTIFICATION_PROBLEME[1:25])
+
+df_femmes <- data.frame(categorie = categorie, valeurs = matrice_femmes[2, ], Genre = "Femmes")
+moy_temps_cohabitation_femmes <- round(mean(df_femmes$valeur)) # 2 (moins d'un mois)
+
+df_hommes <- data.frame(categorie = categorie, valeurs = matrice_hommes[2, ], Genre = "Hommes")
+moy_temps_cohabitation_hommes <- round(mean(df_hommes$valeur)) # 2 (moins d'un mois)
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_femmes, df_hommes)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  labs(title = "Temps de cohabitation en fonction du genre",
+       x = "Dysfonctionnement",
+       y = "Num modalité (moyenne)") +
+  #scale_y_continuous(breaks = 1:3, labels = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois",
+#"Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )) +  # Remplacer les valeurs numériques par des étiquettes de texte
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold"))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+Le temps de cohabitation moyen entre les femmes et les hommes est le
+même et il vaut 2, ce qui signifie que les femmes comme les hommes
+cohabitent avec le problème moins d'un mois. Il y a quand même des
+disparités en terme de temps moyen de cohabitation, entre les genres en
+fonction des types de dysfonctionnements. Pa rexemple les femmes vont
+cohabité plus longtemps avec un problème de batterie que les hommes. A
+contrario les hommes vont mettre plus de temps à cohabiter avec une
+fonctionnalité qui ne marche plus que les femmes.
+
+#### **3 ) Temps de cohabitation moyen en fonction de la CSP**
+
+Grâce à ce graphe, on va pouvoir observer si la CSP (catégorie
+socio-professionelle) a une influence sur le temps de cohabitation avec
+le dysfonctionnement :
+
+**Rappel :** Libelle modalités (Variable "CSP5")
+
+-   1 : CSP+ (comprend les artisans, les cadres et les professions
+    intermédiaires (Professions intermédiaires de la santé et du social,
+    d'entreprise...))
+
+-   2 : CSP- (comprend les agriculteurs, les employés et les ouvriers)
+
+-   3 : Retraités
+
+-   4 : Etudiants
+
+-   5 : Autres Inactifs
+
+```{r echo=FALSE}
+# Diagramme en bars empilées du temps de cohabitation en fonction de la CSP (ici CSP5) 
+
+colonne="COHABITATION_DYSFONCTION_A"
+
+# CSP1
+don = data[which(data$CSP5==1),]
+CSP1 = func1(don,colonne)
+
+# CSP2
+don = data[which(data$CSP5==2),]
+CSP2 = func1(don,colonne)
+
+# CSP3
+don = data[which(data$CSP5==3),]
+CSP3 = func1(don,colonne)
+
+# CSP4
+don = data[which(data$CSP5==4),]
+CSP4 = func1(don,colonne)
+
+# CSP5
+don = data[which(data$CSP5==5),]
+CSP5 = func1(don,colonne)
+
+# Convertir les matrices en data frames
+
+categorie=factor(label_RIDENTIFICATION_PROBLEME[1:25], levels = label_RIDENTIFICATION_PROBLEME[1:25])
+
+df1 <- data.frame(categorie = categorie, valeurs = CSP1[2, ], CSP = "CSP+")
+df2 <- data.frame(categorie = categorie, valeurs = CSP2[2, ], CSP = "CSP-")
+df3 <- data.frame(categorie = categorie, valeurs = CSP3[2, ], CSP = "Retraités")
+df4 <- data.frame(categorie = categorie, valeurs = CSP4[2, ], CSP = "Étudiants")
+df5 <- data.frame(categorie = categorie, valeurs = CSP5[2, ], CSP = "Autres Inactifs")
+
+# Combiner les deux data frames
+df_combined <- rbind(df1,df2,df3,df4,df5)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = CSP)) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  labs(title = "Temps de cohabitation moyen en fonction de la CSP",
+       x = "Dysfonctionnements",
+       y = "Num modalité (moyenne)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold"))
+
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+La matrice ci-dessous nous donne en ligne 1 le numéro de la CSP, et en
+ligne 2 le temps moyen de cohabitation tout problème confondu pour la
+CSP en question :
+
+```{r echo=FALSE}
+# Obtenir les valeurs distinctes de la colonne CSP5
+valeurs_distinctes <- sort(unique(data$CSP5))
+
+# Initialiser une matrice pour stocker les résultats
+mat <- matrix(0, nrow = 2, ncol = length(valeurs_distinctes))
+mat[1, ] <- valeurs_distinctes
+
+# Remplir la matrice avec les résultats calculés
+for (i in 1:length(valeurs_distinctes)) {
+  # Filtrer les données pour chaque valeur distincte de CSP5
+  df <- data[which(data$CSP5 == valeurs_distinctes[i] & data$RIDENTIFICATION_PROBLEMES != "" & data$RIDENTIFICATION_PROBLEMES != "27"), ]
+  
+  # Initialiser une liste pour stocker les valeurs
+  liste <- c()
+  
+  # Parcourir les colonnes COHABITATION_DYSFONCTION_A1 à COHABITATION_DYSFONCTION_A25
+  for (j in 1:25) {
+    num <- as.character(j)
+    nom_colonne <- paste0("COHABITATION_DYSFONCTION_A", num)
+    
+    # Extraire les valeurs de la colonne et ajouter à la liste
+    if (nom_colonne %in% names(df)) {  # Vérifier si la colonne existe dans df
+      valeurs_colonne <- na.omit(df[[nom_colonne]])
+      liste <- c(liste, valeurs_colonne)
+    }
+  }
+  
+  # Convertir les valeurs de la liste en numérique si nécessaire
+  liste <- as.numeric(liste)
+  
+  # Calculer la moyenne des valeurs dans la liste
+  if (length(liste) > 0) {
+    mat[2, i] <- floor(mean(liste))
+  }
+}
+
+# Afficher la matrice
+print(mat)
+
+```
+
+On remarque les propriétaires "inactifs" en moyenne réglent le problème
+assez vite, dés qu'il est décelé. En ce qui concerne les autres CSP, les
+propriétaires rèlent le problème en moins d'un mois en moyenne.
+
+### **VII ) Types de gênes**
+
+**Rappel :** Libellé modalité (Variables "GENE_PROBLEMES_A...") :
+
+Degrés de gêne :
+
+-   1 : Très gênant
+
+-   2 : Plutôt gênant
+
+-   3 : Plutôt pas gênant
+
+-   4 : Pas gênant du tout
+
+#### **1 ) Quels pbs sont plus ou moins faciles à vivre ? (niveau de gènes moyen pour chaques pbs)**
+
+La matrice suivante donne le niveau de gênes moyen pour chaques
+dysfonctionnements :
+
+```{r echo=FALSE}
+
+don = data
+colonne="GENE_PROBLEMES_A"
+print(func1(don,colonne))
+
+```
+
+On remarque qu'en moyenne les dysfonctionnements sont concidérés comme
+étant "plutôt génant". Le 9 (problème de chargement) est le seul étant
+concidéré comme étant "trés gênant". Le 17 (Problème de vibreur) lui est
+le seul étant concidéré en moyenne comme étant "plutôt pas gênant"
+
+#### **2 ) Matrice entre les problèmes et les types de gênes**
+
+La matrice suivante donne en ligne 1 les types de dysfonctionnements et
+les lignes qui suivent correspondent pour chaque dysfonctionnement au
+nombre de propriétaire de smartphone qui ont ressentis chaque degrés de
+gênes. Exemple : pour le dysfonctionnement 1 (Problème avec l'écran), 1
+personne l'a ressentis comme étant "très gênant", 11 personnes comme
+"plutôt gênant", 16 personnes comme "plûtot pas gênant" et 2 personnes
+comme étant "facile à vivre"pas gêant du tout".
+
+```{r echo=FALSE}
+# Matrice entre les types de problèmes et les gènes 
+
+mat=matrix(0,nrow=5,ncol=25)
+mat[1,]=c(1:25)
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+for (pb in 1:25){
+  vec=c()
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i], ".{2}")[[1]]
+    ligne=sub("^0+", "", ligne)
+    if (pb %in% ligne){
+      num=as.character(pb)
+      nom_colonne=paste0("GENE_PROBLEMES_A",num)
+      valeur=df[i,nom_colonne]
+      if(!is.null(valeur) && !is.na(valeur)){
+        mat[valeur+1,pb]=mat[valeur+1,pb]+1
+      }
+    }
+  }
+}
+
+  mat[is.na(mat)] <- 0
+  print(mat)
+  
+```
+
+On remarque que les pbs qui reviennent le plus souvent (le 10, le 18 et
+le 25), sont ressentis comme étant "plutôt génant", par les personnes
+qui y sont confrontés. Des pbs comme le 9 et le 15 eux sont ressentis
+comme étant "trés génant" majoritairement.
+
+### **VIII ) Réparation**
+
+#### **1 ) Raisons de ne pas réparer**
+
+**Rappel :** Libellé modalités (Variable "RRAISON_UTIL_PB")
+
+-   1 : Cela serait trop coûteux de résoudre le(s) problème(s) ou de
+    remplacer mon smartphone
+
+-   2 : J'attends une opportunité
+
+-   3 : Je ne peux pas résoudre le problème car le smartphone ne
+    m'appartient pas
+
+-   4 : Je ne sais pas comment résoudre le(s) problème(s)
+
+-   5 : Je veux faire durer mon téléphone le plus longtemps possible
+
+-   6 : Ce(s) problème(s) ne m'impacte(nt) pas tant que ça au quotidien
+
+-   7 : Je n'ai pas pris le temps de m'en occuper, de chercher une
+    solution
+
+-   8 : Mon téléphone est trop récent pour que je le fasse réparer ou
+    que je le remplace
+
+-   9 : La résolution du (ou des) problème(s) est trop difficile ou
+    incertaine
+
+-   10 : Ça me donne un prétexte pour moins l'utiliser
+
+-   11 : Cela ne vaut pas la peine de résoudre le(s) problème(s)
+
+-   12 : Mon smartphone a une particularité difficile à retrouver si je
+    devais le remplacer
+
+-   13 : Autre
+
+La matrice suivante donne le nombre de personnes ayant choisi chaque
+modalités pour la variable indiquant les comportements face aux
+dysfonctionnements :
+
+```{r}
+# Raisons de ne pas réparer
+
+res <- Count_VCM(data$RRAISON_UTIL_PB_FORM,13)
+print(res)
+```
+
+On voit que la raison principale de ne pas réparer est le fait de
+vouloir faire durer le téléphone le plus longtemps possible, en deuxième
+position on a le fait que ce(s) problème(s) n'impacte(nt) pas tant que
+ça au quotidien, et en troisième position, on a le fait que cela serait
+trop coûteux de résoudre le(s) problème(s) ou de remplacer le
+smartphone.
+
+#### **2 ) Raisons de ne pas réparer en fonction du genre**
+
+```{r echo=FALSE}
+# Raison de ne pas réparer par rapport à la sociodémographie 
+
+############# GENRE 
+
+
+mat_femmes = Count_VCM(femmes$RRAISON_UTIL_PB_FORM,13)
+mat_hommes = Count_VCM(hommes$RRAISON_UTIL_PB_FORM,13)
+
+
+# Convertir les matrices en data frames
+
+categorie=factor(label_RIDENTIFICATION_PROBLEME[1:25], levels = label_RIDENTIFICATION_PROBLEME[1:25])
+
+df_femmes <- data.frame(categorie = categorie, valeurs = matrice_femmes[2, ], Genre = "Femmes")
+df_hommes <- data.frame(categorie = categorie, valeurs = matrice_hommes[2, ], Genre = "Hommes")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_femmes, df_hommes)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) +
+  geom_bar(stat = "identity", position = "stack") + 
+  labs(title = "Raisons de ne pas réparer en fonction du genre",
+       x = "Raisons de ne pas réparer",
+       y = "Num Modalité") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold"),
+    legend.text = element_text(angle = 45))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+#### **3 ) Intention de réparation**
+
+**Rappel :** Libellé modalités (Variable "INT_REPARATION_A...")
+
+-   1 : Oui, par moi-même
+
+-   2 : Oui, par le SAV ou un réparateur
+
+-   3 : Oui, par une connaissance
+
+-   4 : Pas pour l'instant
+
+-   5 : Non
+
+##### **1 ) Intention de réparation en fonction du genre**
+
+```{r echo=FALSE}
+# Intention de réparation en fonction du genre 
+
+print("Intention de réparation moyenne chez les femmes : ")
+res_femmes <- func1(femmes,"INT_REPARATION_A")
+print(res_femmes)
+
+val_femmes=res_femmes[2,]
+print(paste("En général les femmes mettent la raison ",round(mean(val_femmes[val_femmes != 0])), "comme intention de réparation."))
+
+print("Intention de réparation moyenne chez les hommes : ")
+res_hommes <- func1(hommes,"INT_REPARATION_A")
+print(res_hommes)
+
+val_hommes=res_hommes[2,]
+print(paste("En général les hommes mettent la raison ",round(mean(val_hommes[val_hommes != 0])), "comme intention de réparation."))
+
+
+```
+
+##### **2 ) Intention de réparation en fonction de la CSP**
+
+**Rappel :** Libelle modalités (Variable "CSP5")
+
+-   1 : CSP+ (comprend les artisans, les cadres et les professions
+    intermédiaires (Professions intermédiaires de la santé et du social,
+    d'entreprise...))
+
+-   2 : CSP- (comprend les agriculteurs, les employés et les ouvriers)
+
+-   3 : Retraités
+
+-   4 : Etudiants
+
+-   5 : Autres Inactifs
+
+```{r echo=FALSE}
+# Diagramme en bars empilées de l'intention de réparation en fonction de la CSP (ici CSP5) 
+
+colonne="INT_REPARATION_A"
+
+# CSP1
+don = data[which(data$CSP5==1),]
+CSP1 = func1(don,colonne)
+val_CSP1 <- CSP1[2,]
+moy_CSP1 <- round(mean(val_CSP1[val_CSP1 != 0]))
+
+# CSP2
+don = data[which(data$CSP5==2),]
+CSP2 = func1(don,colonne)
+val_CSP2 <- CSP1[2,]
+moy_CSP2 <- round(mean(val_CSP2[val_CSP2 != 0]))
+
+# CSP3
+don = data[which(data$CSP5==3),]
+CSP3 = func1(don,colonne)
+val_CSP3 <- CSP3[2,]
+moy_CSP3 <- round(mean(val_CSP3[val_CSP3 != 0]))
+
+# CSP4
+don = data[which(data$CSP5==4),]
+CSP4 = func1(don,colonne)
+val_CSP4 <- CSP4[2,]
+moy_CSP4 <- round(mean(val_CSP4[val_CSP4 != 0]))
+
+# CSP5
+don = data[which(data$CSP5==5),]
+CSP5 = func1(don,colonne)
+val_CSP5 <- CSP5[2,]
+moy_CSP5 <- round(mean(val_CSP5[val_CSP5 != 0]))
+
+# Convertir les matrices en data frames
+df1 <- data.frame(CSP = "CSP+",categorie = 1, Moyenne = moy_CSP1)
+df2 <- data.frame(CSP = "CSP-",categorie = 2, Moyenne = moy_CSP2)
+df3 <- data.frame(CSP = "Retraités",categorie = 3, Moyenne = moy_CSP3)
+df4 <- data.frame(CSP = "Étudiants",categorie = 4, Moyenne = moy_CSP4)
+df5 <- data.frame(CSP = "Autres Inactifs",categorie = 5, Moyenne = moy_CSP5)
+
+# Combiner les deux data frames
+df_combined <- rbind(df1,df2,df3,df4,df5)
+
+print(df_combined)
+```
+
+# **SEMAINE DU 17 JUIN 2024 au 21 JUIN 2024 : (À venir)**
+
+Pour les semaines à venir, il sera préférable de travailler sur cette nouvelle base de données pour laquelle on a formatté de nombreuses variables. On l'exporte donc : 
+
+```{r}
+saveRDS(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds")
+```
+
+
+
+
