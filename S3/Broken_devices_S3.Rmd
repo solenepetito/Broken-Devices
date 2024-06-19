@@ -85,6 +85,15 @@ Count_VCM <- function(variable,nb_de_modalites){
 
 label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
 
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
 ```
 
 
@@ -372,8 +381,311 @@ p_interactif
 Combien ont été résolu ? 
 
 ```{r}
-label_RIDENTIFICATION_PROBLEME[top_indices]
+matrice = matrix(0,nrow=2,ncol=ncol(top_mat))
+matrice[1,]=top_mat[1,]
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+
+for(i in 1:ncol(matrice)){
+  pb=matrice[1,i]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (j in 1:length(variable)){
+    liste_pbs=str_extract_all(variable[j], ".{2}")[[1]]
+    if (pb %in% liste_pbs){
+      num=as.character(pb)
+      nom_colonne=paste0("REPARATION_A",num)
+      valeur=df[j,nom_colonne]
+      if (!is.na(valeur) && (valeur == 1 || valeur == 3)){
+        matrice[2,i]=matrice[2,i]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+
+df <- data.frame(Dysfonctionnement=label_RIDENTIFICATION_PROBLEME[top_indices], 'Nb_personnes'=top_mat[2,],'Nb_personnes_résolu'=matrice[2,],'Pourcentage_Nb_personnes_résolu'=round(matrice[2,]*100/top_mat[2,]))
+print(df)
 ```
+
+```{r}
+Categorie <- factor(label_RIDENTIFICATION_PROBLEME[top_indices], levels = label_RIDENTIFICATION_PROBLEME[top_indices])
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = matrice[2, ], Legende = "Problème(s) résolu(s)")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = top_mat[2,]-matrice[2, ], Legende = "Problème(s) non résolu(s)")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Legende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
+  labs(title = "Résolution du problème",
+       x = "Dysfonctionnement",
+       y = "Nombre de personnes ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+Diagramme en barres pour chaque CSP en fonction de l'intention de réparation : Vous nous avez déclaré ne pas avoir tenté de résoudre les dysfonctionnements suivants de votre smartphone. Envisagez-vous de tenter de le(s) résoudre ? 
+
+1	: Oui, par moi-même
+2	: Oui, par le SAV ou un réparateur
+3	: Oui, par une connaissance
+4	: Pas pour l’instant
+5	: Non
+
+```{r}
+
+```
+
+Distribution du nombre de personnes par temps de cohabitation : Combien de temps s’est écoulé approximativement entre le moment où vous avez décelé le(s) dysfonctionnement(s) et le moment où vous avez tenté de le(s) résoudre ou de le(s) faire résoudre ?
+
+1	: Dès que j’ai décelé le dysfonctionnement
+2	: Moins d’un mois
+3	: Entre 1 et 6 mois
+4	: Entre 6 mois et 2 ans
+5	: Plus de deux ans
+6	: Je ne sais pas 
+
+```{r}
+indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A1")
+print(indice_colonne) # 106
+
+indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A25")
+print(indice_colonne) # 130
+
+```
+
+```{r}
+as.matrix(table(data[which(data$REPARATION_A10==1 | data$REPARATION_A10==3 ),"COHABITATION_DYSFONCTION_A10"]))
+```
+
+```{r}
+boxplot(x=data[which(data$REPARATION_A10==1 | data$REPARATION_A10==3 ),"COHABITATION_DYSFONCTION_A10"])
+```
+
+```{r}
+boxplot(data[,c(106:130)])
+```
+
+
+Nombre de personnes par modalités pour le temps de cohabitation 
+
+```{r}
+
+vec=c(1:26)
+matrice = matrix(0,nrow=2,ncol=length(vec))
+matrice[1,]=vec
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+
+for(i in 1:ncol(matrice)){
+  pb=matrice[1,i]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (j in 1:length(variable)){
+    liste_pbs=str_extract_all(variable[j], ".{2}")[[1]]
+    if (pb %in% liste_pbs){
+      num=as.character(pb)
+      nom_colonne=paste0("REPARATION_A",num)
+      valeur=df[j,nom_colonne]
+      if (!is.na(valeur) &&!is.null(valeur) && (valeur == 1 || valeur == 3)){
+        matrice[2,i]=matrice[2,i]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+
+total_pbs_resolus <- sum(matrice[2,])
+print(total_pbs_resolus)
+
+```
+
+```{r}
+# Nombre total de problèmes mentionnés dans la base 
+
+res <- Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+total_pbs=sum(res[2,])
+print(total_pbs)
+print(round(total_pbs_resolus*100/total_pbs))
+```
+
+C'est seulement 23% des problèmes recontrés au total dans la base qui ont été résolus.
+
+```{r}
+COHABITATION <- c(1:6)
+matrice=matrix(0,nrow=2,ncol=length(COHABITATION))
+matrice[1,]=COHABITATION
+
+df <- data[,c(106:130)]
+
+for (k in 1:ncol(matrice)){
+  for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val) && val==k){
+        matrice[2,k]=matrice[2,k]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+
+Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
+
+
+
+df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total_pbs_resolus))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
+  geom_bar(stat = "identity") + 
+  labs(title = "Temps de cohabitation avec le problème",
+       x = "Temps de cohabitation",
+       y = "Nombre de personnes ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+71 % des problèmes résolus l'ont été dés que le propriétaire du smartphone l'a décélé. 57% ont été rsolus en moins d'un mois et 27% entre 1 et 6 mois.
+
+Types de gènes 
+
+```{r}
+GENE <- c(1:4)
+matrice=matrix(0,nrow=2,ncol=length(GENE))
+matrice[1,]=GENE
+
+colonne_deb <- which(names(data) == "GENE_PROBLEMES_A1")
+print(colonne_deb) # 31
+
+colonne_fin <- which(names(data) == "GENE_PROBLEMES_A25")
+print(colonne_fin) # 55
+
+df <- data[,c(colonne_deb:colonne_fin)]
+
+for (k in 1:ncol(matrice)){
+  for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val) && val==k){
+        matrice[2,k]=matrice[2,k]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+
+Categorie <- factor(label_GENE, levels = label_GENE)
+
+
+
+df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total_pbs))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
+  geom_bar(stat = "identity") + 
+  labs(title = "Type de gênes",
+       x = "Type de gênes",
+       y = "Nombre de personnes (en %) ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+47% des problèmes rencontrés ont été ressentis comme étant plutôt gênant, 32% comme étant trés gênant, 18 comme étant plutôt pas gênant et 3% comme pas gênant du tout.
+
+
+Récense du pb : A partir de quel moment approximativement avez-vous décelé les premiers dysfonctionnements sur votre smartphone ?
+
+```{r}
+RECENCE <- c(1:7)
+matrice=matrix(0,nrow=2,ncol=length(RECENCE))
+matrice[1,]=RECENCE
+
+colonne_deb <- which(names(data) == "RECENCE_PROBLEMES_A1")
+print(colonne_deb) # 56
+
+colonne_fin <- which(names(data) == "RECENCE_PROBLEMES_A25")
+print(colonne_fin) # 80
+
+df <- data[,c(colonne_deb:colonne_fin)]
+
+for (k in 1:ncol(matrice)){
+  for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val) && val==k){
+        matrice[2,k]=matrice[2,k]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+
+Categorie <- factor(label_RECENCE, levels = label_RECENCE)
+
+
+
+df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total_pbs))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
+  geom_bar(stat = "identity") + 
+  labs(title = "Récence des pbs",
+       x = "Récence des pbs",
+       y = "Nombre de personnes (en %) ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
