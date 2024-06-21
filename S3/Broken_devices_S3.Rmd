@@ -6,10 +6,12 @@ output:
   pdf_document: default
   word_document: default
 date: "2024-06-17"
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 # **SEMAINE DU 17 JUIN 2024 au 21 JUIN 2024 :**
-
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -25,6 +27,7 @@ library(tibble)
 library(dplyr)
 library(plotly) # permet de faire des graphes intéractifs
 library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
 
 ```
 
@@ -83,6 +86,8 @@ Count_VCM <- function(variable,nb_de_modalites){
 
 ##########################################
 
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
 label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
 
 label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
@@ -94,8 +99,9 @@ label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênan
 label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
 
 label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
-```
 
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+```
 
 **OBJECTIF :** *Analyser la base de données*
 
@@ -122,11 +128,14 @@ View(data)
 View(Broken_Devices_Data)
 ```
 
-## **II ) Durée de possession du smartphone**
+### **II ) Dysfonctionnement et date d'obtention du smartphone**
 
-Le graphique à barres suivant donne le nombre de personnes en pourcentage, dans la base de données, qui ont leur téléphone depuis 2000, depuis 2001... 
+Le tableau suivant donne le pourcentage de personnes , dans la base de
+données, qui ont leur téléphone depuis 2000, depuis 2001..., et le
+pourcentage de personnes parmis celles-ci qui rencontrent des
+dysfonctionnements :
 
-```{r}
+```{r echo=FALSE}
 valeurs <- t(as.matrix(table(data$DATEOBTENTIONSMART_1)))
 annees <- sort(unique(data$DATEOBTENTIONSMART_1))
 nb_individus <- nrow(data)
@@ -140,11 +149,15 @@ for (i in 1:length(annees)){
 
   
 }
-
-print(mat)
+df <- data.frame("Année obtention"=mat[1,],"Nombre de personnes"=mat[2,],"Pourcentage de personnes avec pb"=round(mat[3,]*100/mat[2,]))
+print(df)
 ```
 
-```{r}
+Le graphique à barres suivant donne le nombre de personnes , dans la
+base de données, qui ont leur téléphone depuis 2000, depuis 2001..., et
+qui recontrent des dysfonctionnements ou pas :
+
+```{r echo=FALSE}
 
 df_T1 <- data.frame(Annee = mat[1,], valeurs = mat[3, ], Legende = "Dysfonctionnements")
 df_T2 <- data.frame(Annee = mat[1,], valeurs = mat[2, ], Legende = "Pas de dysfonctionnements")
@@ -155,7 +168,7 @@ df_combined <- rbind(df_T1, df_T2)
 # Créer un diagramme en barres empilées
 p <- ggplot(df_combined, aes(x = Annee, y = valeurs, fill = Legende)) +
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
-  labs(title = "Dysfonctionnement rencontrés en fonction de l'année d'obtention",
+  labs(title = "Dysfonctionnements rencontrés en fonction de l'année d'obtention",
        x = "Année d'obtention",
        y = "Nombre de personnes") +
   theme_minimal() +
@@ -170,25 +183,22 @@ p_interactif
 
 ```
 
-On observe que la plupart  des dysfonctionnements ont lieu sur des années récentes d'obtention du smartphone, sur les 5 dernières années même.
+On observe que la plupart des dysfonctionnements ont lieu sur des années
+récentes d'obtention du smartphone, sur les 5 dernières années même. Les
+personnes qui rencontrent des dysfonctionnements l'ont en grande
+majorité depuis 2022 (108 personnes), 80 personnes depuis 2023 et 83
+depuis 2021.
 
-### 2 ) Années de possession en fonction des dysfonctionnements 
-Le but est de savoir combien de personnes dans la base ont leur téléphone depuis 2000, depuis 2001 ..., en fonction des années, on obtient la matrice suivante :
-```{r ehco=FALSE}
-
-# utilisation de la fonction table pour déterminer le nombre d'occurence de chaque année dans la variable
-
-print(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"DATEOBTENTIONSMART_1"]))
-
-```
-
-On remarque que la plupart des personnes l'ont depuis 2022 (108 personnes), 80 personnes depuis 2023 et 83 depuis 2021. 
-
-
-```{r}
+```{r echo=FALSE}
 # Parmis les individus qui rencontrent un pb combien ont leur téléphone depuis 5 ans ?
 
 mat= t(as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"DATEOBTENTIONSMART_1"])))
+
+# Parmis toute la base combien ont leur téléphone de depuis 5 ans et rencontrent un pb ?
+
+pourcent2 <- round(sum(mat[11:15]) *100 / nrow(data)) # 91 %
+print(paste("Pourcentage de personnes dans la base qui rencontrent un pbs et qui ont leur smartphone depuis 5 ans :",pourcent2, "%"))
+
 
 # Années de 2019 à 2023 = position 11 à position 15 de l'objet "mat"
 
@@ -196,18 +206,14 @@ nb_individus_avec_pbs <- nrow(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
 pourcent1 <- round(sum(mat[11:15]) *100 / nb_individus_avec_pbs) # 91 %
 print(paste("Pourcentage de personnes parmis celles qui rencontrent un pbs qui ont leur smartphone depuis 5 ans :",pourcent1, "%"))
 
-# Parmis toute la base combien ont leur téléphone de depuis 5 ans et rencontrent un pb ?
-
-pourcent2 <- round(sum(mat[11:15]) *100 / nrow(data)) # 91 %
-print(paste("Pourcentage de personnes qui rencontrent un pbs et qui ont leur smartphone depuis 5 ans :",pourcent2, "%"))
-
-
-
 ```
 
-Nuage de points représentant le nombre de dysfonctionnements rencontrés par chacun des propriétaires en fonction de l'année d'obtention de leur smartphone :
+Autre représenation mais sous forme de nuage de points représentant le
+nombre de dysfonctionnements rencontrés par chacun des propriétaires en
+fonction de l'année d'obtention de leur smartphone, plus le point est
+gros plus le nombre de personnes dans le cas concidéré est important :
 
-```{r}
+```{r echo=FALSE}
 annees <- c()
 dys <- c()
 df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
@@ -231,18 +237,17 @@ for (i in 1:nrow(dataframe)){
 
 df2 <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys,Nb_personnes_concernees=Nb_personnes_concernees)
 
-```
-
-```{r}
 # Créer le graphique interactif
 p <- ggplot(df2, aes(x = Obtention, y = Nb_dysfonctionnements, size = Nb_personnes_concernees)) +
-  geom_point(alpha = 0.7) +
+  geom_point(alpha = 0.7,col="darkgreen") +
   theme_minimal() +
   labs(title = "Nombre de dysfonctionnements en fonction de l'année d'obtention",
        x = "Année d'obtention",
-       y = "Nombre de dysfonctionnements",
-       size = "Nb de personnes concernées") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+       y = "Nombre de dysfonctionnement(s)",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
+        axis.title.x = element_text( face = "bold",colour="darkgreen"),
+        axis.title.y = element_text(face = "bold",colour="darkgreen"))
 
 p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
 
@@ -251,12 +256,50 @@ p_interactif
 
 ```
 
+### **III ) Acquisition du smartphone**
 
-Répartion des différentes propriétés du smartphone :
+#### **1 ) Comment les propriètaires ont-ils acquis leur smarthphone dans la base de données ? :**
 
-```{r}
-label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen" )
+Représentation sous forme de nuage de points, afin de mieux voir la
+répartition :
 
+```{r echo=FALSE}
+
+# Exemple fictif des labels pour le type d'acquisition
+unique_vals <- sort(unique(data$ACQUISITIONTEL))
+
+# Créer le DataFrame pour ggplot
+obs <- c(1:nrow(data))
+ACQUISITIONTEL <- data$ACQUISITIONTEL
+don2 <- data.frame(Individus = obs, Acquisition = factor(ACQUISITIONTEL, levels = unique_vals, labels = label_ACQUISITION))
+
+# Créer un graphique ggplot
+p <- ggplot(don2, aes(x = Individus, y = Acquisition)) +
+  geom_point(col="turquoise4") +
+  labs(title = "Acquisition du téléphone",
+       x = "Individus",
+       y = "Type d'acquisition") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="turquoise4"),
+        axis.title.x = element_text(face = "bold",colour="turquoise4"), 
+        axis.text.y = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="turquoise4"))
+
+# Convertir le graphique ggplot en graphique interactif avec plotly
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif
+
+```
+
+On voit clairement que la ligne correspondant au fait que les
+propriétaires ont acheté leur téléphone est continue, ce qui explique que
+le nombre de personnes dans ce cas là est important, contrairement à la
+ligne indiquant que le propriétaire l'a obtenu d'une autre manière, qui
+ne contient qu'un seul point. Le tableau suivant donne plus de détails :
+
+```{r echo=FALSE}
 modalites <- sort(unique(data$ACQUISITIONTEL))
 val=as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES=="27"),"ACQUISITIONTEL"]))
 dys <- as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"ACQUISITIONTEL"]))
@@ -264,6 +307,20 @@ matrice=matrix(0,nrow=3,ncol=length(modalites))
 matrice[1,]=modalites
 matrice[2,]=val
 matrice[3,]=dys
+
+Total=matrice[2,]+matrice[3,]
+Pourcentage=round(Total*100/nb_individus,1)
+df <- data.frame("Acquisition"=label_ACQUISITION,"Nombre de personnes"=Total,"Pourcentage"=Pourcentage)
+print(df)
+```
+
+#### **2 ) Acquisition du smartphone et dysfonctionnements** 
+
+Regardons maintenant le nombre de personnes ayant rencontrés un ou
+plusieurs dysfonctionnements, en fonction du type d'acquisition de leur
+téléphone :
+
+```{r echo=FALSE}
 
 Categorie <- factor(label_ACQUISITION, levels = label_ACQUISITION)
 
@@ -290,30 +347,17 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 
-
-
 ```
 
+On observe que la part de dysfonctionnement est plus grande pour la
+modalité "je l'ai acheté", ce qui paraît logique car la modalité en
+question représente 74% des personnes de la base. Il est donc préférable
+de regarder la part de dysfonctionnement pour chacune des modalités.
 
-Sous forme de nuage de points : 
+En terme de pourcentage, le tableau suivant nous indique combien de
+personnes pour chaque modalités a rencontré des dysfonctionnements :
 
-```{r}
-
-don2 <- data.frame(x=c(1:nrow(data)),y=data$ACQUISITIONTEL)
-ggplot(don2)+aes(x=x,y=y)+geom_point()+theme_minimal()
-```
-
-En terme de pourcentage, on obtient le tableau suivant : 
-
-```{r}
-table(data$ACQUISITIONTEL)
-valeurs = as.matrix(table(data$ACQUISITIONTEL))
-frame=data.frame(Acquisition=label_ACQUISITION,`Nombre de personnes`=valeurs , `Pourcentage de personnes` =round(valeurs*100/nrow(data),1))
-print(frame)
-```
-En terme de pourcentage combien de personnes pour chaque modalités rencontrent des problèmes : 
-
-```{r}
+```{r echo=FALSE}
 modalites <- sort(unique(data$ACQUISITIONTEL))
 matrice <- matrix(0,nrow=3,ncol=length(modalites))
 matrice[1,]=modalites
@@ -327,13 +371,115 @@ for(i in 1:length(modalites)){
 }
 # rajouter cette colonne si on veut plus de précision sur le pourcentage : `Nombre de personnes avec un pb`=mat[2,] 
 
-frame=data.frame(Acquisition=label_ACQUISITION, `Pourcentage de personnes avec un pb` =mat[3,])
+frame=data.frame(Acquisition=label_ACQUISITION, `Pourcentage de personnes avec dys` =mat[3,])
 print(frame)
 ```
 
-88 % de ceux dont le smartphone a été fourni par l'employeur rencontrent un pb avec, 45% de ceux qui l'ont obtenu dans le cadre d'un contrat avec leur opérateur en rencontrent un aussi, et 41 % de ceux qui l'ont acheté en rencontrent.
+88 % de ceux dont le smartphone a été fourni par l'employeur rencontrent
+un pb avec, 45% de ceux qui l'ont obtenu dans le cadre d'un contrat avec
+leur opérateur en rencontrent un aussi, et 41 % de ceux qui l'ont acheté
+en rencontrent.
 
-Parmis les 10 premiers pbs qui sont :
+### **IV ) Résolution du problème**
+
+#### **1 ) Combien de problèmes ont été résolus ?** 
+
+La question poséée était : **Avez-vous tenté de résoudre ou de faire résoudre le(s) dysfonctionnement(s) rencontré(s) ? **
+
+
+```{r include=FALSE}
+# Cette matrice donne pour chaques problèmes le nombre de ceux ayant été résolus
+
+vec=c(1:26)
+matrice = matrix(0,nrow=6,ncol=length(vec))
+matrice[1,]=vec
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+
+for(i in 1:ncol(matrice)){
+  pb=matrice[1,i]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (j in 1:length(variable)){
+    liste_pbs=str_extract_all(variable[j], ".{2}")[[1]]
+    liste_pbs= sub("^0+", "", liste_pbs)
+    if (pb %in% liste_pbs){
+      num=as.character(pb)
+      nom_colonne=paste0("REPARATION_A",num)
+      valeur=df[j,nom_colonne]
+      if (!is.na(valeur) &&!is.null(valeur) ){
+        matrice[valeur+1,i]=matrice[valeur+1,i]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+
+total_pbs_resolus <- sum(matrice[2,])+sum(matrice[4,]) #266
+print(total_pbs_resolus)
+print(total_pbs) #832
+
+```
+
+```{r include=FALSE}
+# Nombre total de problèmes rencontrés résolus par rapport au nombre total de problèmes rencontrés dans la base 
+
+res <- Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+total_pbs=sum(res[2,])
+print(total_pbs) #832
+print(round(total_pbs_resolus*100/total_pbs)) #32%
+```
+
+Le graphe suivant montrent le pourcentage de personnes ayant répondu à chaque modalités parmis celles ayant indiqué qu'elles ont rencontré un ou plusieurs dysfonctionnements :
+
+```{r echo=FALSE}
+REPARATION <- c(1:5)
+matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
+matrice_REP[1,]=REPARATION
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+print(colonne_fin) # 105
+
+df <- data[,colonne_deb:colonne_fin]
+
+for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val)&& !is.null(val)){
+        matrice_REP[2,val]=matrice_REP[2,val]+1
+      }
+    }
+  }
+
+Categorie <- factor(label_REPARATION, levels = label_REPARATION)
+
+df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice_REP[2, ]*100/total_pbs))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
+  geom_bar(stat = "identity",fill="darkgreen") + 
+  labs(title = "Résolution des dysfonctionnements ",
+       x = "Résolution des dysfonctionnements",
+       y = "Nombre de personnes (en %) ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
+        axis.title.x = element_text( face = "bold",colour="darkgreen"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="darkgreen")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+ Les problèmes ayant tenté d'être résolus représente 32% des problèmes rencontrés et ceux ayant été résolus représente 18%.
+
+
+#### **2 ) Analyse des 10 principaux dysfonctionnements rencontrés**
+
+Les 10 principaux dysfonctionnements rencontrés sont les suivants :
 
 ```{r echo=FALSE}
 matrice=Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
@@ -354,7 +500,7 @@ top_indices <- sorted_indices[1:10]
 
 # Créer une nouvelle matrice avec les résultats
 top_mat <- matrix(c(top_indices, top_values), nrow = 2, byrow = TRUE)
-print(top_mat)
+#print(top_mat)
 
 # Conversion des matrices en data frames
 df <- data.frame(Dysfonctionnement=factor(label_RIDENTIFICATION_PROBLEME[top_indices], levels = label_RIDENTIFICATION_PROBLEME[top_indices]), Pourcentage = round(top_mat[2,]*100/n))
@@ -378,9 +524,9 @@ p_interactif
 
 ```
 
-Combien ont été résolu ? 
+Il serait intéressant de savoir parmis ces 10 dysfonctionnements combien ont tenté dêtre résout et ont été résolu ? Le tableau suivant nous apporte plus de détails : 
 
-```{r}
+```{r echo=FALSE}
 matrice = matrix(0,nrow=2,ncol=ncol(top_mat))
 matrice[1,]=top_mat[1,]
 df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
@@ -390,24 +536,27 @@ for(i in 1:ncol(matrice)){
   variable=df$RIDENTIFICATION_PROBLEMES
   for (j in 1:length(variable)){
     liste_pbs=str_extract_all(variable[j], ".{2}")[[1]]
+    liste_pbs= sub("^0+", "", liste_pbs)
     if (pb %in% liste_pbs){
       num=as.character(pb)
       nom_colonne=paste0("REPARATION_A",num)
       valeur=df[j,nom_colonne]
-      if (!is.na(valeur) && (valeur == 1 || valeur == 3)){
+      if (!is.na(valeur) && (valeur == 1 )){
         matrice[2,i]=matrice[2,i]+1
       }
     }
   }
 }
 
-print(matrice)
+#print(matrice)
 
 df <- data.frame(Dysfonctionnement=label_RIDENTIFICATION_PROBLEME[top_indices], 'Nb_personnes'=top_mat[2,],'Nb_personnes_résolu'=matrice[2,],'Pourcentage_Nb_personnes_résolu'=round(matrice[2,]*100/top_mat[2,]))
 print(df)
 ```
 
-```{r}
+La plus grande part observée concerne le dysfonctionnement "Problème de chargement" qui pour 33 pbs observés a a tenté d'être résout et a été résolu dans 10 de ces cas, ce qui représente une part de 30% de résolution. Le graphe suivant permet de visualiser cette répartiton :
+
+```{r echo=FALSE}
 Categorie <- factor(label_RIDENTIFICATION_PROBLEME[top_indices], levels = label_RIDENTIFICATION_PROBLEME[top_indices])
 
 df_T1 <- data.frame(Categorie = Categorie, valeurs = matrice[2, ], Legende = "Problème(s) résolu(s)")
@@ -434,98 +583,82 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-Diagramme en barres pour chaque CSP en fonction de l'intention de réparation : Vous nous avez déclaré ne pas avoir tenté de résoudre les dysfonctionnements suivants de votre smartphone. Envisagez-vous de tenter de le(s) résoudre ? 
+#### **3 ) Combien de personnes qui n'ont pas réparer cohabitent avec le problème ?**
 
-1	: Oui, par moi-même
-2	: Oui, par le SAV ou un réparateur
-3	: Oui, par une connaissance
-4	: Pas pour l’instant
-5	: Non
+```{rinclude=FALSE}
 
-```{r}
-
-```
-
-Distribution du nombre de personnes par temps de cohabitation : Combien de temps s’est écoulé approximativement entre le moment où vous avez décelé le(s) dysfonctionnement(s) et le moment où vous avez tenté de le(s) résoudre ou de le(s) faire résoudre ?
-
-1	: Dès que j’ai décelé le dysfonctionnement
-2	: Moins d’un mois
-3	: Entre 1 et 6 mois
-4	: Entre 6 mois et 2 ans
-5	: Plus de deux ans
-6	: Je ne sais pas 
-
-```{r}
-indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A1")
-print(indice_colonne) # 106
-
-indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A25")
-print(indice_colonne) # 130
-
-```
-
-```{r}
-as.matrix(table(data[which(data$REPARATION_A10==1 | data$REPARATION_A10==3 ),"COHABITATION_DYSFONCTION_A10"]))
-```
-
-```{r}
-boxplot(x=data[which(data$REPARATION_A10==1 | data$REPARATION_A10==3 ),"COHABITATION_DYSFONCTION_A10"])
-```
-
-```{r}
-boxplot(data[,c(106:130)])
-```
-
-
-Nombre de personnes par modalités pour le temps de cohabitation 
-
-```{r}
-
-vec=c(1:26)
-matrice = matrix(0,nrow=2,ncol=length(vec))
-matrice[1,]=vec
+REPARATION <- c(1:5)
+matrice <- matrix(0,nrow=7,ncol=length(REPARATION))
+matrice[1,] <- REPARATION
 df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
-
-for(i in 1:ncol(matrice)){
-  pb=matrice[1,i]
-  variable=df$RIDENTIFICATION_PROBLEMES
-  for (j in 1:length(variable)){
-    liste_pbs=str_extract_all(variable[j], ".{2}")[[1]]
-    if (pb %in% liste_pbs){
-      num=as.character(pb)
-      nom_colonne=paste0("REPARATION_A",num)
-      valeur=df[j,nom_colonne]
-      if (!is.na(valeur) &&!is.null(valeur) && (valeur == 1 || valeur == 3)){
-        matrice[2,i]=matrice[2,i]+1
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_COHAB <- df[j,i+25]
+      if (!is.na(num_COHAB) && !is.na(num_COHAB) ){
+        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+1
       }
     }
-  }
 }
 
+
+```
+
+
+### **V ) Temps de cohabitation avec le problème**
+
+La question posée était : **Combien de temps s’est écoulé approximativement entre le moment où vous avez décelé le(s) dysfonctionnement(s) et le moment où vous avez tenté de le(s) résoudre ou de le(s) faire résoudre ?**
+
+#### **1 ) Personnes ayant tenté de résoudre le ou les dysfonctionnements** 
+
+On s'intéresse donc aux personnes ayant répondu aux 2 modalités suivantes, lorsqu'on leur a demandé s'il avait tenté de résoudre le problème, (c'est à dire 32% des dysfonctionnements) :
+
+1	: Oui et le problème est résolu
+2	: Oui mais le problème n'a pas pu être résolu  
+
+Voici les réponses obtenues : 
+
+```{r include=FALSE}
+# Indice des colonnes réparation 
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+print(colonne_fin) # 105
+
+```
+
+```{r}
+# Cohabitation + réparation 
+
+REPARATION <- c(1:5)
+matrice <- matrix(0,nrow=7,ncol=length(REPARATION))
+matrice[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_COHAB <- df[j,i+25]
+      if (!is.na(num_COHAB) && !is.na(num_COHAB) ){
+        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+1
+      }
+    }
+}
 print(matrice)
-
-total_pbs_resolus <- sum(matrice[2,])
-print(total_pbs_resolus)
-
 ```
 
-```{r}
-# Nombre total de problèmes mentionnés dans la base 
 
-res <- Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-total_pbs=sum(res[2,])
-print(total_pbs)
-print(round(total_pbs_resolus*100/total_pbs))
-```
+```{r echo=FALSE}
+total = sum(matrice_REP[2,1:2]) # 351
 
-C'est seulement 23% des problèmes recontrés au total dans la base qui ont été résolus.
-
-```{r}
 COHABITATION <- c(1:6)
 matrice=matrix(0,nrow=2,ncol=length(COHABITATION))
 matrice[1,]=COHABITATION
 
-df <- data[,c(106:130)]
+df <- data[, 106:130]
 
 for (k in 1:ncol(matrice)){
   for (i in 1 :ncol(df)){
@@ -538,20 +671,87 @@ for (k in 1:ncol(matrice)){
   }
 }
 
-print(matrice)
-
 Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
 
-
-
-df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total_pbs_resolus))
+df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total))
 
 # Créer un diagramme en barres empilées
 p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
-  geom_bar(stat = "identity") + 
+  geom_bar(stat = "identity",fill="thistle4") + 
   labs(title = "Temps de cohabitation avec le problème",
        x = "Temps de cohabitation",
-       y = "Nombre de personnes ") +
+       y = "Nombre de personnes (en %) ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="thistle4"),
+        axis.title.x = element_text( face = "bold",colour="thistle4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="thistle4")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+39 % des problèmes résolus l'ont été dés que le propriétaire du
+smartphone l'a décelé. 32% ont été résolus en moins d'un mois et 15%
+entre 1 et 6 mois.
+
+#### **2) Incidence du genre sur le temps de cohabitation**
+
+Le genre aurait-il une incidence sur ce temps de cohabitation ?
+
+```{r}
+# Matrice des femmes
+COHABITATION <- c(1:6)
+matrice_femmes=matrix(0,nrow=2,ncol=length(COHABITATION))
+matrice_femmes[1,]=COHABITATION
+
+df <- data[which(data$SEXE==2),c(106:130)]
+
+for (k in 1:ncol(matrice)){
+  for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val) && val==k){
+        matrice_femmes[2,k]=matrice_femmes[2,k]+1
+      }
+    }
+  }
+}
+
+# Matrice des hommes 
+COHABITATION <- c(1:6)
+matrice_hommes=matrix(0,nrow=2,ncol=length(COHABITATION))
+matrice_hommes[1,]=COHABITATION
+
+df <- data[which(data$SEXE==1),c(106:130)]
+
+for (k in 1:ncol(matrice)){
+  for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val) && val==k){
+        matrice_hommes[2,k]=matrice_hommes[2,k]+1
+      }
+    }
+  }
+}
+
+Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = round(matrice_femmes[2, ]*100/total), Genre = "Femmes")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = round(matrice_hommes[2, ]*100/total), Genre = "Hommes")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Genre)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Temps de cohabitation avec le problème",
+       x = "Temps de cohabitation",
+       y = "Pourcentage de personnes (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
@@ -564,9 +764,43 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-71 % des problèmes résolus l'ont été dés que le propriétaire du smartphone l'a décélé. 57% ont été rsolus en moins d'un mois et 27% entre 1 et 6 mois.
+Les hommes semblent régler le problème en moins d'un mois (20%) alors
+que les femmes semblent le régler dès le dysfonctionnement est décelé (22%).
 
-Types de gènes 
+Autre représentation mais sous forme de boites à moustache (distribution du nombre de personnes par temps de cohabitation) : 
+
+```{r}
+
+# Sélectionner les colonnes 106 à 130
+data_long <- data %>% pivot_longer(cols = 106:130, names_to = "Variable", values_to = "Value")
+don <- data.frame(Variable=data_long$Variable,COHABITATION <- factor(data_long$Value, levels = c(1:6), labels = label_COHABITATION))
+
+# Créer le boxplot avec ggplot2
+p <- ggplot(don, aes(x = Variable, y = COHABITATION)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot des colonnes 106 à 130",
+       x = "Variables",
+       y = "Valeurs") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1),        
+        axis.text.y = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+# Afficher le boxplot
+print(p)
+
+```
+
+```{r}
+data_long$Variable
+```
+
+
+### **VI ) Gênes ressenties **
+
+Le graphe suivant donne les gênes qu'ont ressentis les propriétaires suite au(x) dysfonctionnement(s) qu'ils ont rencontré : 
 
 ```{r}
 GENE <- c(1:4)
@@ -574,10 +808,10 @@ matrice=matrix(0,nrow=2,ncol=length(GENE))
 matrice[1,]=GENE
 
 colonne_deb <- which(names(data) == "GENE_PROBLEMES_A1")
-print(colonne_deb) # 31
+#print(colonne_deb) # 31
 
 colonne_fin <- which(names(data) == "GENE_PROBLEMES_A25")
-print(colonne_fin) # 55
+#print(colonne_fin) # 55
 
 df <- data[,c(colonne_deb:colonne_fin)]
 
@@ -592,8 +826,6 @@ for (k in 1:ncol(matrice)){
   }
 }
 
-print(matrice)
-
 Categorie <- factor(label_GENE, levels = label_GENE)
 
 
@@ -602,15 +834,15 @@ df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total_
 
 # Créer un diagramme en barres empilées
 p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
-  geom_bar(stat = "identity") + 
-  labs(title = "Type de gênes",
-       x = "Type de gênes",
-       y = "Nombre de personnes (en %) ") +
+  geom_bar(stat = "identity",fill="tan4") + 
+  labs(title = "Type de gênes ressenties",
+       x = "Gênes ressenties par les propriétaires",
+       y = "Pourcentage de personnes (en %) ") +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text( face = "bold"), 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="tan4"),
+        axis.title.x = element_text( face = "bold",colour="tan4"), 
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-        axis.title.y = element_text(face = "bold")) 
+        axis.title.y = element_text(face = "bold",colour="tan4")) 
 
 p_interactif <- ggplotly(p)
 
@@ -618,10 +850,14 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-47% des problèmes rencontrés ont été ressentis comme étant plutôt gênant, 32% comme étant trés gênant, 18 comme étant plutôt pas gênant et 3% comme pas gênant du tout.
+47% des problèmes rencontrés ont été ressentis comme étant plutôt
+gênant, 32% comme étant trés gênant, 18% comme étant plutôt pas gênant et
+3% comme pas gênant du tout.
 
+### **VII ) Récence du dysfonctionnement**
 
-Récense du pb : A partir de quel moment approximativement avez-vous décelé les premiers dysfonctionnements sur votre smartphone ?
+La question posée était :**A partir de quel moment approximativement avez-vous
+décelé les premiers dysfonctionnements sur votre smartphone ? **
 
 ```{r}
 RECENCE <- c(1:7)
@@ -647,8 +883,6 @@ for (k in 1:ncol(matrice)){
   }
 }
 
-print(matrice)
-
 Categorie <- factor(label_RECENCE, levels = label_RECENCE)
 
 
@@ -657,10 +891,80 @@ df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2, ]*100/total_
 
 # Créer un diagramme en barres empilées
 p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
-  geom_bar(stat = "identity") + 
-  labs(title = "Récence des pbs",
-       x = "Récence des pbs",
+  geom_bar(stat = "identity",fill="turquoise4") + 
+  labs(title = "Récence des dysfonctionnements",
+       x = "Récence des dysfonctionnements",
        y = "Nombre de personnes (en %) ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="turquoise4"),
+        axis.title.x = element_text( face = "bold",colour="turquoise4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="turquoise4")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+C'est 25% de personnes qui s'en sont rendus compte entre 3 mois et 1 an, et 24% entre 1 an et 2 ans. 
+
+### **VIII ) Degrés de gêne par rapport au temps de cohabitation**
+
+Est ce que le degré de gêne ressentis pour chaques dysfonctionnements est différent selon les différents temps de cohabitation avec le ou les dysfonctionnements ?
+
+```{r include=FALSE}
+COHABITATION <- c(1:6)
+matrice <- matrix(0,nrow=5,ncol=length(COHABITATION))
+matrice[1,] <- COHABITATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+for (i in 106:130){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_COHAB <- df[j,i]
+      num_GENE <- df[j,i-75]
+      if (!is.na(num_COHAB) && !is.na(num_GENE) ){
+        matrice[num_GENE+1,num_COHAB]=matrice[num_GENE+1,num_COHAB]+1
+      }
+    }
+}
+print(matrice)
+```
+
+```{r echo=FALSE}
+COHABITATION <- c(1:6)
+matrice <- matrix(0,nrow=5,ncol=length(COHABITATION))
+matrice[1,] <- COHABITATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+for (i in 106:130){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_COHAB <- df[j,i]
+      num_GENE <- df[j,i-75]
+      if (!is.na(num_COHAB) && !is.na(num_GENE) ){
+        matrice[num_GENE+1,num_COHAB]=matrice[num_GENE+1,num_COHAB]+1
+      }
+    }
+}
+# print(matrice)
+
+Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = round(matrice[2,]*100/total), GÊNE = "Trés gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = round(matrice[3,]*100/total), GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = round(matrice[4,]*100/total), GÊNE = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = round(matrice[5,]*100/total), GÊNE = "Pas gênant du tout")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Type de gênes et temps de cohabitation",
+       x = "Temps de cohabitation",
+       y = "Pourcentage de personnes (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
@@ -673,28 +977,42 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+On voit que lorsque le dysfonctionnement a été décelé dés son apparition, le problème a été ressentis comme étant trés gênant. Lorsque le propriétaire a cohabité avec le dysfonctionnement moins d'un mois le dysfonctionnement comme étant majoritairement plutôt gênant.
 
 
 
+Choses à faire :
+
+BOXPLOT
 
 
+Diagramme en barres pour chaque CSP en fonction de l'intention de
+réparation : Vous nous avez déclaré ne pas avoir tenté de résoudre les
+dysfonctionnements suivants de votre smartphone. Envisagez-vous de
+tenter de le(s) résoudre ?
 
+1 : Oui, par moi-même 2 : Oui, par le SAV ou un réparateur 3 : Oui, par
+une connaissance 4 : Pas pour l'instant 5 : Non
 
+```{r}
 
+```
 
+```{r}
+indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A1")
+print(indice_colonne) # 106
 
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
+print(indice_colonne) # 31
 
+indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A25")
+print(indice_colonne) # 130
 
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
+print(indice_colonne) #55
 
-
-
-
-
-
-
-
-
-
+31+75
+```
 
 
 
