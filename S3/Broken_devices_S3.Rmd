@@ -168,7 +168,7 @@ df_combined <- rbind(df_T1, df_T2)
 # Créer un diagramme en barres empilées
 p <- ggplot(df_combined, aes(x = Annee, y = valeurs, fill = Legende)) +
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
-  labs(title = "Dysfonctionnements rencontrés en fonction de l'année d'obtention",
+  labs(title = "Problèmes rencontrés en fonction de l'année d'obtention",
        x = "Année d'obtention",
        y = "Nombre de personnes") +
   theme_minimal() +
@@ -294,10 +294,11 @@ p_interactif
 ```
 
 On voit clairement que la ligne correspondant au fait que les
-propriétaires ont acheté leur téléphone est continue, ce qui explique que
-le nombre de personnes dans ce cas là est important, contrairement à la
-ligne indiquant que le propriétaire l'a obtenu d'une autre manière, qui
-ne contient qu'un seul point. Le tableau suivant donne plus de détails :
+propriétaires ont acheté leur téléphone est continue, ce qui explique
+que le nombre de personnes dans ce cas là est important, contrairement à
+la ligne indiquant que le propriétaire l'a obtenu d'une autre manière,
+qui ne contient qu'un seul point. Le tableau suivant donne plus de
+détails :
 
 ```{r echo=FALSE}
 modalites <- sort(unique(data$ACQUISITIONTEL))
@@ -314,9 +315,9 @@ df <- data.frame("Acquisition"=label_ACQUISITION,"Nombre de personnes"=Total,"Po
 print(df)
 ```
 
-#### **2 ) Acquisition du smartphone et dysfonctionnements** 
+#### **2 ) Acquisition du smartphone et dysfonctionnements**
 
-Regardons maintenant le nombre de personnes ayant rencontrés un ou
+Regardons maintenant le nombre de personnes ayant rencontré un ou
 plusieurs dysfonctionnements, en fonction du type d'acquisition de leur
 téléphone :
 
@@ -349,7 +350,7 @@ p_interactif
 
 ```
 
-On observe que la part de dysfonctionnement est plus grande pour la
+On observe que la part de dysfonctionnements est plus grande pour la
 modalité "je l'ai acheté", ce qui paraît logique car la modalité en
 question représente 74% des personnes de la base. Il est donc préférable
 de regarder la part de dysfonctionnement pour chacune des modalités.
@@ -371,7 +372,7 @@ for(i in 1:length(modalites)){
 }
 # rajouter cette colonne si on veut plus de précision sur le pourcentage : `Nombre de personnes avec un pb`=mat[2,] 
 
-frame=data.frame(Acquisition=label_ACQUISITION, `Pourcentage de personnes avec dys` =mat[3,])
+frame=data.frame(Acquisition=label_ACQUISITION, `Pourcentage de personnes avec dys` =matrice[3,])
 print(frame)
 ```
 
@@ -382,10 +383,10 @@ en rencontrent.
 
 ### **IV ) Résolution du problème**
 
-#### **1 ) Combien de problèmes ont été résolus ?** 
+#### **1 ) Combien de problèmes ont été résolus ?**
 
-La question poséée était : **Avez-vous tenté de résoudre ou de faire résoudre le(s) dysfonctionnement(s) rencontré(s) ? **
-
+La question posée était : **Avez-vous tenté de résoudre ou de faire
+résoudre le(s) dysfonctionnement(s) rencontré(s) ?**
 
 ```{r include=FALSE}
 # Cette matrice donne pour chaques problèmes le nombre de ceux ayant été résolus
@@ -416,8 +417,6 @@ print(matrice)
 
 total_pbs_resolus <- sum(matrice[2,])+sum(matrice[4,]) #266
 print(total_pbs_resolus)
-print(total_pbs) #832
-
 ```
 
 ```{r include=FALSE}
@@ -429,7 +428,9 @@ print(total_pbs) #832
 print(round(total_pbs_resolus*100/total_pbs)) #32%
 ```
 
-Le graphe suivant montrent le pourcentage de personnes ayant répondu à chaque modalités parmis celles ayant indiqué qu'elles ont rencontré un ou plusieurs dysfonctionnements :
+Le graphe suivant montrent le pourcentage de personnes ayant répondu à
+chaque modalités, parmis celles ayant indiqué qu'elles ont rencontré un
+ou plusieurs dysfonctionnements :
 
 ```{r echo=FALSE}
 REPARATION <- c(1:5)
@@ -437,10 +438,10 @@ matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
 matrice_REP[1,]=REPARATION
 
 colonne_deb <- which(names(data) == "REPARATION_A1")
-print(colonne_deb) # 81
+#print(colonne_deb) # 81
 
 colonne_fin <- which(names(data) == "REPARATION_A25")
-print(colonne_fin) # 105
+#print(colonne_fin) # 105
 
 df <- data[,colonne_deb:colonne_fin]
 
@@ -474,8 +475,9 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
- Les problèmes ayant tenté d'être résolus représente 32% des problèmes rencontrés et ceux ayant été résolus représente 18%.
 
+Les problèmes ayant **tenté d'être résolus** représentent 32% des
+problèmes rencontrés et ceux ayant **été résolus** représentent 18%.
 
 #### **2 ) Analyse des 10 principaux dysfonctionnements rencontrés**
 
@@ -524,7 +526,9 @@ p_interactif
 
 ```
 
-Il serait intéressant de savoir parmis ces 10 dysfonctionnements combien ont tenté dêtre résout et ont été résolu ? Le tableau suivant nous apporte plus de détails : 
+Il serait intéressant de savoir parmis ces 10 dysfonctionnements combien
+ont tenté dêtre résout et combien ont été résolu ? Le tableau suivant nous
+apporte plus de détails :
 
 ```{r echo=FALSE}
 matrice = matrix(0,nrow=2,ncol=ncol(top_mat))
@@ -554,7 +558,8 @@ df <- data.frame(Dysfonctionnement=label_RIDENTIFICATION_PROBLEME[top_indices], 
 print(df)
 ```
 
-La plus grande part observée concerne le dysfonctionnement "Problème de chargement" qui pour 33 pbs observés a a tenté d'être résout et a été résolu dans 10 de ces cas, ce qui représente une part de 30% de résolution. Le graphe suivant permet de visualiser cette répartiton :
+La plus grande part observée concerne le dysfonctionnement "Problème de
+chargement" qui pour 33 pbs observés a été résolu dans 10 de ces cas, ce qui représente une part de 30% de résolution. Le graphe suivant permet de visualiser cette répartiton :
 
 ```{r echo=FALSE}
 Categorie <- factor(label_RIDENTIFICATION_PROBLEME[top_indices], levels = label_RIDENTIFICATION_PROBLEME[top_indices])
@@ -583,9 +588,9 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-#### **3 ) Combien de personnes qui n'ont pas réparer cohabitent avec le problème ?**
+#### **3 ) Combien de personnes qui n'ont pas réparé cohabitent avec le problème ?**
 
-```{rinclude=FALSE}
+```{r include=FALSE}
 
 REPARATION <- c(1:5)
 matrice <- matrix(0,nrow=7,ncol=length(REPARATION))
@@ -602,22 +607,49 @@ for (i in 81:105){
     }
 }
 
+print(matrice)
+
 
 ```
 
+```{r include=FALSE}
+matrice=matrix(0,nrow=3,ncol=5)
+matrice[1,]=c(1:5)
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),c(81:105)]
+for (j in 1:ncol(matrice)){
+  for (i in 1:nrow(df)){
+    if (j %in% df[i,]){
+      matrice[2,j]=matrice[2,j]+1
+    }
+  
+} 
+}
+matrice[3,]=round(matrice[2,]*100/nb_individus_avec_pbs)
+print(matrice)
+```
+
+C'est 33% des personnes ayant rencontré un ou plusieurs
+dysfonctionnements qui n'ont pas réussi à résoudre le ou les
+dysfonctionnements.
 
 ### **V ) Temps de cohabitation avec le problème**
 
-La question posée était : **Combien de temps s’est écoulé approximativement entre le moment où vous avez décelé le(s) dysfonctionnement(s) et le moment où vous avez tenté de le(s) résoudre ou de le(s) faire résoudre ?**
+La question posée était : **Combien de temps s'est écoulé
+approximativement entre le moment où vous avez décelé le(s)
+dysfonctionnement(s) et le moment où vous avez tenté de le(s) résoudre
+ou de le(s) faire résoudre ?**
 
-#### **1 ) Personnes ayant tenté de résoudre le ou les dysfonctionnements** 
+#### **1 ) Personnes ayant tenté de résoudre le ou les dysfonctionnements**
 
-On s'intéresse donc aux personnes ayant répondu aux 2 modalités suivantes, lorsqu'on leur a demandé s'il avait tenté de résoudre le problème, (c'est à dire 32% des dysfonctionnements) :
+On s'intéresse donc aux personnes ayant répondu aux 2 modalités
+suivantes, lorsqu'on leur a demandé s'il avait tenté de résoudre le
+problème, (c'est à dire 32% des dysfonctionnements) :
 
-1	: Oui et le problème est résolu
-2	: Oui mais le problème n'a pas pu être résolu  
+-   1 : Oui et le problème est résolu
 
-Voici les réponses obtenues : 
+-   2 : Oui mais le problème n'a pas pu être résolu
+
+Voici les réponses obtenues :
 
 ```{r include=FALSE}
 # Indice des colonnes réparation 
@@ -630,7 +662,7 @@ print(colonne_fin) # 105
 
 ```
 
-```{r}
+```{r include=FALSE}
 # Cohabitation + réparation 
 
 REPARATION <- c(1:5)
@@ -649,7 +681,6 @@ for (i in 81:105){
 }
 print(matrice)
 ```
-
 
 ```{r echo=FALSE}
 total = sum(matrice_REP[2,1:2]) # 351
@@ -701,7 +732,7 @@ entre 1 et 6 mois.
 
 Le genre aurait-il une incidence sur ce temps de cohabitation ?
 
-```{r}
+```{r echo=FALSE}
 # Matrice des femmes
 COHABITATION <- c(1:6)
 matrice_femmes=matrix(0,nrow=2,ncol=length(COHABITATION))
@@ -765,44 +796,76 @@ p_interactif
 ```
 
 Les hommes semblent régler le problème en moins d'un mois (20%) alors
-que les femmes semblent le régler dès le dysfonctionnement est décelé (22%).
+que les femmes semblent le régler dès le dysfonctionnement est décelé
+(22%).
 
-Autre représentation mais sous forme de boites à moustache (distribution du nombre de personnes par temps de cohabitation) : 
+#### **3 ) Boîte à moustache du temps de cohabitation**
 
-```{r}
+Autre représentation mais sous forme de boites à moustache (distribution
+du nombre de personnes par temps de cohabitation) :
 
-# Sélectionner les colonnes 106 à 130
-data_long <- data %>% pivot_longer(cols = 106:130, names_to = "Variable", values_to = "Value")
-don <- data.frame(Variable=data_long$Variable,COHABITATION <- factor(data_long$Value, levels = c(1:6), labels = label_COHABITATION))
+```{r echo=FALSE}
+df <- data[which(data$RIDENTIFICATION_PROBLEMES!="27"),c(106:130)]
+filtered_columns <- list()
 
-# Créer le boxplot avec ggplot2
-p <- ggplot(don, aes(x = Variable, y = COHABITATION)) +
-  geom_boxplot() +
+# Parcourir les colonnes du dataframe
+for (i in 1:ncol(df)) {
+  # Extraire la colonne
+  column <- df[,i]
+  column <- na.omit(column)
+  filtered_columns = c(filtered_columns,column)
+}
+
+valeurs <- c()
+for (j in 1:length(filtered_columns)){
+  valeurs[j]=filtered_columns[[j]]
+}
+
+don <- data.frame(y=factor(valeurs, levels = sort(unique(valeurs)), labels = label_COHABITATION))
+p <- ggplot(don)+aes(y=y)+geom_boxplot(fill="skyblue")+theme_minimal()+
+  labs(title = "Boxplot du temps de cohabitation",
+       y = "Temps de cohabitation") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="skyblue"),
+        axis.title.x = element_text(face = "bold",colour="skyblue"),
+        axis.title.y = element_text(face = "bold",colour="skyblue"),
+        axis.text.y = element_text(angle = 45, hjust = 1, vjust = 1)) 
+ 
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+ 
+
+```
+
+#### **4 ) Nuage de points du temps de cohabitation**
+
+```{r echo=FALSE }
+don <- data.frame(obs=c(1:length(valeurs)),Cohabitation = factor(valeurs, levels = sort(unique(valeurs)), labels = label_COHABITATION)) # Ajouter une colonne numérique Temps
+p <- ggplot(don, aes(x = obs, y =Cohabitation )) +
+  geom_point(col="thistle4") +
   theme_minimal() +
-  labs(title = "Boxplot des colonnes 106 à 130",
-       x = "Variables",
-       y = "Valeurs") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text(face = "bold"),
-        axis.title.y = element_text(face = "bold"),
-        axis.text.x = element_text(angle = 45, hjust = 1),        
+  labs(title = "Nuage de points du temps de cohabitation",
+       y = "Temps de cohabitation",
+       x = "Individus") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="thistle4"),
+        axis.title.x = element_text(face = "bold",colour="thistle4"),
+        axis.title.y = element_text(face = "bold",colour="thistle4"),
         axis.text.y = element_text(angle = 45, hjust = 1, vjust = 1)) 
 
-# Afficher le boxplot
-print(p)
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
 
 ```
 
-```{r}
-data_long$Variable
-```
+### **VI ) Gênes ressenties**
 
+Le graphe suivant donne les gênes qu'ont ressentis les propriétaires
+suite au(x) dysfonctionnement(s) qu'ils ont rencontré :
 
-### **VI ) Gênes ressenties **
-
-Le graphe suivant donne les gênes qu'ont ressentis les propriétaires suite au(x) dysfonctionnement(s) qu'ils ont rencontré : 
-
-```{r}
+```{r echo=FALSE}
 GENE <- c(1:4)
 matrice=matrix(0,nrow=2,ncol=length(GENE))
 matrice[1,]=GENE
@@ -851,24 +914,25 @@ p_interactif
 ```
 
 47% des problèmes rencontrés ont été ressentis comme étant plutôt
-gênant, 32% comme étant trés gênant, 18% comme étant plutôt pas gênant et
-3% comme pas gênant du tout.
+gênant, 32% comme étant trés gênant, 18% comme étant plutôt pas gênant
+et 3% comme pas gênant du tout.
 
 ### **VII ) Récence du dysfonctionnement**
 
-La question posée était :**A partir de quel moment approximativement avez-vous
-décelé les premiers dysfonctionnements sur votre smartphone ? **
+La question posée était :**A partir de quel moment approximativement
+avez-vous décelé les premiers dysfonctionnements sur votre smartphone
+?**
 
-```{r}
+```{r echo=FALSE}
 RECENCE <- c(1:7)
 matrice=matrix(0,nrow=2,ncol=length(RECENCE))
 matrice[1,]=RECENCE
 
 colonne_deb <- which(names(data) == "RECENCE_PROBLEMES_A1")
-print(colonne_deb) # 56
+#print(colonne_deb) # 56
 
 colonne_fin <- which(names(data) == "RECENCE_PROBLEMES_A25")
-print(colonne_fin) # 80
+#print(colonne_fin) # 80
 
 df <- data[,c(colonne_deb:colonne_fin)]
 
@@ -907,11 +971,14 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-C'est 25% de personnes qui s'en sont rendus compte entre 3 mois et 1 an, et 24% entre 1 an et 2 ans. 
+C'est 25% de personnes qui s'en sont rendus compte entre 3 mois et 1 an,
+et 24% entre 1 an et 2 ans.
 
 ### **VIII ) Degrés de gêne par rapport au temps de cohabitation**
 
-Est ce que le degré de gêne ressentis pour chaques dysfonctionnements est différent selon les différents temps de cohabitation avec le ou les dysfonctionnements ?
+Est ce que le degré de gêne ressentis pour chaques dysfonctionnements
+est différent selon les différents temps de cohabitation avec le ou les
+dysfonctionnements ?
 
 ```{r include=FALSE}
 COHABITATION <- c(1:6)
@@ -946,7 +1013,7 @@ for (i in 106:130){
       }
     }
 }
-# print(matrice)
+#print(matrice)
 
 Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
 
@@ -977,47 +1044,172 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-On voit que lorsque le dysfonctionnement a été décelé dés son apparition, le problème a été ressentis comme étant trés gênant. Lorsque le propriétaire a cohabité avec le dysfonctionnement moins d'un mois le dysfonctionnement comme étant majoritairement plutôt gênant.
+On voit que lorsque le dysfonctionnement a été décelé dés son
+apparition, le problème a été ressentis comme étant trés gênant. Lorsque
+le propriétaire a cohabité avec le dysfonctionnement moins d'un mois le
+dysfonctionnement a été ressentis comme étant majoritairement plutôt
+gênant.
 
+### **IX ) Intention de réparation**
 
+La question posée était : **Vous nous avez déclaré ne pas avoir tenté de
+résoudre les dysfonctionnements suivants de votre smartphone.
+Envisagez-vous de tenter de le(s) résoudre ?**
 
-Choses à faire :
+Les réponses possibles étaient :
 
-BOXPLOT
+-   1 : Oui, par moi-même
 
+-   2 : Oui, par le SAV ou un réparateur
 
-Diagramme en barres pour chaque CSP en fonction de l'intention de
-réparation : Vous nous avez déclaré ne pas avoir tenté de résoudre les
-dysfonctionnements suivants de votre smartphone. Envisagez-vous de
-tenter de le(s) résoudre ?
+-   3 : Oui, par une connaissance
 
-1 : Oui, par moi-même 2 : Oui, par le SAV ou un réparateur 3 : Oui, par
-une connaissance 4 : Pas pour l'instant 5 : Non
+-   4 : Pas pour l'instant
 
-```{r}
+-   5 : Non
+
+```{r include=FALSE}
+REPARATION <- c(1:5)
+matrice <- matrix(0,nrow=6,ncol=length(REPARATION))
+matrice[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27" ),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_INT <- df[j,i+50]
+      if (!is.na(num_REP) && !is.na(num_INT) ){
+        matrice[num_INT+1,num_REP]=matrice[num_INT+1,num_REP]+1
+      }
+    }
+}
+print(matrice)
+nb_personnes <-sum(matrice[2:6,4])+(matrice[2:6,5])
 
 ```
 
-```{r}
-indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A1")
-print(indice_colonne) # 106
+Cela ne concerne que les personnes ayant répondu aux modalités 4(Non,
+peut être plus tard) et 5 (Non, je ne pense pas tenter de résoudre le
+problème) à la question "Avez vous tenté de résoudre le problème" Ce qui
+représente 40% des personnes ayant rencontré des dysfonctionnements.
 
-indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
-print(indice_colonne) # 31
+```{r include=FALSE}
+REPARATION <- c(1:5)
 
-indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A25")
-print(indice_colonne) # 130
+# CSP 1
+matrice_CSP1 <- matrix(0,nrow=6,ncol=length(REPARATION))
+matrice_CSP1[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27" & data$CSP5==1),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_INT <- df[j,i+50]
+      if (!is.na(num_REP) && !is.na(num_INT) ){
+        matrice_CSP1[num_INT+1,num_REP]=matrice_CSP1[num_INT+1,num_REP]+1
+      }
+    }
+}
+CSP1 <- c(matrice_CSP1[2:6,4]+matrice_CSP1[2:6,5])
 
-indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
-print(indice_colonne) #55
+# CSP 2
+matrice_CSP2 <- matrix(0,nrow=6,ncol=length(REPARATION))
+matrice_CSP2[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27" & data$CSP5==2),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_INT <- df[j,i+50]
+      if (!is.na(num_REP) && !is.na(num_INT) ){
+        matrice_CSP2[num_INT+1,num_REP]=matrice_CSP2[num_INT+1,num_REP]+1
+      }
+    }
+}
+CSP2 <- c(matrice_CSP2[2:6,4]+matrice_CSP2[2:6,5])
 
-31+75
+# CSP 3
+matrice_CSP3 <- matrix(0,nrow=6,ncol=length(REPARATION))
+matrice_CSP3[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27" & data$CSP5==3),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_INT <- df[j,i+50]
+      if (!is.na(num_REP) && !is.na(num_INT) ){
+        matrice_CSP3[num_INT+1,num_REP]=matrice_CSP3[num_INT+1,num_REP]+1
+      }
+    }
+}
+CSP3 <- c(matrice_CSP3[2:6,4]+matrice_CSP3[2:6,5])
+
+# CSP 4
+matrice_CSP4 <- matrix(0,nrow=6,ncol=length(REPARATION))
+matrice_CSP4[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27" & data$CSP5==4),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_INT <- df[j,i+50]
+      if (!is.na(num_REP) && !is.na(num_INT) ){
+        matrice_CSP4[num_INT+1,num_REP]=matrice_CSP4[num_INT+1,num_REP]+1
+      }
+    }
+}
+CSP4 <- c(matrice_CSP4[2:6,4]+matrice_CSP4[2:6,5])
+
+# CSP 5
+matrice_CSP5 <- matrix(0,nrow=6,ncol=length(REPARATION))
+matrice_CSP5[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27" & data$CSP5==5),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_INT <- df[j,i+50]
+      if (!is.na(num_REP) && !is.na(num_INT) ){
+        matrice_CSP5[num_INT+1,num_REP]=matrice_CSP5[num_INT+1,num_REP]+1
+      }
+    }
+}
+CSP5 <- c(matrice_CSP5[2:6,4]+matrice_CSP5[2:6,5])
+
 ```
 
+Diagramme en barres pour chaques CSPs en fonction de l'intention de
+réparation :
+
+```{r echo=FALSE}
+Categorie <- factor(label_INT_REPARATION, levels = label_INT_REPARATION)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs =round(CSP1*100/nb_personnes) , CSP = "CSP+")
+df_T2 <- data.frame(Categorie = Categorie, valeurs =round(CSP2*100/nb_personnes) , CSP = "CSP-")
+df_T3 <- data.frame(Categorie = Categorie, valeurs =round(CSP3*100/nb_personnes) , CSP = "Retraités")
+df_T4 <- data.frame(Categorie = Categorie, valeurs =round(CSP4*100/nb_personnes) , CSP = "Étudiants")
+df_T5 <- data.frame(Categorie = Categorie, valeurs =round(CSP5*100/nb_personnes) , CSP = "Autre Inactifs")
 
 
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4,df_T5)
 
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = CSP)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Intention de réparation",
+       x = "Intention de réparation",
+       y = "Pourcentage de personnes (en %) ") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold")) 
 
+p_interactif <- ggplotly(p)
 
+# Afficher le graphique interactif
+p_interactif 
+```
 
 
