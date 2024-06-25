@@ -674,7 +674,7 @@ for (i in 81:105){
     for (j in 1:length(colonne)){
       num_REP <- df[j,i]
       num_COHAB <- df[j,i+25]
-      if (!is.na(num_COHAB) && !is.na(num_COHAB) ){
+      if (!is.na(num_COHAB) && !is.na(num_REP) ){
         matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+1
       }
     }
@@ -1209,7 +1209,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = CSP)) +
 p_interactif <- ggplotly(p)
 
 # Afficher le graphique interactif
-p_interactif 
 ```
+
 
 
