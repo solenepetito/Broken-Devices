@@ -629,4 +629,5 @@ indice_colonne <- which(names(data) == "REPARATION_A25")
 print(indice_colonne) #105
 
 81-56
+
 ```
