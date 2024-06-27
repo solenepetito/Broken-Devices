@@ -28,6 +28,8 @@ library(dplyr)
 library(plotly) # permet de faire des graphes intéractifs
 library(corrplot) # permet de réqliser des matrices de corrélation
 library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+
 
 ```
 
@@ -105,6 +107,9 @@ label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na
 label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
 
 label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
 ```
 
 **OBJECTIF :** *Analyser la base de données*
@@ -225,142 +230,11 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-### **III ) Temps de cohabitation de ceux qui n'ont résolu le problème** 
-
-```{r}
-pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-nb_total_pbs <- sum(pbs[2,])
-print(nb_total_pbs) #832
-```
-
-```{r}
-# Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
-recence <- c()
-annee <- c()
-mois <- c()
-
-# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
-df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
-
-# Parcourir les colonnes de 81 à 105
-for (i in 81:105) {
-  # Parcourir les lignes du dataframe filtré
-  for (j in 1:nrow(df)) {
-    val <- df[j, i]
-    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
-    if (!is.na(val) && (val == 4 || val == 5)) {
-      RECENCE <- df[j, i - 25]
-      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
-      if (!is.na(RECENCE)) {
-        recence <- c(recence, RECENCE)
-        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
-        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
-      }
-    }
-  }
-}
-
-# Suppression de la raison 7 dans la liste recence 
-
-indices_rec_7= which(recence==7)
-recence=recence[-c(indices_rec_7)]
-annee=annee[-c(indices_rec_7)]
-mois=mois[-c(indices_rec_7)]
-
-# Afficher les résultats pour vérifier
-print(recence)
-print(annee)
-print(mois)
-
-
-
-
-```
-
-Changement du mois non renseigné indiqué par la valeur 99, par un mois
-"moyen" d'obtention pour l'année en question :
-
-```{r}
-indices_mois_99 <- which(mois==99)
-for (i in 1:length(indices_mois_99)){
-  indice=indices_mois_99[i]
-  year=annee[i]
-  indices_annees = which(annee==year)
-  liste_mois=mois[indices_annees]
-  liste_mois=liste_mois[liste_mois!=99]
-  mois[indice]=round(mean(liste_mois))
-}
-print(mois)
-```
-
-Création des dates avec l'année et le mois renseignés dans les listes
-annee et mois précédemment :
-
-```{r}
-dates = c()
-for (i in 1:length(recence)){
-  date_str <- paste(annee[i], sprintf("%02d", mois[i]), "01", sep = "-")
-  dates=c(dates,date_str)
-}
-
-dates
-```
-
-```{r}
-# Définir les dates de début et de fin
-date_debut <- as.Date("2022-05-01")
-date_fin <- as.Date("2023-11-01")
-
-# Calculer la différence en jours
-diff_jours <- as.numeric(difftime(date_fin, date_debut, units = "days"))
-
-# Afficher le résultat
-print(diff_jours)
-
-```
-
-```{r}
-# Année et mois en chiffres
-annee <- 2022
-mois <- 10
-
-# Convertir en chaîne de caractères au format "YYYY-MM-DD"
-date_str <- paste(annee, sprintf("%02d", mois), "01", sep = "-")
-
-# Afficher la chaîne de caractères
-print(date_str)
-
-```
-
-```{r}
-liste=c(0,list(c(1,83)),list(c(84,365)),list(c(366,730)),list(c(731,1095)),1096)
-a=liste[[2]]
-length(a)
-```
-
-```{r}
-# Date de départ
-date_depart <- as.Date("2022-12-01")
-
-# Ajouter 500 jours
-date_nouvelle <- date_depart + 500
-
-# Afficher la nouvelle date
-print(date_nouvelle)
-
-```
-
-```{r}
-mois
-mois[-1]
-```
-
-
 ### **III ) Etat du smartphone**
 
-Combien de personnes ont acheté leur smartphone neuf ? Combien l'ont eu
-d'occasion ? Combien l'on acheté reconditionné ? Le graphe suivant nous
-apporte plus de détails :
+#### **1 ) Combien de personnes ont acheté leur smartphone neuf ? Combien l'ont eu d'occasion ? Combien l'on acheté reconditionné ?** 
+
+Le graphe suivant nous apporte plus de détails :
 
 ```{r echo=FALSE}
 nb_individus=nrow(data)
@@ -410,6 +284,45 @@ dataframe <- data.frame("État"=label_ETAT,"Nb_personnes"=mat[2,],"Nb_personnes_
 print(dataframe)
 ```
 
+La part de dysfonctionnements pour les smarthpones d'occasion est assez importante (50%), suivi des smartphones reconditionnés avec une part de 45% de dysfonctionnements.
+
+#### **2 ) Smartphone d'occasion** 
+
+Parmis les smartphones d'occasion, quelle était leur durée d'utilisation avant que le propriétaire l'obtienne, et quel impact cela a eu sur le fait que le propriétaire rencontre des dysfonctionnements ou pas ?
+
+Le graphe suivant nous donne plus de détails : 
+
+```{r}
+label_duree_occas <- c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
+
+df =data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),"UTILISATIONSMARTOCCAS"]
+total = nrow(data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),]) # 45 obs
+
+don2 <- as.matrix(table(df))
+Categorie <- factor(label_duree_occas, levels = label_duree_occas)
+
+don <- data.frame(Categorie=Categorie, valeurs=round(don2[,1]*100/total),2)
+
+p <- ggplot(don, aes(x = Categorie, y =valeurs )) +
+  geom_bar(stat='identity',fill="turquoise4") +
+  theme_minimal() +
+  labs(title = "Ancienne durée du smartphone et pbs actuels",
+       x = "Ancienne durée du smartphone d'occasion",
+       y = "Pourcentage de personnes (%)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="turquoise4"),
+        axis.title.x = element_text(face = "bold",colour="turquoise4"),
+        axis.title.y = element_text(face = "bold",colour="turquoise4"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+
+```
+
+
 ### **IV ) Groupement des thématiques par catégories**
 
 #### **1 ) Groupement à plus grosses mailles**
@@ -444,7 +357,7 @@ Les différentes catégories pourraient être :
 -   **Problèmes divers :** Problème lié à une fonctionnalité manquante,
     Autre
 
-```{r }
+```{r include=FALSE}
 label_dys <- c("Matériel","Logiciel","Réseau","Performance","Divers")
 
 materiel <- c(1,2,1,3,4,6,7,8,9,10,11,12,16,17)
@@ -471,9 +384,13 @@ print(matrice_cat)
 
 ```
 
+#### **1 ) Visualisation des catégories** 
+
 Le tableau suivant donne le nombre de dysfonctionnements rencontrés pour chaque catégorie, et la part de chaque catégorie par rapport au nombre total de dysfonctionnements qui est de 832 :
 
 ```{r echo=FALSE}
+pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+nb_total_pbs <- sum(pbs[2,])
 
 mat=matrix(0,nrow=2,ncol=length(label_dys))
 mat[1,]=c(1:length(label_dys))
@@ -513,8 +430,6 @@ Le graphique à barres suivant permet de visualiser ces valeurs :
 ```{r echo=FALSE}
 # PROGRAMME
 
-pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-nb_total_pbs <- sum(pbs[2,])
 
 Categorie <- factor(label_dys, levels = label_dys)
 
@@ -537,6 +452,9 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
+#### **2 ) Types de gênes ressenties en fonction des catégories**
+
 Parmis ces différentes catégories quels sont les types de gênes ressentis pour chacun des dysfonctionnements, le tableau suivant indique ces différents types de gênes ressenties pour chacunes des catégories en pourcentage : 
 
 ```{r echo=FALSE}
@@ -608,14 +526,569 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+La gêne ressentie parmis tous les dysfonctionnements et ce peut importe la catégorie, est en grande marjorité "plutôt gênante".
+
+#### **3 ) Répartition des catégories pour chaque type de résolution**
+
+```{r include=FALSE}
+REPARATION = C(1:5)
+mat = matrix(0,nrow=6,ncol=length(REPARATION))
+mat[1,]=REPARATION
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+for (i in 1:length(variable)){
+  liste_pbs=liste_pbs=str_extract_all(variable[i],".{2}")[[1]]
+  liste_pbs=as.numeric(liste_pbs)
+  for (j in 1:length(liste_pbs)){
+    pb=liste_pbs[j]
+    num=as.character(pb)
+    nom_colonne=paste0("REPARATION_A",num)
+    val=df[i,nom_colonne]
+    if (!is.na(val) && !is.null(val)){
+      result <- which(matrice_cat == pb, arr.ind = TRUE)
+      row_index <- result[1]
+      mat[row_index+1,val]=mat[row_index+1,val]+1
+    }
+
+    
+  }
+}
+print(mat)
 
 
+```
+Quelle est la part de résolution des dysfonctionnments entre ces catégories ? 
+
+```{r echo=FALSE}
+Categorie <- factor(label_REPARATION, levels = label_REPARATION)
+
+df_T1 <- data.frame(Résolution = Categorie, valeurs = round((mat[2,]*100/nb_total_pbs),2), Dysfonctionnement = "Matériel")
+df_T2 <- data.frame(Résolution = Categorie, valeurs = round(mat[3,]*100/nb_total_pbs,2), Dysfonctionnement = "Logiciel")
+df_T3 <- data.frame(Résolution = Categorie, valeurs = round(mat[4,]*100/nb_total_pbs,2), Dysfonctionnement = "Réseau")
+df_T4 <- data.frame(Résolution = Categorie, valeurs = round(mat[5,]*100/nb_total_pbs,2), Dysfonctionnement = "Performance")
+df_T5 <- data.frame(Résolution = Categorie, valeurs = round(mat[6,]*100/nb_total_pbs,2), Dysfonctionnement = "Divers")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4,df_T5)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Résolution, y = valeurs, fill = Dysfonctionnement)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Résolution du problème en fonction de la catégorie",
+       x = "Types de résolution",
+       y = "Pourcentage de personnes (%) ") +
+  
+  scale_fill_brewer(palette = "Greens", name = "Nb de Dysfonctionnements") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
+        axis.title.x = element_text( face = "bold",colour="palegreen3"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="palegreen3")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+On remarque que dans chaque catégorie, les dysfonctionnements majoritaires sont ceux étant matériels, suivi de ceux étant liés à la performance. Les parts des différentes catégories semblent être assez égales entre chaque types de résolution.
 
 
+Le tableau suivant donne plus de détails pour chaque types de résolution, avec une part en pourcentage du type de dysfonctionnement concerné pour chaque type de résolution : 
+
+```{r echo=FALSE}
+REPARATION <- c(1:5)
+matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
+matrice_REP[1,]=REPARATION
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+#print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+#print(colonne_fin) # 105
+
+df <- data[,colonne_deb:colonne_fin]
+
+for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val)&& !is.null(val)){
+        matrice_REP[2,val]=matrice_REP[2,val]+1
+      }
+    }
+}
+
+df <- data.frame(Résolution=label_REPARATION,Dys_Materiel=round(mat[2,]*100/matrice_REP[2,]),Dys_Logiciel=round(mat[3,]*100/matrice_REP[2,]),Dys_Reseau=round(mat[4,]*100/matrice_REP[2,]),Dys_Performance=round(mat[5,]*100/matrice_REP[2,]),Dys_Divers=round(mat[6,]*100/matrice_REP[2,]))
+
+print(df)
+```
+
+#### **4 ) Temps de cohabitation de ceux qui ont résolu le problème ou qui ont tenté de le résoudre en fonction des catégories de dysfonctionnements**
+
+Voici la répartition des temps de cohabitation pour les dysfonctionnements qui ont été résolus ou qui ont tenté d'être résolus :
+```{r include=FALSE}
+COHABITATION = c(1:6)
+mat = matrix(0,nrow=6,ncol=length(COHABITATION))
+mat[1,]=COHABITATION
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+for (i in 1:length(variable)){
+  liste_pbs=liste_pbs=str_extract_all(variable[i],".{2}")[[1]]
+  liste_pbs=as.numeric(liste_pbs)
+  for (j in 1:length(liste_pbs)){
+    pb=liste_pbs[j]
+    num=as.character(pb)
+    nom_colonne=paste0("COHABITATION_DYSFONCTION_A",num)
+    val=df[i,nom_colonne]
+    if (!is.na(val) && !is.null(val)){
+      result <- which(matrice_cat == pb, arr.ind = TRUE)
+      row_index <- result[1]
+      mat[row_index+1,val]=mat[row_index+1,val]+1
+    }
+
+    
+  }
+}
+print(mat)
+
+```
+
+```{r echo=FALSE}
+total_pbs_resolus = sum(matrice_REP[2,1:2])
+Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = round((mat[2,]*100/total_pbs_resolus),2), Dysfonctionnement = "Matériel")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = round(mat[3,]*100/total_pbs_resolus,2), Dysfonctionnement = "Logiciel")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = round(mat[4,]*100/total_pbs_resolus,2), Dysfonctionnement = "Réseau")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = round(mat[5,]*100/total_pbs_resolus,2), Dysfonctionnement = "Performance")
+df_T5 <- data.frame(Categorie = Categorie, valeurs = round(mat[6,]*100/total_pbs_resolus,2), Dysfonctionnement = "Divers")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4,df_T5)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Dysfonctionnement)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Temps de cohabitation en fonction de la catégorie",
+       x = "Temps de cohabitation",
+       y = "Pourcentage de personnes (%) ") +
+  
+  scale_fill_brewer(palette = "Purples", name = "Nb de Dysfonctionnements") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="purple4"),
+        axis.title.x = element_text( face = "bold",colour="purple4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="purple4")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+Ce graphe nous montre que les problèmes de types matériel sont ceux qui ce règlent le plus vite.
+
+### **V ) Temps de cohabitation de ceux qui n'ont pas résolu le problème** 
+
+```{r include=FALSE}
+pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+nb_total_pbs <- sum(pbs[2,])
+print(nb_total_pbs) #832
+```
+
+```{r include=FALSE}
+# Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
+recence <- c()
+annee <- c()
+mois <- c()
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 4 || val == 5)) {
+      RECENCE <- df[j, i - 25]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(RECENCE)) {
+        recence <- c(recence, RECENCE)
+        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
+        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+      }
+    }
+  }
+}
+
+# Suppression de la raison 7 dans la liste recence 
+
+indices_rec_7= which(recence==7)
+recence=recence[-c(indices_rec_7)]
+annee=annee[-c(indices_rec_7)]
+mois=mois[-c(indices_rec_7)]
+
+# Afficher les résultats pour vérifier
+print(head(recence))
+print(head(annee))
+print(head(mois))
+```
+
+```{r include=FALSE}
+# Changement du mois non renseigné indiqué par la valeur 99, par un mois "moyen" d'obtention pour l'année en question :
+
+indices_mois_99 <- which(mois==99)
+for (i in 1:length(indices_mois_99)){
+  indice=indices_mois_99[i]
+  year=annee[i]
+  indices_annees = which(annee==year)
+  liste_mois=mois[indices_annees]
+  liste_mois=liste_mois[liste_mois!=99]
+  mois[indice]=round(mean(liste_mois))
+}
+print(head(mois))
+```
+
+```{r include=FALSE}
+# Création des dates avec l'année et le mois renseignés dans les listes annee et mois précédemment :
+
+dates = c()
+for (i in 1:length(recence)){
+  date_str <- paste(annee[i], sprintf("%02d", mois[i]), "01", sep = "-")
+  dates=c(dates,date_str)
+}
+
+head(dates)
+```
+
+```{r include=FALSE}
+# On détermine une plage de valeurs en terme de dates durant laquelle les dysfonctionnements ont été décelés :
+
+liste=c(0,list(c(1,83)),list(c(84,365)),list(c(366,730)),list(c(731,1095)),1096)
+l=c()
+for (i in 1:length(dates)){
+  b=c()
+  d=dates[i]
+  r=recence[i]
+  periode=liste[[r]]
+  for (j in 1:length(periode)){
+    a=as.Date(d)+periode[j]
+    b[j]=a
+    
+  }
+  l[i]=list(b)
+}
+
+date_ref <- as.Date("1970-01-01")
+
+# Fonction pour convertir les jours en dates
+convert_to_dates <- function(jours, date_ref) {
+  return(as.Date(jours, origin = date_ref))
+}
+
+# Appliquer la conversion à chaque sous-liste
+dates_list <- lapply(l, convert_to_dates)
+
+# Afficher les dates exactes
+print(head(dates_list))
+```
+
+```{r include=FALSE}
+# Calcul du nombre de jours qui se sont écoulés entre ces plages de dates et novembre 2023 : 
+
+# Date de référence
+date_ref <- as.Date("2023-11-01")
+
+# Fonction pour calculer les jours écoulés
+calculate_days <- function(dates, reference_date) {
+  return(as.numeric(dates - reference_date))
+}
+
+# Appliquer la fonction de calcul à chaque sous-liste
+days_elapsed <- lapply(dates_list, calculate_days, reference_date = date_ref)
+
+# Afficher les résultats
+print(head(days_elapsed))
+
+```
+
+```{r include=FALSE}
+# Calcul du temps de cohabitation : 
+
+vec=c()
+for(i in 1:length(days_elapsed)){
+  days=days_elapsed[[i]]
+  val=abs(sum(days))
+  if(val %in% 0:30){
+    vec[i]=1
+  }
+  if(val %in% 31:168){
+    vec[i]=2
+  }
+  if(val %in% 169:730){
+    vec[i]=3
+  }
+  if(val > 730){
+    vec[i]=4
+  }
+}
+
+head(vec)
+table(vec)
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+```
+Pour déterminer le temps de cohabitation avec les dysfonctionnements des individus n'ayant pas résolu pas le problème, il a fallu prendre le mois et l'année d'obtention de leur téléphone, puis pour chaque dysfonctionnement rencontré, le temps approximatif au bout duquel il se rendu compte du problème, et déterminer le temps qui séparait ce temps approximatif du mois de novembre 2023 (date du questionnaire). Voici les temps de cohabitation pour les personnes n'ayant pas résolu les problèmes : 
+
+```{r echo=FALSE}
+don2 <- as.matrix(table(vec))
+Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
+
+don <- data.frame(Categorie=Categorie, valeurs=round(don2[,1]*100/sum(don2[,1])))
+
+p <- ggplot(don, aes(x = Categorie, y =valeurs )) +
+  geom_bar(stat='identity',fill="turquoise4") +
+  theme_minimal() +
+  labs(title = "Répartition du temps de cohabitation",
+       x = "Temps de cohabitation",
+       y = "Pourcentage de dysfonctionnments (%)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="turquoise4"),
+        axis.title.x = element_text(face = "bold",colour="turquoise4"),
+        axis.title.y = element_text(face = "bold",colour="turquoise4"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+Voici la même représentation mais avec la part de chaque catégorie de dysfonctionnements :
+
+```{r include=FALSE}
+cat = c()
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),81:105]
+
+# Parcourir les colonnes de 81 à 105
+for (i in 1:ncol(df)) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 4 || val == 5)) {
+      result <- which(matrice_cat == i, arr.ind = TRUE)
+      row_index <- result[1]
+      cat=c(cat,row_index)
+      
+    }
+  }
+}
+cat=cat[-c(indices_rec_7)]
+
+```
+
+```{r echo=FALSE}
+
+COHAB <- factor(vec, levels = 1:length(label_COHAB_2),labels=label_COHAB_2)
+DYS <- factor(cat, levels = 1:length(label_dys),labels=label_dys)
+
+# Créer un data frame avec les facteurs
+df <- data.frame(Dysfonctionnement = DYS, Cohabitation = COHAB)
+
+# Créer un diagramme à barres empilées avec ggplot2
+p <- ggplot(df, aes(x = Cohabitation, fill = Dysfonctionnement)) +
+  geom_bar(position = "stack") +
+  labs(title = "Temps de cohabitation en fonction des catégories",
+       x = "Temps de cohabitation",
+       y = "Nombre de dysfonctionnements",
+       fill = "Dysfonctionnement") +
+  scale_fill_manual(values = colorRampPalette(brewer.pal(9, "Spectral"))(length(levels(df$Dysfonctionnement)))) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold"))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+La grande part de problèmes avec lesquels les personnes cohabitent sont les problèmes matériels.
+
+Voici une autre représentation mais sous forme de nuage de points, afin de mieux voir la répartition des valeurs : 
+
+```{r echo=FALSE}
+don <- data.frame(obs=c(1:length(vec)),Cohabitation = factor(vec, levels = sort(unique(vec)), labels = label_COHAB_2)) # Ajouter une colonne numérique Temps
+p <- ggplot(don, aes(x = obs, y =Cohabitation )) +
+  geom_point(col="orchid4") +
+  theme_minimal() +
+  labs(title = "Nuage de points du temps de cohabitation",
+       y = "Temps de cohabitation",
+       x = "Dysfonctionnements") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="orchid4"),
+        axis.title.x = element_text(face = "bold",colour="orchid4"),
+        axis.title.y = element_text(face = "bold",colour="orchid4"),
+        axis.text.y = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+On remarque que le temmps de cohabitation avec le problème lorsqu'on ne l'a pas résolu est de deux ans en trés grande marjorité, suivi de entre 6 mois et 2 ans.
+
+### **VI ) Nombre de dysfonctionnements** 
+
+#### 1 ) **Nombre de dysfonctionnements rencontrés par année d'obtention** 
+
+```{r include=FALSE}
+annees <- c()
+dys <- c()
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+date=df$DATEOBTENTIONSMART_1
+pbs=df$RIDENTIFICATION_PROBLEMES
+for(i in 1:length(date)){
+  annees=c(annees,date[i])
+  liste_pbs=str_extract_all(pbs[i], ".{2}")[[1]]
+  dys=c(dys,length(liste_pbs))
+}
+
+dataframe <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys)
+
+Nb_personnes_concernees <- c()
+for (i in 1:nrow(dataframe)){
+  annee=dataframe[i,1]
+  dysfonc=dataframe[i,2]
+  don <- dataframe[which(dataframe$Obtention==annee & dataframe$Nb_dysfonctionnements==dysfonc),]
+  Nb_personnes_concernees <- c(Nb_personnes_concernees,nrow(don))
+}
+
+df2 <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys,Nb_personnes_concernees=Nb_personnes_concernees)
+
+print(df2)
+```
+
+Il serait intéressant de savoir le nombre de personnes ayant rencontré 1,2,3 ou plus de dysfonctionnements en fonction de l'année d'obtention de leur smartphone. On se concentre sur les 5 dernières années car c'est celles pour lesquelles le nombre de dysfonctionnements rencontrés est important. Le graphe suivant nous apporte ces détails : 
+
+```{r echo=FALSE}
+
+df3 = df2[which(df2$Obtention > 2017),]
+df3 = distinct(df3)
+
+df3$Obtention = as.factor(df3$Obtention)
+df3$Nb_dysfonctionnements = as.factor(df3$Nb_dysfonctionnements)
+
+# Créer le diagramme à barres empilées
+p <- ggplot(df3, aes(x = Obtention, y = Nb_personnes_concernees, fill =Nb_dysfonctionnements)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_brewer(palette = "Reds", name = "Nb de Dysfonctionnements") +
+  labs(title = "Nombre de dysfonctionnements par année d'obtention",
+       x = "Année d'obtention",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="orangered3"),
+        axis.title.x = element_text(face = "bold",colour="orangered3"),
+        axis.title.y = element_text(face = "bold",colour="orangered3"))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+On observe que de 2018 à 2020, le nombre de dysfonctionnements recontrés par individus est de 2 en général, et que vers 2021 il passe à 1.
+
+#### **2 ) Nombre de dysfonctionnements par temps de cohabitation (de ceux qui ont tenté de résoudre le pb ou qui l'ont résolu)**
+
+```{r include=FALSE}
+nb_dys = c()
+cohab = c()
 
 
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+for (i in 1:length(variable)){
+  liste_pbs=liste_pbs=str_extract_all(variable[i],".{2}")[[1]]
+  liste_pbs=as.numeric(liste_pbs)
+  for (j in 1:length(liste_pbs)){
+    pb=liste_pbs[j]
+    num=as.character(pb)
+    nom_colonne=paste0("COHABITATION_DYSFONCTION_A",num)
+    val=df[i,nom_colonne]
+    if (!is.na(val) && !is.null(val)){
+      nb_dys=c(nb_dys,length(liste_pbs))
+      cohab=c(cohab,val)
+    }
+  }
+}
 
-```{r}
+df5 <- data.frame(nb_dys=nb_dys,cohab=cohab)
+print(df5)
+data1 = data.frame(unique(df5))
+data1
+
+
+```
+
+
+```{r include=FALSE}
+head(nb_dys)
+head(cohab)
+
+length(nb_dys) #351
+
+df5 <- data.frame(nb_dys=nb_dys,cohab=cohab)
+liste2 = c()
+
+nb_dys_unique = sort(unique(nb_dys))
+cohab_unique=sort(unique(cohab))
+for ( k in 1:nrow(df5)){
+  dys <- df5[k,"nb_dys"]
+  coh <- df5[k,"cohab"]
+  n = nrow(df5[which(df5$nb_dys==dys & df5$cohab==coh),])
+  liste2=c(liste2,n)
+    }
+
+
+df5$nb_concernees = liste2
+
+df5
+
+
+```
+
+```{r echo=FALSE}
+df6 = distinct(df5)
+df6$Categorie <- factor(df6$cohab, levels = 1:length(label_COHABITATION),labels=label_COHABITATION)
+
+
+df6$nb_dys = as.factor(df6$nb_dys)
+df6$cohab = as.factor(df6$cohab)
+
+# Créer le diagramme à barres empilées
+p <- ggplot(df6, aes(x = Categorie, y = nb_concernees, fill =nb_dys)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_brewer(palette = "Reds", name = "Nb de Dysfonctionnements") +
+  labs(title = "Nombre de dysfonctionnements et temps de cohabitation",
+       x = "Temps de cohabitation",
+       y = "Nombre de personnes") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="orangered3"),
+        axis.title.x = element_text(face = "bold",colour="orangered3"),
+        axis.title.y = element_text(face = "bold",colour="orangered3"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+
+```{r include=FALSE}
 indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A1")
 print(indice_colonne) # 106
 
