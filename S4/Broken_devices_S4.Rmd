@@ -149,6 +149,7 @@ Les réponses possibles étaient :
 -   3 : Autre
 -   4 : Je ne sais pas
 
+Voici le pourcentage de réponses obtenues : 
 ```{r echo=FALSE}
 nb_individus=nrow(data)
 valeurs=as.matrix(table(data$OS))
@@ -177,11 +178,11 @@ p_interactif
 
 ```
 
-La plupart des propriétaires de smartphone ont donc des android (67% des
+La plupart des propriétaires de smartphone ont donc des androids (67% des
 personnes de la base).
 
 Regardons maintenant le nombre de personnes rencontrant des
-dysfonctionnements pour chaque systèmes d'exploitation :
+dysfonctionnements pour chaque système d'exploitation :
 
 ```{r echo=FALSE}
 sys = sort(unique(data$OS))
@@ -284,7 +285,7 @@ dataframe <- data.frame("État"=label_ETAT,"Nb_personnes"=mat[2,],"Nb_personnes_
 print(dataframe)
 ```
 
-La part de dysfonctionnements pour les smarthpones d'occasion est assez importante (50%), suivi des smartphones reconditionnés avec une part de 45% de dysfonctionnements.
+La part de dysfonctionnements pour les smarthpones d'occasion est assez importante (50%), suivie des smartphones reconditionnés avec une part de 45% de dysfonctionnements.
 
 #### **2 ) Smartphone d'occasion** 
 
@@ -292,7 +293,7 @@ Parmis les smartphones d'occasion, quelle était leur durée d'utilisation avant
 
 Le graphe suivant nous donne plus de détails : 
 
-```{r}
+```{r echo=FALSE}
 label_duree_occas <- c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
 
 df =data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),"UTILISATIONSMARTOCCAS"]
@@ -325,13 +326,7 @@ p_interactif
 
 ### **IV ) Groupement des thématiques par catégories**
 
-#### **1 ) Groupement à plus grosses mailles**
-
-```{r}
-
-```
-
-#### **2 ) Groupement plus fin par thématiques**
+Groupement plus fin par thématiques : 
 
 Les différentes catégories pourraient être :
 
@@ -384,7 +379,7 @@ print(matrice_cat)
 
 ```
 
-#### **1 ) Visualisation des catégories** 
+##### **1 ) Visualisation des catégories** 
 
 Le tableau suivant donne le nombre de dysfonctionnements rencontrés pour chaque catégorie, et la part de chaque catégorie par rapport au nombre total de dysfonctionnements qui est de 832 :
 
@@ -453,9 +448,9 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-#### **2 ) Types de gênes ressenties en fonction des catégories**
+##### **2 ) Types de gênes ressenties en fonction des catégories**
 
-Parmis ces différentes catégories quels sont les types de gênes ressentis pour chacun des dysfonctionnements, le tableau suivant indique ces différents types de gênes ressenties pour chacunes des catégories en pourcentage : 
+Parmis ces différentes catégories quels sont les types de gênes ressenties pour chacun des dysfonctionnements, le tableau suivant indique ces différents types de gênes ressenties pour chacunes des catégories en pourcentage : 
 
 ```{r echo=FALSE}
 CATEGORIE <- c(1:5)
@@ -508,7 +503,7 @@ df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
 p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Type de gênes ressenties par catégorie",
-       x = "DYsfonctionnements",
+       x = "Dysfonctionnements",
        y = "Nombre de personnes ") +
   scale_fill_manual(values = c("Trés gênant" = "#1f77b4", 
                                "Plutôt gênant" = "#6baed6", 
@@ -578,7 +573,7 @@ p <- ggplot(df_combined, aes(x = Résolution, y = valeurs, fill = Dysfonctionnem
        x = "Types de résolution",
        y = "Pourcentage de personnes (%) ") +
   
-  scale_fill_brewer(palette = "Greens", name = "Nb de Dysfonctionnements") +
+  scale_fill_brewer(palette = "Greens", name = "Dysfonctionnements") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
         axis.title.x = element_text( face = "bold",colour="palegreen3"), 
@@ -590,10 +585,10 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
-On remarque que dans chaque catégorie, les dysfonctionnements majoritaires sont ceux étant matériels, suivi de ceux étant liés à la performance. Les parts des différentes catégories semblent être assez égales entre chaque types de résolution.
+On remarque que dans chaque catégorie, les dysfonctionnements majoritaires sont ceux étant matériels, suivis de ceux étant liés à la performance. Les parts des différentes catégories semblent être assez égales entre chaque types de résolution.
 
 
-Le tableau suivant donne plus de détails pour chaque types de résolution, avec une part en pourcentage du type de dysfonctionnement concerné pour chaque type de résolution : 
+Le tableau suivant donne plus de détails pour chaque types de résolution, avec une part en pourcentage pour cahque catégorie de dysfonctionnements, pour chaque type de résolution : 
 
 ```{r echo=FALSE}
 REPARATION <- c(1:5)
@@ -672,7 +667,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Dysfonctionnemen
        x = "Temps de cohabitation",
        y = "Pourcentage de personnes (%) ") +
   
-  scale_fill_brewer(palette = "Purples", name = "Nb de Dysfonctionnements") +
+  scale_fill_brewer(palette = "Purples", name = "Dysfonctionnements") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="purple4"),
         axis.title.x = element_text( face = "bold",colour="purple4"), 
@@ -684,7 +679,7 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
-Ce graphe nous montre que les problèmes de types matériel sont ceux qui ce règlent le plus vite.
+Ce graphe nous montre que les problèmes de type matériel sont ceux qui ce règlent le plus vite.
 
 ### **V ) Temps de cohabitation de ceux qui n'ont pas résolu le problème** 
 
@@ -838,7 +833,7 @@ table(vec)
 
 label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
 ```
-Pour déterminer le temps de cohabitation avec les dysfonctionnements des individus n'ayant pas résolu pas le problème, il a fallu prendre le mois et l'année d'obtention de leur téléphone, puis pour chaque dysfonctionnement rencontré, le temps approximatif au bout duquel il se rendu compte du problème, et déterminer le temps qui séparait ce temps approximatif du mois de novembre 2023 (date du questionnaire). Voici les temps de cohabitation pour les personnes n'ayant pas résolu les problèmes : 
+Pour déterminer le temps de cohabitation avec les dysfonctionnements des individus n'ayant pas résolu pas le problème, il a fallu prendre le mois et l'année d'obtention de leur téléphone, puis pour chaque dysfonctionnement rencontré, le temps approximatif durant lequel il se rendu compte du problème, et déterminer le temps qui séparait ce temps approximatif du mois de novembre 2023 (date du questionnaire). Voici les temps de cohabitation pour les personnes n'ayant pas résolu les problèmes : 
 
 ```{r echo=FALSE}
 don2 <- as.matrix(table(vec))
@@ -926,7 +921,7 @@ p <- ggplot(don, aes(x = obs, y =Cohabitation )) +
   theme_minimal() +
   labs(title = "Nuage de points du temps de cohabitation",
        y = "Temps de cohabitation",
-       x = "Dysfonctionnements") +
+       x = "Individus") +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="orchid4"),
         axis.title.x = element_text(face = "bold",colour="orchid4"),
         axis.title.y = element_text(face = "bold",colour="orchid4"),
@@ -938,7 +933,7 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-On remarque que le temmps de cohabitation avec le problème lorsqu'on ne l'a pas résolu est de deux ans en trés grande marjorité, suivi de entre 6 mois et 2 ans.
+On remarque que le temps de cohabitation avec le problème, lorsqu'on ne l'a pas résolu est de deux ans en trés grande marjorité, suivi de entre 6 mois et 2 ans.
 
 ### **VI ) Nombre de dysfonctionnements** 
 
@@ -971,7 +966,7 @@ df2 <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys,Nb_personnes_concer
 print(df2)
 ```
 
-Il serait intéressant de savoir le nombre de personnes ayant rencontré 1,2,3 ou plus de dysfonctionnements en fonction de l'année d'obtention de leur smartphone. On se concentre sur les 5 dernières années car c'est celles pour lesquelles le nombre de dysfonctionnements rencontrés est important. Le graphe suivant nous apporte ces détails : 
+Il serait intéressant de savoir quel est le nombre de personnes ayant rencontré 1,2,3 ou plus de dysfonctionnements en fonction de l'année d'obtention de leur smartphone. On se concentre sur les 5 dernières années car c'est celles pour lesquelles le nombre de dysfonctionnements rencontrés est important. Le graphe suivant nous apporte plus de détails : 
 
 ```{r echo=FALSE}
 
@@ -999,10 +994,11 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-On observe que de 2018 à 2020, le nombre de dysfonctionnements recontrés par individus est de 2 en général, et que vers 2021 il passe à 1.
+On observe que de 2018 à 2020, le nombre de dysfonctionnements rencontrés par individus est de 2 en général, et que vers 2021 il passe à 1 majoritairement.
 
 #### **2 ) Nombre de dysfonctionnements par temps de cohabitation (de ceux qui ont tenté de résoudre le pb ou qui l'ont résolu)**
 
+Ce graphe présente le nombre de personnes ayant cohabité avec des problèmes, et le nombre de dysfonctionnements qu'ils rencontraients à ce moment là : 
 ```{r include=FALSE}
 nb_dys = c()
 cohab = c()
@@ -1087,6 +1083,7 @@ p_interactif <- ggplotly(p)
 p_interactif  
 ```
 
+On remarque que ceux qui ont cohabité avec le(s) problème(s) peu de temps étaient ceux qui en rencontraient plusieurs en même temps.
 
 ```{r include=FALSE}
 indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A1")
