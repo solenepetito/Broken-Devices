@@ -1083,8 +1083,7 @@ p_interactif <- ggplotly(p)
 p_interactif  
 ```
 
-On remarque que ceux qui ont cohabité avec le(s) problème(s) peu de temps étaient ceux qui en rencontraient plusieurs en même temps.
-
+On remarque que ceux qui ont cohabité avec le(s) problème(s) peu de temps étaient ceux qui en rencontraient plusieurs en même temps. 
 ```{r include=FALSE}
 indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A1")
 print(indice_colonne) # 106

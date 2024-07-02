@@ -1,0 +1,536 @@
+---
+title: 'Project : Broken devices S5'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-07-01"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **SEMAINE DU 1 JUILLET 2024 au 5 JUILLET 2024 :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+1
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
+
+label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
+label_RAISON_UTIL_PB <- c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité", "Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas","Je ne sais pas comment résoudre le(s) problème(s)","Je veux faire durer mon téléphone le plus longtemps possible","Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien","Je n’ai pas pris le temps de m’en occuper, de chercher une solution","Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace","La résolution du (ou des) problème(s) est trop difficile ou incertaine","Ça me donne un prétexte pour moins l’utiliser","Cela ne vaut pas la peine de résoudre le(s) problème(s)","Mon smartphone a une particularité difficile à retrouver si je devais le remplacer","Autre")
+
+```
+
+**OBJECTIF :** *Analyser la base de données*
+
+## **ANALYSE DE LA BASE DE DONNÉES**
+
+### **I ) Import de la nouvelle base de données formattée**
+
+```{r}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
+### **II ) Comportement face au(x) dysfonctionnement(s)**
+
+La question posée était : **Pour quelles raisons continuez-vous à
+utiliser votre smartphone malgré les problèmes rencontrés ou qui
+subsistent ?**
+
+Les réponses possibles étaient :
+
+-   1 : Cela serait trop coûteux de résoudre le(s) problème(s) ou de
+    remplacer mon smartphone
+
+-   2 : J'attends une opportunité
+
+-   3 : Je ne peux pas résoudre le problème car le smartphone ne
+    m'appartient pas
+
+-   4 : Je ne sais pas comment résoudre le(s) problème(s)
+
+-   5 : Je veux faire durer mon téléphone le plus longtemps possible
+
+-   6 : Ce(s) problème(s) ne m'impacte(nt) pas tant que ça au quotidien
+
+-   7 : Je n'ai pas pris le temps de m'en occuper, de chercher une
+    solution
+
+-   8 : Mon téléphone est trop récent pour que je le fasse réparer ou
+    que je le remplace
+
+-   9 : La résolution du (ou des) problème(s) est trop difficile ou
+    incertaine
+
+-   10 : Ça me donne un prétexte pour moins l'utiliser
+
+-   11 : Cela ne vaut pas la peine de résoudre le(s) problème(s)
+
+-   12 : Mon smartphone a une particularité difficile à retrouver si je
+    devais le remplacer
+
+-   13 : Autre
+
+```{r}
+variable=data$RRAISON_UTIL_PB_FORM
+nb_de_modalites <- 14
+mat=Count_VCM(variable,nb_de_modalites)
+print(mat)
+
+```
+
+```{r}
+print(nrow(data[which(data$RRAISON_UTIL_PB_FORM!="14"),]))
+```
+
+### **III ) Degrés de gêne par temps de cohabitation de ceux qui n'ont pas réparé**
+
+```{r include=FALSE}
+# Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
+recence <- c()
+annee <- c()
+mois <- c()
+gene <- c()
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105 (indice des colonnes reparation)
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 4 || val == 5)) {
+      RECENCE <- df[j, i - 25]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(RECENCE)) {
+        recence <- c(recence, RECENCE)
+        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
+        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+        gene <- c(gene,df[j, i - 50])
+      }
+    }
+  }
+}
+
+# Suppression de la raison 7 dans la liste recence 
+
+indices_rec_7= which(recence==7)
+gene=gene[-c(indices_rec_7)]
+
+# Afficher les résultats pour vérifier
+print(head(recence))
+print(head(annee))
+print(head(mois))
+print(head(gene))
+```
+
+```{r include=FALSE}
+COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
+
+length(COHAB_non_resolus)
+```
+
+```{r include=FALSE}
+val=sort(unique(COHAB_non_resolus))
+total=as.matrix(table(COHAB_non_resolus))
+
+mat=matrix(0,nrow=5,ncol=length(val))
+mat[1,]=val
+
+for (i in val){
+  indices=which(COHAB_non_resolus==i)
+  g = gene[c(indices)]
+  freq=as.matrix(table(g))
+  mat[2:(length(freq)+1),i]=freq
+}
+mat
+# Définir une fonction de normalisation
+normalize <- function(x) {
+  return(round(x*100/total))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat <- t(apply(mat[2:5,], 1, normalize))
+print(normalized_mat)
+
+```
+
+
+```{r echo=FALSE}
+Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Gêne = "Trés gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[4,], Gêne = "Pas gênant du tout")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Type de gênes ressenties par temps de Cohabitation",
+       x = "Temps de cohabitation",
+       y = "Pourcentage de dysfonctionnements ") +
+  scale_fill_manual(values = c("Trés gênant" = "#1f77b4", 
+                               "Plutôt gênant" = "#6baed6", 
+                               "Plutôt pas gênant" = "#9ecae1", 
+                               "Pas gênant du tout" = "#c6dbef")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
+        axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+
+```
+
+### **IV ) Graphe qui rassemble les cohabitations pour ceux qui ont résolu, ceuix qui ont tenté de résoudre et qui n'ont pas réussi et ceux qui n'ont tenté de résoudre**
+
+```{r include=FALSE}
+# Cohabitation + réparation 
+
+REPARATION <- c(1:5)
+matrice <- matrix(0,nrow=7,ncol=length(REPARATION))
+matrice[1,] <- REPARATION
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+for (i in 81:105){
+    colonne=df[,i]
+    for (j in 1:length(colonne)){
+      num_REP <- df[j,i]
+      num_COHAB <- df[j,i+25]
+      if (!is.na(num_COHAB) && !is.na(num_REP) ){
+        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+1
+      }
+    }
+}
+print(matrice)
+
+matrice_fin=matrice[2:nrow(matrice),1:3]
+total=as.matrix(table(COHAB_non_resolus))
+
+matrice_fin[2:5,3]=total[,1]
+matrice_fin=t(matrice_fin)
+print(matrice_fin)
+
+
+normalize <- function(x) {
+  return(round(x*100/colSums(matrice_fin)))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat <- t(apply(t(matrice_fin), 2, normalize))
+print(normalized_mat)
+
+```
+
+```{r echo=FALSE}
+Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Résolution = "Résolu")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Résolution = "Tenté mais pas réussi")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Résolution = "Pas résolu")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Résolution)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Répartition des temps de Cohabitation",
+       x = "Temps de cohabitation",
+       y = "Pourcentage de dysfonctionnements ") +
+  scale_fill_manual(values = c("Résolu" = "#1f77b4", 
+                               "Tenté mais pas réussi"= "#6baed6", 
+                               "Pas résolu"= "#c6dbef")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
+        axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+
+```
+
+```{r include=FALSE}
+colSums(matrice_fin)
+```
+
+### **V ) Niveau de gêne de ceux qui ont réparé vs ceux qui n'ont pas réparé**
+
+```{r include=FALSE}
+gene_pbs_non_resolus=as.matrix(table(gene))
+gene_pbs_non_resolus
+```
+
+```{r include=FALSE}
+gene_tente_pas_reussi <- c()
+gene_pbs_resolus <- c()
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105 (indice des colonnes reparation)
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 1)) {
+      g <- df[j, i - 50]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(g)) {
+        gene_pbs_resolus <- c(gene_pbs_resolus,g)
+      }
+    }
+    if (!is.na(val) && (val == 2)) {
+      g <- df[j, i - 50]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(g)) {
+        gene_tente_pas_reussi <- c(gene_tente_pas_reussi,g)
+      }
+    }
+  }
+}
+
+gene_pbs_resolus=as.matrix(table(gene_pbs_resolus))
+gene_tente_pas_reussi=as.matrix(table(gene_tente_pas_reussi))
+
+print(gene_pbs_resolus)
+print(gene_tente_pas_reussi)
+```
+
+```{r include=FALSE}
+# Types de résolution en abscisse et gêne en ordonné
+
+mat=matrix(0,nrow=3,ncol=3)
+mat[,1]=gene_pbs_resolus[,1]
+mat[,2]=gene_tente_pas_reussi[,1]
+mat[,3]=gene_pbs_non_resolus[,1]
+print(mat)
+
+total=colSums(mat)
+print(total)
+
+normalize <- function(x) {
+  return(round(x*100/total))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat <- t(apply(mat, 1, normalize))
+print(normalized_mat)
+```
+
+```{r echo=FALSE}
+label=c("Résolu","Tenté mais pas réussi","Pas résolu")
+Categorie <- factor(label, levels = label)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Gêne = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Niveau de gêne en fonction de la résolution",
+       x = "Type de résolution",
+       y = "Pourcentage de dysfonctionnements ")  +
+  scale_fill_brewer(palette = "Greens", name = "Degrès de Gêne") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
+        axis.title.x = element_text( face = "bold",colour="palegreen3"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="palegreen3")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+### **VI ) Pour les usages : faire au cas lorsque le propriètaire rencontre un pb**
+
+```{r}
+matrice = matrix(0,nrow=15,ncol=26)
+
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+
+for (i in 1:length(variable)){
+  liste_pbs=str_extract_all(variable[i], ".{2}")[[1]]
+  if (length(liste_pbs)==1){
+    for (j in 1:length(liste_pbs)){
+      pb=liste_pbs[1]
+      pb=as.numeric(pb)
+      liste_impacts = str_extract_all(df[i,"RIMPACT_PB"], ".{2}")[[1]]
+      liste_impacts = as.numeric(liste_impacts)
+      for (k in liste_impacts){
+        matrice[k,pb]=matrice[k,pb]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r }
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
+print(indice_colonne) # 106
+
+indice_colonne <- which(names(data) == "REPARATION_A1")
+print(indice_colonne) # 81
+
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
+print(indice_colonne) # 80
+
+indice_colonne <- which(names(data) == "REPARATION_A25")
+print(indice_colonne) #105
+
+81-31
+
+```
