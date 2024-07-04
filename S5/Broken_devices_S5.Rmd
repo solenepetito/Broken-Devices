@@ -908,7 +908,7 @@ print(length(cohab))
 
 
 don = data.frame()
-don <- data.frame("Num Dys"=pbs, "Categorie_dys"=cate_dys, "Gêne"=deg_gene,"Cohab"=cohab)
+don <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=deg_gene,"Cohab"=cohab)
 print(head(don))
 print(nrow(don))
 ```
@@ -957,11 +957,223 @@ gene=gene[-c(indices_rec_7)]
 pbs=pbs[-c(indices_rec_7)]
 cate_dys=cate_dys[-c(indices_rec_7)]
 
+don2 <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=gene,"Cohab"=COHAB_non_resolus)
+
 # Afficher les résultats pour vérifier
 print(head(pbs))
 print(head(cate_dys))
 print(head(gene))
 
+don <- rbind(don,don2)
+
+don1 <- rbind(don,don2)
+head(don)
+nrow(don)
+nrow(don2)
+```
+
+```{r}
+liste = c()
+for (k in 1:nrow(don)){
+  i = don[k,"Gêne"]
+  j = don[k,"Categorie_dys"]
+  l = don[k,"Cohab"]
+  df2 <- don[which(don$Categorie_dys==j & don$Gêne==i & don$Cohab==l),]
+  nb = nrow(df2)
+  liste = c(liste,nb)
+  
+}
+don$nb <- liste
+don <- unique(don)
+don <- don %>% 
+  arrange( Cohab,Gêne,Categorie_dys)
+
+don$labels<- rep(c("Dys Stockage trés gênant","Dys Matériel trés gênant","Dys Maj trés gênant", "Dys divers trés gênant","Dys Stockage plutôt gênant", "Dys Matériel plutôt gênant","Dys Maj plutôt gênant","Dys divers plutôt gênant","Dys Stockage plutôt pas gênant", "Dys Matériel plutôt pas gênant","Dys Maj plutôt pas gênant","Dys divers plutôt pas gênant"),times=5)
+
+print(don)
+nrow(don)
+```
+
+```{r}
+# Création du graphique à barres empilées
+p <- ggplot(don, aes(x = factor(Cohab), y = nb, fill = factor(labels, levels = unique(labels)))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Dys Stockage trés gênant"="#006400","Dys Matériel trés gênant"= "#228B22","Dys Maj trés gênant"= "#32CD32", "Dys divers trés gênant"="#98FB98","Dys Stockage plutôt gênant"="#FFD700", "Dys Matériel plutôt gênant"="#FFF200","Dys Maj plutôt gênant"= "#FFFF00","Dys divers plutôt gênant"= "#FFFFE0","Dys Stockage plutôt pas gênant"= "#000080", "Dys Matériel plutôt pas gênant"="#0000CD","Dys Maj plutôt pas gênant"= "#1E90FF","Dys divers plutôt pas gênant"= "#ADD8E6")) +
+  labs(title = "Barres Empilées pour Différentes Catégories de Dysfonctionnement",
+       x = "Temps de Cohabitation",
+       y = "Nombre de dysfonctionnements",
+       fill = "Catégorie et Gêne") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.title.y = element_text(face = "bold"))
+
+# Affichage du graphique
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif
+```
+```{r}
+
+
+labels <- c("Dys Stockage trés gênant","Dys Stockage plutôt gênant","Dys Stockage plutôt pas gênant", "Dys divers trés gênant", "Dys Divers plutôt gênant","Dys Divers plutôt pas gênant","Dys Maj trés gênant", "Dys Maj plutôt gênant","Dys Maj plutôt pas gênant","Dys Matériel trés gênant", "Dys Matériel plutôt gênant","Dys Matériel plutôt pas gênant")
+
+colors <- c("Dys Stockage trés gênant"="#006400","Dys Stockage plutôt gênant"= "#228B22","Dys Stockage plutôt pas gênant"= "#98FB98", "Dys divers trés gênant"="#FFD700", "Dys Divers plutôt gênant"="#FFF200","Dys Divers plutôt pas gênant"= "#FFFFE0","Dys Maj trés gênant"= "#0000CD", "Dys Maj plutôt gênant"="#1E90FF","Dys Maj plutôt pas gênant"= "#ADD8E6","Dys Matériel trés gênant"= "#B22222", "Dys Matériel plutôt gênant"="#FF0000","Dys Matériel plutôt pas gênant"= "#FFA07A")
+
+
+liste = c()
+for (k in 1:nrow(don1)){
+  i = don1[k,"Gêne"]
+  j = don1[k,"Categorie_dys"]
+  l = don1[k,"Cohab"]
+  df2 <- don1[which(don1$Categorie_dys==j & don1$Gêne==i & don1$Cohab==l),]
+  nb = nrow(df2)
+  liste = c(liste,nb)
+  
+}
+don1$nb <- liste
+don1 <- unique(don1)
+don1 <- don1 %>% 
+  arrange( Cohab,Categorie_dys,Gêne)
+
+don1$labels<- rep(labels,times=5)
+
+print(don1)
+nrow(don1)
+```
+
+
+
+```{r}
+
+# Création du graphique à barres empilées
+p <- ggplot(don1, aes(x = factor(Cohab), y = nb, fill = factor(labels, levels = unique(labels)))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values =c("Dys Stockage trés gênant"="#006400","Dys Stockage plutôt gênant"= "#228B22","Dys Stockage plutôt pas gênant"= "#98FB98", "Dys divers trés gênant"="#FFD700", "Dys Divers plutôt gênant"="#FFF200","Dys Divers plutôt pas gênant"= "#FFFFE0","Dys Maj trés gênant"= "#0000CD", "Dys Maj plutôt gênant"="#1E90FF","Dys Maj plutôt pas gênant"= "#ADD8E6","Dys Matériel trés gênant"= "#B22222", "Dys Matériel plutôt gênant"="#FF0000","Dys Matériel plutôt pas gênant"= "#FFA07A")) +
+  labs(title = "Barres Empilées pour Différentes Catégories de Dysfonctionnement",
+       x = "Temps de Cohabitation",
+       y = "Nombre de dysfonctionnements",
+       fill = "Catégorie et Gêne") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.title.y = element_text(face = "bold"))
+
+# Affichage du graphique
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif
+```
+
+
+```{r}
+# label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+cohab1 <- don[which(don$Cohab==1),2:3]
+
+G1_mat <- cohab1[which(cohab1$Categorie_dys==2 & cohab1$Gêne==1),]
+G2_mat <- cohab1[which(cohab1$Categorie_dys==2 & cohab1$Gêne==2),]
+G3_mat <- cohab1[which(cohab1$Categorie_dys==2 & cohab1$Gêne==3),]
+
+G1_stock <- cohab1[which(cohab1$Categorie_dys==1 & cohab1$Gêne==1),]
+G2_stock <- cohab1[which(cohab1$Categorie_dys==1 & cohab1$Gêne==2),]
+G3_stock <- cohab1[which(cohab1$Categorie_dys==1 & cohab1$Gêne==3),]
+
+G1_maj <- cohab1[which(cohab1$Categorie_dys==3 & cohab1$Gêne==1),]
+G2_maj <- cohab1[which(cohab1$Categorie_dys==3 & cohab1$Gêne==2),]
+G3_maj <- cohab1[which(cohab1$Categorie_dys==3 & cohab1$Gêne==3),]
+
+G1_dd <- cohab1[which(cohab1$Categorie_dys==4 & cohab1$Gêne==1),]
+G2_dd <- cohab1[which(cohab1$Categorie_dys==4 & cohab1$Gêne==2),]
+G3_dd <- cohab1[which(cohab1$Categorie_dys==4 & cohab1$Gêne==3),]
+
+liste = c()
+for (k in 1:nrow(cohab1)){
+  i = cohab1[k,"Gêne"]
+  j = cohab1[k,"Categorie_dys"]
+  df2 <- cohab1[which(cohab1$Categorie_dys==j &   cohab1$Gêne==i),]
+  nb = nrow(df2)
+  liste = c(liste,nb)
+  
+}
+cohab1$nb <- liste
+cohab1 <- unique(cohab1)
+cohab1 <- cohab1 %>% 
+  arrange( Gêne,Categorie_dys)
+
+cohab1$labels<- c("Dys Stockage trés gênant","Dys Matériel trés gênant","Dys Maj trés gênant", "Dys divers trés gênant","Dys Stockage plutôt gênant", "Dys Matériel plutôt gênant","Dys Maj plutôt gênant","Dys divers plutôt gênant","Dys Stockage plutôt pas gênant", "Dys Matériel plutôt pas gênant","Dys Maj plutôt pas gênant","Dys divers plutôt pas gênant")
+# Affichage du dataframe trié
+print(cohab1)
+
+```
+
+```{r}
+
+# Création du graphique à barres empilées
+p <- ggplot(cohab1, aes(x = factor(1), y = nb, fill = factor(labels, levels = labels))) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Dys Stockage trés gênant"="#006400","Dys Matériel trés gênant"= "#228B22","Dys Maj trés gênant"= "#32CD32", "Dys divers trés gênant"="#98FB98","Dys Stockage plutôt gênant"="#FFD700", "Dys Matériel plutôt gênant"="#FFF200","Dys Maj plutôt gênant"= "#FFFF00","Dys divers plutôt gênant"= "#FFFFE0","Dys Stockage plutôt pas gênant"= "#000080", "Dys Matériel plutôt pas gênant"="#0000CD","Dys Maj plutôt pas gênant"= "#1E90FF","Dys divers plutôt pas gênant"= "#ADD8E6")) +
+  labs(title = "Barres Empilées pour Différentes Catégories de Dysfonctionnement",
+       x = "Temps de Cohabitation",
+       y = "Nombre de dysfonctionnements",
+       fill = "GCatégorie et Gêne") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.title.y = element_text(face = "bold"))
+
+# Affichage du graphique
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif
+```
+
+```{r}
+colors <- c("Dys Stockage trés gênant"="#006400","Dys Matériel trés gênant"= "#228B22","Dys Maj trés gênant"= "#32CD32", "Dys divers trés gênant"="#98FB98","Dys Stockage plutôt gênant"="#FFD700", "Dys Matériel plutôt gênant"="#FFF200","Dys Maj plutôt gênant"= "#FFFF00","Dys divers plutôt gênant"= "#FFFFE0","Dys Stockage plutôt pas gênant"= "#000080", "Dys Matériel plutôt pas gênant"="#0000CD","Dys Maj plutôt pas gênant"= "#1E90FF","Dys divers plutôt pas gênant"= "#ADD8E6") 
+
+labels <- c("Dys Stockage trés gênant","Dys Matériel trés gênant","Dys Maj trés gênant", "Dys divers trés gênant","Dys Stockage plutôt gênant", "Dys Matériel plutôt gênant","Dys Maj plutôt gênant","Dys divers plutôt gênant","Dys Stockage plutôt pas gênant", "Dys Matériel plutôt pas gênant","Dys Maj plutôt pas gênant","Dys divers plutôt pas gênant")
+```
+
+
+
+```{r}
+liste = c()
+for (k in 1:nrow(don)){
+  i = don[k,"Gêne"]
+  j = don[k,"Categorie_dys"]
+  df2 <- don[which(don$Categorie_dys==j &   don$Gêne==i),]
+  nb = nrow(df2)
+  liste = c(liste,nb)
+  
+}
+don$nb <- liste
+don <- unique(don)
+don <- don %>% 
+  arrange( Gêne,Categorie_dys,Cohab)
+
+print(don)
+nrow(don)
+```
+
+
+```{r}
+# Chargement des bibliothèques nécessaires
+library(dplyr)
+
+# Exemple de dataframe
+df <- data.frame(Categorie_dys = c(2, 2, 2, 1, 1, 1, 3, 3, 3, 4, 4, 4),
+                 Gene = c(2, 3, 1, 2, 1, 3, 3, 1, 2, 1, 3, 2),
+                 Nombre = c(10, 15, 5, 8, 12, 7, 3, 6, 9, 2, 4, 1))
+
+# Tri des données selon Categorie_dys puis Gene
+df_sorted <- df %>% 
+  arrange(Categorie_dys, Gene)
+
+# Affichage du dataframe trié
+print(df_sorted)
 
 ```
 

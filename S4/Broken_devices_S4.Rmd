@@ -523,6 +523,8 @@ p_interactif
 
 La gêne ressentie parmis tous les dysfonctionnements et ce peut importe la catégorie, est en grande marjorité "plutôt gênante".
 
+
+
 #### **3 ) Répartition des catégories pour chaque type de résolution**
 
 ```{r include=FALSE}
@@ -807,7 +809,7 @@ print(head(days_elapsed))
 
 ```
 
-```{r include=FALSE}
+```{r}
 # Calcul du temps de cohabitation : 
 
 vec=c()
@@ -828,7 +830,7 @@ for(i in 1:length(days_elapsed)){
   }
 }
 
-head(vec)
+vec
 table(vec)
 
 label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")

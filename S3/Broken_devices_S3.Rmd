@@ -1208,6 +1208,8 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = CSP)) +
 
 p_interactif <- ggplotly(p)
 
+p_interactif
+
 # Afficher le graphique interactif
 ```
 
