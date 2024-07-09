@@ -142,10 +142,12 @@ View(data)
 View(Broken_Devices_Data)
 ```
 
-
 ### **I ) Degrés de gêne par temps de cohabitation de ceux qui n'ont pas réparé**
 
-Précédemment il a été calculé le temps de cohabitation de ceux qui n'avait pas tenté de résoudre le(s) dysfonctionnement(s). Le graphe qui suit permet de montrer pour chaque temps de cohabitation, le degré de gêne qui a été ressentis pour chacun d'eux :
+Précédemment il a été calculé le temps de cohabitation de ceux qui
+n'avait pas tenté de résoudre le(s) dysfonctionnement(s). Le graphe qui
+suit permet de montrer pour chaque temps de cohabitation, le degré de
+gêne qui a été ressenti pour chacun d'eux :
 
 ```{r include=FALSE}
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
@@ -219,29 +221,28 @@ print(normalized_mat)
 
 ```
 
-
 ```{r include=FALSE}
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Gêne = "Trés gênant")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne = "Plutôt gênant")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = "Plutôt pas gênant")
-df_T4 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[4,], Gêne = "Pas gênant du tout")
+gene_levels <- c("Plutôt pas gênant", "Plutôt gênant", "Très gênant")
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Gêne = factor("Très gênant",levels=gene_levels))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne = factor("Plutôt gênant",levels=gene_levels))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = factor("Plutôt pas gênant",levels=gene_levels))
 
 
 # Combiner les deux data frames
-df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+df_combined <- rbind(df_T1, df_T2, df_T3)
 
 # Créer un diagramme en barres empilées
 p1 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Type de gênes par temps de cohabitation",
        x = "Temps de cohabitation",
-       y = " ") +
-  scale_fill_manual(values = c("Trés gênant" = "#1f77b4", 
+       y = "Pourcentage de dysfonctionnements ") +
+  scale_fill_manual(values = c("Très gênant" = "#1f77b4", 
                                "Plutôt gênant" = "#6baed6", 
-                               "Plutôt pas gênant" = "#9ecae1", 
-                               "Pas gênant du tout" = "#c6dbef")) +
+                               "Plutôt pas gênant" = "#c6dbef")) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
         axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
@@ -254,28 +255,28 @@ p1_interactif <- ggplotly(p1)
 p1_interactif  
 
 ```
+
 ```{r include=FALSE}
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
+gene_levels <- c("Plutôt pas gênant", "Plutôt gênant", "Très gênant")
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,]*100/nb_non_resolus, Gêne = "Trés gênant")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[3,]*100/nb_non_resolus, Gêne = "Plutôt gênant")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[4,]*100/nb_non_resolus, Gêne = "Plutôt pas gênant")
-df_T4 <- data.frame(Categorie = Categorie, valeurs = mat[5,]*100/nb_non_resolus, Gêne = "Pas gênant du tout")
+df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,]*100/nb_non_resolus, Gêne = factor("Très gênant",levels=gene_levels))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[3,]*100/nb_non_resolus, Gêne = factor("Plutôt gênant",levels=gene_levels))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[4,]*100/nb_non_resolus, Gêne =factor("Plutôt pas gênant",levels=gene_levels))
 
 
 # Combiner les deux data frames
-df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+df_combined <- rbind(df_T1, df_T2, df_T3)
 
 # Créer un diagramme en barres empilées
 p2 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Types de gênes par temps de cohabitation",
        x = "Temps de cohabitation",
-       y = "Pourcentage de dysfonctionnements ") +
-  scale_fill_manual(values = c("Trés gênant" = "#1f77b4", 
+       y = "Nombre de dysfonctionnements ") +
+  scale_fill_manual(values = c("Très gênant" = "#1f77b4", 
                                "Plutôt gênant" = "#6baed6", 
-                               "Plutôt pas gênant" = "#9ecae1", 
-                               "Pas gênant du tout" = "#c6dbef")) +
+                               "Plutôt pas gênant" = "#c6dbef")) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
         axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
@@ -298,7 +299,8 @@ subplot(
   nrows = 1, 
   titleX = TRUE, 
   titleY = TRUE,
-  shareY = FALSE
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
 ) %>%
   layout(
     title = list(
@@ -311,20 +313,27 @@ subplot(
         showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#1f77b4", family = "Arial", weight = "bold")
       ),
       list(
-        x = 0.8, y = 1.05, text = "Sur la même échelle", 
+        x = 0.8, y = 1.05, text = "Sur le même niveau", 
         showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#1f77b4", family = "Arial", weight = "bold")
       )
     ),
-    margin = list(t = 100)  # Ajout de marge pour les titres
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1))  # Ajout de marge pour les titres
   )
 
 ```
 
-Le premier graphe présente les degrés de gêne pour chaque temps de cohabitation pour 316 dysfonctionnements, et le deuxième graphe met tous ces temps de cohabitation à la même échelle et représente la part de chaque degré de gêne.
+Le premier graphe présente les degrés de gêne pour chaque temps de
+cohabitation pour 316 dysfonctionnements, et le deuxième graphe met tous
+ces temps de cohabitation au même niveau et représente la part de
+chaque degré de gêne.
 
 ### **II ) Graphes qui rassemble les temps cohabitations pour tous les types de résolutions**
 
-Le graphe suivant combine deux graphes indiquant le temps de cohabitation pour ceux qui ont résolu, ceux qui ont tenté de résoudre et qui n'ont pas réussi et ceux qui n'ont pas tenté de résoudre :
+Le graphe suivant combine deux graphes indiquant le temps de
+cohabitation pour ceux qui ont résolu, ceux qui ont tenté de résoudre et
+qui n'ont pas réussi et ceux qui n'ont pas tenté de résoudre le dysfonctionnement :
 
 ```{r include=FALSE}
 # Cohabitation + réparation 
@@ -363,12 +372,15 @@ print(normalized_mat)
 
 ```
 
+
+
 ```{r include=FALSE}
 Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
+resolution_label <- c("Pas résolu","Tenté mais pas réussi","Résolu")
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Résolution = "Résolu")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Résolution = "Tenté mais pas réussi")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Résolution = "Pas résolu")
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Résolution = factor("Résolu",levels=resolution_label))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Résolution = factor("Tenté mais pas réussi",levels=resolution_label))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Résolution = factor("Pas résolu",levels=resolution_label))
 
 
 # Combiner les deux data frames
@@ -379,15 +391,15 @@ p3 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Résolution)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Répartition des temps de Cohabitation",
        x = "Temps de cohabitation",
-       y = " ") +
-  scale_fill_manual(values = c("Résolu" = "#1f77b4", 
-                               "Tenté mais pas réussi"= "#6baed6", 
-                               "Pas résolu"= "#c6dbef")) +
+       y = " Pourcentage de problèmes ") +
+  scale_fill_manual(values = c("Résolu" = "#33a02c", 
+                               "Tenté mais pas réussi"= "#FFD700", 
+                               "Pas résolu"= "#e31a1c")) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
-        axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+        axis.title.y = element_text(face = "bold")) 
 
 p3_interactif <- ggplotly(p3)
 
@@ -396,19 +408,19 @@ p3_interactif
 
 ```
 
-```{r include=FALSE}
-colSums(matrice_fin)
-```
+
 
 ```{r include=FALSE}
 pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-nb_total_pbs <- sum(pbs[2,])
+nb_total_pbs <- sum(matrice_fin)
 
 Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = round(matrice_fin[1,]*100/nb_total_pbs), Résolution = "Résolu")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = round(matrice_fin[2,]*100/nb_total_pbs), Résolution = "Tenté mais pas réussi")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = round(matrice_fin[3,]*100/nb_total_pbs), Résolution = "Pas résolu")
+resolution_label <- c("Pas résolu","Tenté mais pas réussi","Résolu")
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = matrice_fin[1,], Résolution = factor("Résolu",levels=resolution_label))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice_fin[2,], Résolution = factor("Tenté mais pas réussi",levels=resolution_label))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice_fin[3,], Résolution = factor("Pas résolu",levels=resolution_label))
 
 
 # Combiner les deux data frames
@@ -419,15 +431,15 @@ p4 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Résolution)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Répartition des temps de Cohabitation",
        x = "Temps de cohabitation",
-       y = "Pourcentage de dysfonctionnements ") +
-  scale_fill_manual(values = c("Résolu" = "#1f77b4", 
-                               "Tenté mais pas réussi"= "#6baed6", 
-                               "Pas résolu"= "#c6dbef")) +
+       y = "Nombre de problèmes ") +
+  scale_fill_manual(values = c("Résolu" = "#33a02c", 
+                               "Tenté mais pas réussi"= "#FFD700", 
+                               "Pas résolu"= "#e31a1c")) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
-        axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+        axis.title.y = element_text(face = "bold")) 
 
 p4_interactif <- ggplotly(p4)
 
@@ -436,9 +448,9 @@ p4_interactif
 ```
 
 
+
+
 ```{r echo=FALSE}
-p3_interactif <- ggplotly(p3)
-p4_interactif <- ggplotly(p4) 
 
 # Utiliser subplot pour afficher les graphiques côte à côte
 subplot(
@@ -446,7 +458,8 @@ subplot(
   nrows = 1, 
   titleX = TRUE, 
   titleY = TRUE,
-  shareY = FALSE
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
 ) %>%
   layout(
     title = list(
@@ -455,23 +468,28 @@ subplot(
     ),
     annotations = list(
       list(
-        x = 0.2, y = 1.05, text = "Sur 832 dysfonctionnements", 
-        showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#1f77b4", family = "Arial", weight = "bold")
+        x = 0.2, y = 1.05, text = "Sur 667 dysfonctionnements", 
+        showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "black", family = "Arial", weight = "bold")
       ),
       list(
-        x = 0.8, y = 1.05, text = "Sur la même échelle", 
-        showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#1f77b4", family = "Arial", weight = "bold")
+        x = 0.8, y = 1.05, text = "Sur le même niveau", 
+        showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "black", family = "Arial", weight = "bold")
       )
     ),
-    margin = list(t = 100)  # Ajout de marge pour les titres
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1))  # Ajout de marge pour les titres
   )
 ```
-Le premier graphe présente les types de résolution pour chaque temps de cohabitation, et le deuxième graphe met tous ces temps de cohabitation à la même échelle et représente la part de chaque type de résolution.
+
+Le premier graphe présente les types de résolution pour chaque temps de
+cohabitation, et le deuxième graphe met tous ces temps de cohabitation au même niveau et représente la part de chaque type de résolution.
 
 ### **III ) Niveau de gêne de ceux qui ont réparé vs ceux qui n'ont pas réparé**
 
-Le graphe suivant combine deux graphes indiquant le degré de gêne ressenti pour ceux qui ont résolu, ceux qui ont tenté de résoudre et qui n'ont pas réussi, et ceux qui n'ont pas tenté de résoudre :
-
+Le graphe suivant combine deux graphes indiquant le degré de gêne
+ressenti pour ceux qui ont résolu, ceux qui ont tenté de résoudre et qui
+n'ont pas réussi, et ceux qui n'ont pas tenté de résoudre les dysfonctionnements :
 
 ```{r include=FALSE}
 gene_pbs_non_resolus=as.matrix(table(gene))
@@ -523,6 +541,7 @@ mat[,1]=gene_pbs_resolus[,1]
 mat[,2]=gene_tente_pas_reussi[,1]
 mat[,3]=gene_pbs_non_resolus[,1]
 print(mat)
+print(sum(mat))
 
 total=colSums(mat)
 print(total)
@@ -540,9 +559,12 @@ print(normalized_mat)
 label=c("Résolu","Tenté mais pas réussi","Pas résolu")
 Categorie <- factor(label, levels = label)
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Gêne = "Très gênant")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne = "Plutôt gênant")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = "Plutôt pas gênant")
+gene_levels <- c("Plutôt pas gênant", "Plutôt gênant", "Très gênant")
+
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[1,], Gêne = factor("Très gênant",levels=gene_levels))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne =factor("Plutôt gênant",levels=gene_levels))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = factor("Plutôt pas gênant",levels=gene_levels))
 
 
 # Combiner les deux data frames
@@ -553,7 +575,7 @@ p5 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Niveau de gêne en fonction de la résolution",
        x = "Type de résolution",
-       y = " ")  +
+       y = "Pourcentage de dysfonctionnements ")  +
   scale_fill_brewer(palette = "Greens", name = "Degrés de Gêne") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
@@ -571,9 +593,11 @@ p5_interactif
 label=c("Résolu","Tenté mais pas réussi","Pas résolu")
 Categorie <- factor(label, levels = label)
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = round(mat[1,]*100/nb_total_pbs), Gêne = "Très gênant")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = round(mat[2,]*100/nb_total_pbs), Gêne = "Plutôt gênant")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = round(mat[3,]*100/nb_total_pbs), Gêne = "Plutôt pas gênant")
+gene_levels <- c("Plutôt pas gênant", "Plutôt gênant", "Très gênant")
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[1,], Gêne = factor("Très gênant",levels=gene_levels))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[2,], Gêne = factor("Plutôt gênant",levels=gene_levels))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[3,], Gêne = factor("Plutôt pas gênant",levels=gene_levels))
 
 
 # Combiner les deux data frames
@@ -584,7 +608,7 @@ p6 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Niveau de gêne en fonction de la résolution",
        x = "Type de résolution",
-       y = "Pourcentage de dysfonctionnements ")  +
+       y = "Nombre de dysfonctionnements ")  +
   scale_fill_brewer(palette = "Greens", name = "Degrés de Gêne") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
@@ -597,7 +621,6 @@ p6_interactif <- ggplotly(p6)
 # Afficher le graphique interactif
 ```
 
-
 ```{r echo=FALSE}
 
 # Utiliser subplot pour afficher les graphiques côte à côte
@@ -606,7 +629,8 @@ subplot(
   nrows = 1, 
   titleX = TRUE, 
   titleY = TRUE,
-  shareY = FALSE
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
 ) %>%
   layout(
     title = list(
@@ -615,24 +639,30 @@ subplot(
     ),
     annotations = list(
       list(
-        x = 0.2, y = 1.05, text = "Sur 832 dysfonctionnements", 
+        x = 0.2, y = 1.05, text = "Sur 667 dysfonctionnements", 
         showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#33a02c", family = "Arial", weight = "bold")
       ),
       list(
-        x = 0.8, y = 1.05, text = "Sur la même échelle", 
+        x = 0.8, y = 1.05, text = "Sur le même niveau", 
         showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#33a02c", family = "Arial", weight = "bold")
       )
     ),
-    margin = list(t = 100)  # Ajout de marge pour les titres
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1))  # Ajout de marge pour les titres
   )
 ```
 
+Le premier graphe présente les degrés de gêne pour chaque temps de
+résolution, et le deuxième graphe met tous ces types de résolution au même niveau et représente la part de chaque degré de gêne.
 
-Le premier graphe présente les =degrés de gêne pour chaque temps de résolution, et le deuxième graphe met tous ces types de résolution à la même échelle et représente la part de chaque degré de gêne.
+### **IV ) Quels usages du smarthpone sont impactés par les dysfonctionnements ?** 
 
-### **IV ) Quels usages du smarthpone sont impactés par les dysfonctionnements ? **
+Ici il n'a été concidéré que les personnes qui avait rencontrés **un
+dysfonctionnement** (187 personnes), et qui avaient par la suite listé les
+impacts que ce dysfonctionnement avait sur leur smartphone, ce qui a
+donnée le graphe suivant :
 
-Ici il n'a été concidéré que les personnes qui avait rencontrés un dysfonctionnement (187 personnes), et qui avaient par la suite listé les impacts que ce dysfonctionnement avait sur leur smartphone, ce qui a donnée le graphe suivant : 
 ```{r include=FALSE}
 matrice = matrix(0,nrow=15,ncol=25)
 
@@ -660,7 +690,6 @@ for (i in 1:length(variable)){
 print(matrice)
 print(n) # 187
 ```
-
 
 ```{r echo=FALSE}
 # Créer une palette de 25 couleurs distinctes
@@ -699,8 +728,8 @@ p_interactif
 
 ```
 
-La lecture des informations n'étant pas trés lisible, les représentation qui suivent montrent pour 5 dysfonctionnements, les réparttion des usages impactés :  
-
+La lecture des informations n'étant pas trés lisible, les représentations
+qui suivent montrent pour 5 dysfonctionnements, les usages impactés :
 
 ```{r include=FALSE}
 # Création de la variable Categorie comme facteur
@@ -853,7 +882,6 @@ p4_interactif <- ggplotly(p4)
 p4_interactif
 ```
 
-
 ```{r include=FALSE}
 distinct_colors <- c("#1f78b4", "#33a02c", "#e31a1c", "#ff7f00", "#6a3d9a", 
                      "#b15928", "#a6cee3", "#b2df8a", "#fb9a99", "#fdbf6f",
@@ -911,9 +939,32 @@ p4_interactif
 p5_interactif
 ```
 
+### **V ) Répartition des dysfonctionnements :**
 
+La répartition des dysfonctionnements s'est faite selon la
+catégorisation suivante :
 
-### **V ) Graphes représentant les temps de cohabitation en fonction de la catégorie de dysfonctionnement et du degrés de gêne **
+-   **Problème de stockage :** Stockage saturé
+
+-   **Problème matériel :** Problème avec l'écran, Problème de
+    sensibilité du tactile, Problème avec l'appareil photo Problème de
+    vibreur, Problème de capteurs, Problème de batterie, Problème de
+    chargement, Problème de prise jack Problème de son, Problème avec le
+    micro, Problème avec la lampe torche ou le flash, Problème avec les
+    boutons
+
+-   **Problème de mise à jour :** Système d'exploitation non mis à jour,
+    Applications ne pouvant pas être téléchargées ou mises à jour
+
+-   **Dysfonctionnement divers :** Problème lié à une fonctionnalité
+    manquante, Fonctionnalité qui ne marche plus, Dysfonctionnement
+    logiciel, Problèmes avec des applications, Problème d'accès à
+    Internet, Problème de téléphonie, Problème de Bluetooth ou de
+    transferts de fichiers sans fil, Problème de Wi-Fi, Problème avec le
+    GPS, Problème de lenteur
+
+La représentation graphique qui suit permet de visualiser cette
+répartition :
 
 ```{r include=FALSE}
 label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
@@ -939,6 +990,73 @@ matrice_cat[4, 1:length(dys_divers)] <- dys_divers
 print(matrice_cat)
 ```
 
+
+```{r include=FALSE}
+variable=data$RIDENTIFICATION_PROBLEMES
+nb_de_modalites = 25
+valeurs = Count_VCM(variable,nb_de_modalites)
+
+num_pb = c()
+nb_pb = c()
+cat_pb = c()
+
+valeurs = Count_VCM(variable,nb_de_modalites)
+
+for (i in 1:ncol(valeurs)){
+  num_pb=c(num_pb,valeurs[1,i])
+  nb_pb = c(nb_pb,valeurs[2,i])
+  
+  result <- which(matrice_cat == i, arr.ind = TRUE)
+  cat <- result[1]
+  
+  cat_pb=c(cat_pb,cat)
+}
+
+dataframe = data.frame(Dys = num_pb, nb = nb_pb, Categorie = cat_pb)
+
+dataframe <- dataframe %>% 
+  arrange( Categorie,desc(nb))
+
+dataframe$Dys = factor(dataframe$Dys, levels=1:length(label_RIDENTIFICATION_PROBLEME),labels=label_RIDENTIFICATION_PROBLEME)
+
+dataframe$Categorie= factor(dataframe$Categorie, levels = 1:length(label_dys),labels=label_dys)
+
+dataframe
+
+nrow(dataframe[which(dataframe$Categorie==1),]) # 1
+nrow(dataframe[which(dataframe$Categorie==2),]) # 12
+nrow(dataframe[which(dataframe$Categorie==3),]) # 2
+nrow(dataframe[which(dataframe$Categorie==4),]) # 10 
+
+```
+
+```{r echo=FALSE}
+
+label <- c("Stockage saturé","Problème de batterie","Problème avec l’écran","Problème de sensibilité du tactile","Problème de chargement","Problème de son","Problème avec le micro","Problème avec l’appareil photo","Problème avec les boutons","Problème de prise jack","Problème avec la lampe torche ou le flash","Problème de capteurs","Problème de vibreur","Applications ne pouvant pas être téléchargées ou mises à jour","Système d’exploitation non mis à jour","Problème de lenteur","Problèmes avec des applications","Problème de Wi-Fi","Dysfonctionnement logiciel","Problème lié à une fonctionnalité manquante","Problème de téléphonie","Problème d’accès à Internet","Fonctionnalité qui ne marche plus","Problème avec le GPS","Problème de Bluetooth ou de transferts de fichiers sans fil")
+
+dataframe$Dys = factor(dataframe$Dys,levels=label)
+
+p <- ggplot(dataframe, aes(x = Categorie, y = nb, fill =Dys)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("Stockage saturé"= "#1E90FF","Problème de batterie"= "#004d00","Problème avec l’écran"="#006600","Problème de sensibilité du tactile"="#007f00","Problème de chargement"="#009900","Problème de son"="#00b300","Problème avec le micro"="#00cc00","Problème avec l’appareil photo"="#00e600","Problème avec les boutons"="#1aff1a","Problème de prise jack"="#4dff4d","Problème avec la lampe torche ou le flash"="#80ff80","Problème de capteurs"="#b3ffb3","Problème de vibreur"="#e6ffe6","Applications ne pouvant pas être téléchargées ou mises à jour"="#FFD700","Système d’exploitation non mis à jour"="#FFFF00","Problème de lenteur"="#4B0082","Problèmes avec des applications"="#6A0DAD","Problème de Wi-Fi"="#7B1FA2","Dysfonctionnement logiciel"="#8E24AA","Problème lié à une fonctionnalité manquante"="#9C27B0","Problème de téléphonie"="#AB47BC","Problème d’accès à Internet"="#BA68C8","Fonctionnalité qui ne marche plus"="#CE93D8","Problème avec le GPS"="#E1BEE7","Problème de Bluetooth ou de transferts de fichiers sans fil"="#F3E5F5")) +
+  labs(title = "Répartition des dysfonctionnements",
+       x = "Catégorie",
+       y = "Nombre de dysfonctionnements",
+       fill = "Problème") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.title.y = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+# Affichage du graphique
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif
+```
+
+### **VI ) Graphes représentant les temps de cohabitation en fonction de la catégorie de dysfonctionnement et du degrés de gêne** 
 
 
 ```{r include=FALSE}
@@ -1082,7 +1200,9 @@ print(don)
 nrow(don)
 ```
 
-Le graphe suivant présente pour chaque temps de cohabitation la part de chaque degré de gêne, et dans ces parts, la part de chaque catégorie de dysfonctionnements : 
+Le graphe suivant présente pour chaque temps de cohabitation la part de
+chaque degré de gêne, et dans ces parts, la part de chaque catégorie de
+dysfonctionnements :
 
 ```{r echo=FALSE}
 # Création du graphique à barres empilées
@@ -1105,7 +1225,6 @@ p_interactif <- ggplotly(p)
 # Affichage du graphique interactif
 p_interactif
 ```
-
 
 ```{r include=FALSE}
 
@@ -1135,8 +1254,9 @@ print(don1)
 nrow(don1)
 ```
 
-Le graphe suivant présente pour chaque temps de cohabitation la part de chaque catégorie de dysfonctionnments, et dans ces parts, la part de chaque degrés de gêne : 
-
+Le graphe suivant présente pour chaque temps de cohabitation la part de
+chaque catégorie de dysfonctionnments, et dans ces parts, la part de
+chaque degrés de gêne :
 
 ```{r echo=FALSE}
 
@@ -1160,11 +1280,6 @@ p_interactif <- ggplotly(p)
 # Affichage du graphique interactif
 p_interactif
 ```
-
-
-
-
-
 
 ```{r include=FALSE}
 indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
