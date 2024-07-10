@@ -727,6 +727,11 @@ p_interactif
 
 
 ```
+```{r}
+df_combined
+```
+
+
 
 La lecture des informations n'étant pas trés lisible, les représentations
 qui suivent montrent pour 5 dysfonctionnements, les usages impactés :

@@ -392,35 +392,16 @@ subplot(
 
 
 Lien entre resolution et pourquoi ne pas avoir tenté de reparer : 
-```{r}
 
-REPARATION <- c(1:5)
-matrice <- matrix(0,nrow=2,ncol=length(REPARATION))
-matrice[1,] <- REPARATION
-df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
-print(nrow(df))
-for (i in 81:105){
-    colonne=df[,i]
-    for (j in 1:length(colonne)){
-      num_REP <- df[j,i]
-      raison <- df[j,"RRAISON_UTIL_PB_FORM"]
-      if (!is.na(raison) && !is.na(raison) ){
-        matrice[2,num_REP]=matrice[2,num_REP]+1
-      }
-    }
-}
-
-print(matrice)
-
-```
-
-```{r}
+```{r include=FALSE}
 Count_VCM(data$RRAISON_UTIL_PB_FORM,13)
 ```
 
-```{r}
+```{r include=FALSE}
 mat_raison_cat = matrix(0,nrow=13,ncol=4)
-mat2_raison_gene = matrix(0,nrow=13,ncol=4)
+mat_raison_gene = matrix(0,nrow=13,ncol=4)
+
+liste_pbs_pas_resolu = c()
 
 df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
 
@@ -430,13 +411,14 @@ for ( i in 81:105){
     if (!is.na(res) && (res == 4 || res == 5)){
       gene=df[j,i-50]
       num_pb=i-80
+      liste_pbs_pas_resolu = c(liste_pbs_pas_resolu,num_pb)
       result <- which(matrice_cat == num_pb, arr.ind = TRUE)
       cat <- result[1]
       liste = str_extract_all(df[j,"RRAISON_UTIL_PB_FORM"], ".{2}")[[1]]
       liste=as.numeric(liste)
       for (raison in liste){
         mat_raison_cat[raison,cat]=mat_raison_cat[raison,cat]+1
-        mat2_raison_gene[raison,gene]=mat2_raison_gene[raison,gene]+1
+        mat_raison_gene[raison,gene]=mat_raison_gene[raison,gene]+1
       }
       
     }
@@ -444,10 +426,148 @@ for ( i in 81:105){
   }
 }
 
+
+
 print(mat_raison_cat)
-print(mat2_raison_gene)
+print(mat_raison_gene)
+
+print(length(liste_pbs_pas_resolu)) # 331
+print(sum(mat_raison_cat)) # 679
+print(sum(mat_raison_gene)) # 679
+
+
+normalize1 <- function(x) {
+  return(round(x*100/colSums(mat_raison_cat),1))
+}
+
+normalize2 <- function(x) {
+  return(round(x*100/colSums(mat_raison_gene),1))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat_raison_cat <- t(apply(mat_raison_cat,1, normalize1))
+normalized_mat_raison_gene <- t(apply(mat_raison_gene,1, normalize2))
 
 ```
+
+
+```{r echo=FALSE}
+Catégorie <- factor(label_dys, levels = label_dys)
+
+df_T <- data.frame(Catégorie = Catégorie, Valeurs = mat_raison_cat[1,], Légende = factor(label_RAISON_UTIL_PB[1],levels=label_RAISON_UTIL_PB))
+
+for (i in 2:13){
+  df_T1 = data.frame(Catégorie = Catégorie, Valeurs = mat_raison_cat[i,], Légende = factor(label_RAISON_UTIL_PB[i],levels=label_RAISON_UTIL_PB))
+  df_T = rbind(df_T,df_T1)
+}
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Catégorie, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Raisons de ne pas réparer ",
+       x = "Catégorie",
+       y = "Nombre de dysfonctionnnements") +
+  scale_fill_manual(values =c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#A52A2A", "#FFC0CB", "#808080", "#000000", "#FFFFFF","#00868B")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold",colour="#00868B"), 
+        axis.title.y = element_text(face = "bold",colour="#00868B"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+```
+
+```{r echo=FALSE}
+Catégorie <- factor(label_dys, levels = label_dys)
+
+df_T <- data.frame(Catégorie = Catégorie, Valeurs = normalized_mat_raison_cat[1,], Légende = factor(label_RAISON_UTIL_PB[1],levels=label_RAISON_UTIL_PB))
+
+for (i in 2:13){
+  df_T1 = data.frame(Catégorie = Catégorie, Valeurs = normalized_mat_raison_cat[i,], Légende = factor(label_RAISON_UTIL_PB[i],levels=label_RAISON_UTIL_PB))
+  df_T = rbind(df_T,df_T1)
+}
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Catégorie, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Raisons de ne pas réparer ",
+       x = "Catégorie",
+       y = "Pourcentage de dysfonctionnnements") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold",colour="#00868B"), 
+        axis.title.y = element_text(face = "bold",colour="#00868B"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+```{r echo=FALSE}
+Catégorie <- factor(label_GENE, levels = label_GENE)
+
+df_T <- data.frame(Catégorie = Catégorie, Valeurs = mat_raison_gene[1,], Légende = factor(label_RAISON_UTIL_PB[1],levels=label_RAISON_UTIL_PB))
+
+for (i in 2:13){
+  df_T1 = data.frame(Catégorie = Catégorie, Valeurs = mat_raison_gene[i,], Légende = factor(label_RAISON_UTIL_PB[i],levels=label_RAISON_UTIL_PB))
+  df_T = rbind(df_T,df_T1)
+}
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Catégorie, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Degrés de gêne ressenti ",
+       x = "Raisons de ne pas réparer",
+       y = "Nombre de dysfonctionnnements") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold",colour="#00868B"), 
+        axis.title.y = element_text(face = "bold",colour="#00868B"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+```{r echo=FALSE}
+Catégorie <- factor(label_GENE, levels = label_GENE)
+
+df_T <- data.frame(Catégorie = Catégorie, Valeurs = normalized_mat_raison_gene[1,], Légende = factor(label_RAISON_UTIL_PB[1],levels=label_RAISON_UTIL_PB))
+
+for (i in 2:13){
+  df_T1 = data.frame(Catégorie = Catégorie, Valeurs = normalized_mat_raison_gene[i,], Légende = factor(label_RAISON_UTIL_PB[i],levels=label_RAISON_UTIL_PB))
+  df_T = rbind(df_T,df_T1)
+}
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Catégorie, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Degrés de gêne ressenti ",
+       x = "Raisons de ne pas réparer",
+       y = "Pourcentage de dysfonctionnnements") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold",colour="#00868B"), 
+        axis.title.y = element_text(face = "bold",colour="#00868B"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+
+
+
 
 
 
@@ -740,11 +860,80 @@ subplot(
   )
 ```
 
-Raisons de ne pas réparer 
+Usages impactés :
+
+```{r include=FALSE}
+matrice = matrix(0,nrow=15,ncol=25)
+
+n= 0
+
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+
+for (i in 1:length(variable)){
+  liste_pbs=str_extract_all(variable[i], ".{2}")[[1]]
+  if (length(liste_pbs)==1){
+    n=n+1
+    for (j in 1:length(liste_pbs)){
+      pb=liste_pbs[1]
+      pb=as.numeric(pb)
+      liste_impacts = str_extract_all(df[i,"RIMPACT_PB"], ".{2}")[[1]]
+      liste_impacts = as.numeric(liste_impacts)
+      for (k in liste_impacts){
+        matrice[k,pb]=matrice[k,pb]+1
+      }
+    }
+  }
+}
+
+print(matrice)
+print(n) # 187
+```
+
+```{r echo=FALSE}
+# Créer une palette de 25 couleurs distinctes
+label <- c("Stockage saturé","Problème de batterie","Problème avec l’écran","Problème de sensibilité du tactile","Problème de chargement","Problème de son","Problème avec le micro","Problème avec l’appareil photo","Problème avec les boutons","Problème de prise jack","Problème avec la lampe torche ou le flash","Problème de capteurs","Problème de vibreur","Applications ne pouvant pas être téléchargées ou mises à jour","Système d’exploitation non mis à jour","Problème de lenteur","Problèmes avec des applications","Problème de Wi-Fi","Dysfonctionnement logiciel","Problème lié à une fonctionnalité manquante","Problème de téléphonie","Problème d’accès à Internet","Fonctionnalité qui ne marche plus","Problème avec le GPS","Problème de Bluetooth ou de transferts de fichiers sans fil")
+
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+
+Categorie <- factor(label_RIDENTIFICATION_PROBLEME[1:25], levels = label_RIDENTIFICATION_PROBLEME[1:25])
+
+df_combined <- data.frame(Categorie = Categorie, valeurs = matrice[1,], Impact =label_IMPACT[1])
+
+for (i in 2:nrow(matrice)){
+  df_T1 <- data.frame(Categorie = Categorie, valeurs = matrice[i,], Impact =label_IMPACT[i])
+  df_combined <- rbind(df_combined, df_T1)
+}
+
+df_combined$Impact = factor(df_combined$Impact,levels=label_IMPACT)
+df_combined$Categorie=factor(df_combined$Categorie,levels=label)
+df_combined = df_combined[which(df_combined$valeurs!=0),]
+
+p <- ggplot(df_combined, aes(x = Impact, y = valeurs, fill = Categorie)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Usages impactés par les dysfonctionnements ",
+       x = "Dysfonctionnements",
+       y = "Nombre de personnes") +
+  scale_fill_manual(values = c("Stockage saturé"= "#1E90FF","Problème de batterie"= "#004d00","Problème avec l’écran"="#006600","Problème de sensibilité du tactile"="#007f00","Problème de chargement"="#009900","Problème de son"="#00b300","Problème avec le micro"="#00cc00","Problème avec l’appareil photo"="#00e600","Problème avec les boutons"="#1aff1a","Problème de prise jack"="#4dff4d","Problème avec la lampe torche ou le flash"="#80ff80","Problème de capteurs"="#b3ffb3","Problème de vibreur"="#e6ffe6","Applications ne pouvant pas être téléchargées ou mises à jour"="#FFD700","Système d’exploitation non mis à jour"="#FFFF00","Problème de lenteur"="#4B0082","Problèmes avec des applications"="#6A0DAD","Problème de Wi-Fi"="#7B1FA2","Dysfonctionnement logiciel"="#8E24AA","Problème lié à une fonctionnalité manquante"="#9C27B0","Problème de téléphonie"="#AB47BC","Problème d’accès à Internet"="#BA68C8","Fonctionnalité qui ne marche plus"="#CE93D8","Problème avec le GPS"="#E1BEE7","Problème de Bluetooth ou de transferts de fichiers sans fil"="#F3E5F5"),name="Problème") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold"))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif
+
+
+```
 
 ```{r}
-nrow(data[which(data$RRAISON_UTIL_PB_FORM=="14"),])
+df_combined
 ```
+
+
 
 
 ```{r include=FALSE }
