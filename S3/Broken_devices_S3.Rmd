@@ -100,7 +100,10 @@ label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur"
 
 label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
 
-label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+# label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_REPARATION <- c("Yes, and the problem is resolved", "Yes, but the problem could not be resolved","No, the problem resolved itself after a while","No, maybe later","No, I don't think I'll try to solve the problem")
+
 ```
 
 **OBJECTIF :** *Analyser la base de données*
@@ -456,14 +459,14 @@ for (i in 1 :ncol(df)){
 
 Categorie <- factor(label_REPARATION, levels = label_REPARATION)
 
-df3 <- data.frame(Categorie = Categorie, valeurs = round(matrice_REP[2, ]*100/total_pbs))
+df3 <- data.frame(Resolution = Categorie, Number = round(matrice_REP[2, ]*100/total_pbs))
 
 # Créer un diagramme en barres empilées
-p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
+p <- ggplot(df3, aes(x = Resolution, y = Number)) +
   geom_bar(stat = "identity",fill="darkgreen") + 
-  labs(title = "Résolution des dysfonctionnements ",
-       x = "Résolution des dysfonctionnements",
-       y = "Nombre de personnes (en %) ") +
+  labs(title = "Resolution of Malfunctions",
+     x = "Malfunction Resolution",
+     y = "Number of Malfunctions (in %)") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
         axis.title.x = element_text( face = "bold",colour="darkgreen"), 

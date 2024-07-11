@@ -727,11 +727,6 @@ p_interactif
 
 
 ```
-```{r}
-df_combined
-```
-
-
 
 La lecture des informations n'étant pas trés lisible, les représentations
 qui suivent montrent pour 5 dysfonctionnements, les usages impactés :
@@ -1274,6 +1269,7 @@ p <- ggplot(don1, aes(x = factor(Cohab, levels = 1:length(label_COHABITATION),la
        y = "Nombre de dysfonctionnements",
        fill = "Catégorie et Gêne") +
   theme_minimal() +
+  coord_flip()+
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"), 
         axis.title.y = element_text(face = "bold"),

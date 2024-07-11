@@ -86,7 +86,7 @@ Count_VCM <- function(variable,nb_de_modalites){
 
 ##########################################
 
-label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+label_RIDENTIFICATION_PROBLEME = c("Problem with the screen", "Touch sensitivity problem","Problem with the camera", "Problem with the flashlight or flash", "Problem with the GPS","Problem with the microphone", "Sound problem", "Problem with the headphone jack", "Charging problem", "Battery problem", "Wi-Fi problem", "Sensor problem", "Bluetooth or wireless file transfer problem", "Telephony problem", "Internet access problem", "Problem with the buttons", "Vibrator problem", "Storage full", "Operating system not updated", "Applications cannot be downloaded or updated", "Problem related to a missing feature", "Feature not working anymore", "Software malfunction", "Problems with applications", "Slowness problem", "Other")
 
 ```
 
@@ -179,7 +179,7 @@ On les supprime donc de la base :
 ```{r}
 data <- data[data$RIDENTIFICATION_PROBLEMES != "", ]
 nb_individus=nrow(data)
-View(data)
+#View(data)
 ```
 
 On a désormais 968 individus dans notre base de données.
@@ -385,14 +385,14 @@ nb_de_modalites=26
 mat <- Count_VCM(variable,nb_de_modalites)
 
 # Conversion des matrices en data frames
-df <- data.frame(categorie=factor(label_RIDENTIFICATION_PROBLEME, levels = label_RIDENTIFICATION_PROBLEME), valeurs = mat[2,])
+df <- data.frame(Problem=factor(label_RIDENTIFICATION_PROBLEME, levels = label_RIDENTIFICATION_PROBLEME), Number = mat[2,])
 
 # Créer un diagramme en barres empilées
-p <- ggplot(df, aes(x = categorie, y = valeurs)) +
+p <- ggplot(df, aes(x = Problem, y = Number)) +
   geom_bar(stat = "identity",fill = "darkgreen") + # mettre position = "dodge" si on veut des barres côteà côte
-  labs(title = "Répartition des différents problèmes rencontrés ",
-       x = "Dysfonctionnements",
-       y = "Nombre de personnes") +
+  labs(title = "Distribution of Different Problems Encountered",
+     x = "Malfunctions",
+     y = "Number of Malfunctions") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
         axis.title.x = element_text(face = "bold",colour="darkgreen"),
