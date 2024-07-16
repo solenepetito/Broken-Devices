@@ -562,7 +562,7 @@ df_T <- na.omit(df_T)
 p <- ggplot(df_T, aes(x = Catégorie, y = Valeurs, fill = Légende)) +
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "Degré de gêne ressenti ",
-       x = "Raisons de ne pas réparer",
+       x = "Degrè de gêne",
        y = "Pourcentage de dysfonctionnnements") +
   theme_minimal() +
   scale_fill_manual(values =c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#A52A2A", "#FFC0CB", "#808080", "#000000", "azure2","#00868B")) +
@@ -875,7 +875,8 @@ for (i in 1:length(variable)){
 }
 
 print(matrice)
-print(n) # 187
+print(n) # 187 : nb de personnes rencontrant un pb
+print(sum(matrice)) # 286 : nb d'usages rescencés pour ces 187 personnes
 
 normalize <- function(x) {
   return(round(x*100/rowSums(matrice),1))
@@ -915,7 +916,7 @@ p <- ggplot(df_combined, aes(x = Impact, y = valeurs, fill = Dys)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text(face = "bold"), 
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-        axis.title.y = element_text(face = "bold"),legend.position="none")
+        axis.title.y = element_text(face = "bold"))
 
 p_interactif <- ggplotly(p)
 
@@ -1192,7 +1193,7 @@ p <- ggplot(don1, aes(x = Categorie_dys, y = nb, fill = label)) +
   labs(title = "Degrés de gêne et dysfonctionnements par temps de cohabitation",
        x = "Catégorie de dysfonctionnements",
        y = "Nombre de dysfonctionnements",
-       fill = "Cohabotation et Gêne") +
+       fill = "Cohabitation et Gêne") +
   theme_minimal() +
   scale_fill_manual(values =  c("Moins d'un mois - Dys très gênant"="palegreen4","Moins d'un mois - Dys plutôt gênant"="palegreen3","Moins d'un mois - Dys plutôt pas gênant"="palegreen2","Entre 1 et 6 mois - Dys très gênant"="yellow3","Entre 1 et 6 mois - Dys plutôt gênant"="yellow2","Entre 1 et 6 mois - Dys plutôt pas gênant"="yellow1","Entre 6 mois et 2 ans - Dys très gênant"="darkorange3","Entre 6 mois et 2 ans - Dys plutôt gênant"="darkorange2","Entre 6 mois et 2 ans - Dys plutôt pas gênant"="darkorange","Plus de 2 ans - Dys très gênant"="red4","Plus de 2 ans - Dys plutôt gênant"="red3","Plus de 2 ans - Dys plutôt pas gênant"="red","Je ne sais pas - Dys très gênant"="azure4","Je ne sais pas - Dys plutôt gênant"="azure3","Je ne sais pas - Dys plutôt pas gênant"="azure1")) +
   coord_flip()+
@@ -1408,8 +1409,6 @@ subplot(
     xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
     yaxis2 = list(showticklabels = FALSE))
 ```
-
-
 
 
 ```{r include=FALSE }
