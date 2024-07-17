@@ -1,0 +1,732 @@
+---
+title: 'Project : Broken devices S7'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-07-01"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **SEMAINE DU 15 JUILLET 2024 au 20 JUILLET 2024 :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+library(viridis) # palette de couleurs > 25 nuances
+library(Polychrome)
+library(gridExtra) # afficher les graphes côte à côte
+library(grid)
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ data[i,"poids"] # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
+
+label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
+label_RAISON_UTIL_PB <- c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité", "Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas","Je ne sais pas comment résoudre le(s) problème(s)","Je veux faire durer mon téléphone le plus longtemps possible","Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien","Je n’ai pas pris le temps de m’en occuper, de chercher une solution","Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace","La résolution du (ou des) problème(s) est trop difficile ou incertaine","Ça me donne un prétexte pour moins l’utiliser","Cela ne vaut pas la peine de résoudre le(s) problème(s)","Mon smartphone a une particularité difficile à retrouver si je devais le remplacer","Autre")
+
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+```
+
+```{r include=FALSE}
+# Catégorisation des dysfonctionnements
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+materiel <- c(1,2,1,3,4,6,7,8,9,10,12,16,17)
+dys_divers <- c(5,11,13,14,15,21,22,23,24,25)
+stockage <- c(18)
+maj <- c(19,20)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(dys_divers), length(stockage), length(maj))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 4, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(stockage)] <- stockage
+matrice_cat[2, 1:length(materiel)] <- materiel
+matrice_cat[3, 1:length(maj)] <- maj
+matrice_cat[4, 1:length(dys_divers)] <- dys_divers
+
+# Afficher la matrice
+print(matrice_cat)
+```
+
+```{r include=FALSE}
+REPARATION <- c(1:5)
+matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
+matrice_REP[1,]=REPARATION
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+#print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+#print(colonne_fin) # 105
+
+df <- data[,colonne_deb:colonne_fin]
+
+for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val)&& !is.null(val)){
+        matrice_REP[2,val]=matrice_REP[2,val]+1
+      }
+    }
+  }
+```
+
+**OBJECTIF :** *Réaliser un graphe pour chaque question du questionnaire (en y incluant les poids) *
+
+## **ANALYSE DE LA BASE DE DONNÉES**
+
+```{r include=FALSE}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
+
+Remarque : En appliquant les poids à notre base de données, on se retrouve désormais avec 47831 individus et non plus 968. De base il y a 49669 individus, mais 3.7 % de ceux-ci ont été enlevés, les indii=vidus en question correspondaient à ceux qui n'ont pas indiqué avoir un smartphone, lorsqu'on leur a demandé les types d'équipement numériques dont ils disposaient.
+
+
+### **I ) Module sociodémographique **
+
+#### 1 ) Genre du répondant 
+
+**Filtre : À tous** (soit 47831 personnes)
+
+```{r include=FALSE}
+mat <- t(as.matrix(tapply(data$poids, data$SEXE, sum)))
+
+pourcent_femmes=mat[1,2]*100/sum(mat[1,])
+pourcent_hommes=mat[1,1]*100/sum(mat[1,])
+
+print(round(pourcent_femmes))
+print(round(pourcent_hommes))
+
+# print(floor(sum(mat[1,]))) # 47831
+```
+Dans la base de données, il y a 52 % d'hommes et 48% de femmes. En incluant les poids, on tient compte de 47831 répondants.
+
+#### 2 ) Année de naissance du répondant 
+
+**Filtre : À tous** (soit 47831 personnes)
+
+```{r}
+don <- tapply(data$poids, data$AGE, sum)
+
+df <- data.frame(Age =names(don), Nb_personnes = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+
+print(df)
+
+#print(floor(sum(as.numeric(don)))) #47831
+
+```
+```{r}
+# Même histogramme que ci-dessus mais intéractif : 
+  
+  p <-ggplot(data)+aes(x=Age,weight = round(poids))+geom_histogram(bins=30,fill="skyblue")+
+  theme_minimal() +
+  labs(title = "Répartition des âges",
+       x = "Age",
+       y = "Nombre de répondants") +
+  #scale_x_continuous(limits = c(1, 6),breaks = seq(0, 7, by = 1)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "skyblue"),
+        axis.title.x = element_text(color = "skyblue", face = "bold"),  
+        axis.title.y = element_text(color = "skyblue", face = "bold")) 
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+
+
+
+
+#### 3 ) Tranches d'âge des répondants 
+
+**Filtre : À tous** (soit 47831 personnes)
+
+
+```{r}
+don <- tapply(data$poids, data$Tage5, sum)
+
+df <- data.frame(Tranche_Age =names(don), Nb_personnes = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+
+print(df)
+#print(floor(sum(as.numeric(don)))) #47831
+```
+
+```{r}
+  p <-ggplot(data)+aes(x=Tage5,weight = round(poids))+geom_bar(color="skyblue",fill="skyblue")+
+  theme_minimal() +
+  labs(title = "Répartition des âges",
+       x = "Age",
+       y = "Nombre de répondants") +
+  #scale_x_continuous(limits = c(1, 6),breaks = seq(0, 7, by = 1)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "skyblue"),
+        axis.title.x = element_text(color = "skyblue", face = "bold"),  
+        axis.title.y = element_text(color = "skyblue", face = "bold")) 
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+#### 4 ) Régions UDA5
+
+### **II ) MODULE QUALIFICATION SMARTPHONE ACTUEL**
+
+
+#### 1 ) **APPETENCEDIGIT**
+
+**Filtre : À tous** (soit 47829 personnes)
+
+**À quel niveau situez-vous votre maîtrise d’Internet et de vos équipements multimédia (ordinateur, téléphone mobile, tablette tactile, etc.) ?**
+
+```{r}
+don <- tapply(data$poids, data$APPETENCEDIGIT, sum)
+
+label = c("Limited mastery","Basic mastery","Intermediate mastery","Expert mastery")
+
+df <- data.frame(Mastery =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don))))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$Mastery = factor(df$Mastery,labels=c("Intermediate mastery","Expert mastery","Basic mastery","Limited mastery"))
+
+total_row <- data.frame(
+  Mastery = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+# print(floor(sum(as.numeric(don)))) #47831
+```
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(Mastery,levels = c("Limited mastery","Basic mastery","Intermediate mastery","Expert mastery")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "Mastery of the internet",
+    x = "Mastery",
+    y = "Number of respondents"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+
+```
+
+
+
+
+#### **2 ) QUALIFANCIENTEL**
+
+**Filtre : À tous** (soit 47831 personnes)
+
+**Aviez-vous un téléphone avant votre téléphone actuel ?**
+
+```{r}
+don <- tapply(data$poids, data$QUALIFANCIENTEL, sum)
+
+df <- data.frame(QUALIFOLDPHONE =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don))))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$QUALIFOLDPHONE = factor(df$QUALIFOLDPHONE,labels=c("Yes, it was a smartphone", "Yes, but it wasn't a smartphone", "No, this is my first phone"))
+
+total_row <- data.frame(
+  QUALIFOLDPHONE = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+
+print(df)
+# print(floor(sum(as.numeric(don)))) #47831
+```
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(QUALIFOLDPHONE, levels = c("Yes, it was a smartphone", "Yes, but it wasn't a smartphone", "No, this is my first phone")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "QUALIFICATION OF OLD PHONE",
+    x = "Qualification",
+    y = "Number of respondents"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+
+#### **3 ) DUREE USAGE ANCIEN TEL**
+
+**Filtre : Si QUALIFANCIENTEL= "Oui, c’était un smartphone" ou "Oui, mais ce n’était pas un smartphone"** (soit 47299 personnes)
+
+**Combien de temps pensez-vous avoir gardé votre ancien téléphone ?**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$DUREE_USAGE_ANCIEN_TEL, sum)
+
+df <- data.frame(DURATION_OF_USE_OLD_PHONE =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don))))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$DURATION_OF_USE_OLD_PHONE = factor(df$DURATION_OF_USE_OLD_PHONE,labels=c("Less than 6 months", "Between 6 months and 1 year", "Between 1 and 2 years", "Between 2 and 3 years", "Between 3 and 5 years", "More than 5 years", "I don't know"))
+
+total_row <- data.frame(
+  DURATION_OF_USE_OLD_PHONE = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+#print(floor(sum(as.numeric(don)))) #47299
+```
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(DURATION_OF_USE_OLD_PHONE, levels = c("Less than 6 months", "Between 6 months and 1 year", "Between 1 and 2 years", "Between 2 and 3 years", "Between 3 and 5 years", "More than 5 years", "I don't know")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "DURATION OF USE OLD PHONE",
+    x = "Duration",
+    y = "Number of respondents"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+
+```
+
+#### **4 ) RMOTIV SMART**
+
+**Filtre : Si REQUIPMENT= "Un smartphone"** (soit 47831 personnes)
+
+**Qu’est-ce qui vous a motivé à obtenir votre smartphone actuel ?**
+
+```{r}
+variable = data$RMOTIV_SMART_FORM
+nb_de_modalites = 6
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+df <- data.frame(PHONE_MOTIV =mat[1,], Nb_people = round(mat[2,]), Percent= round(mat[2,]*100/sum(mat[2,]),2))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$PHONE_MOTIV = factor(df$PHONE_MOTIV,labels=c("I wanted a new one","I no longer had access to the old one ","The previous one was too limiting or no longer usable","I gave the old one to someone","I had the opportunity to get a new one", "Other"))
+
+total_row <- data.frame(
+  PHONE_MOTIV = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(PHONE_MOTIV, levels = c("I wanted a new one","I no longer had access to the old one ","The previous one was too limiting or no longer usable","I gave the old one to someone","I had the opportunity to get a new one", "Other")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "What motivated you to get your current smartphone?",
+    x = "Motivations",
+    y = "Count"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+
+#### **5 ) ETAT ANCIEN TEL**
+
+**Filtre : Si QUALIFANCIENTEL= "Oui, c’était un smartphone" ou "Oui, mais ce n’était pas un smartphone"** ** (soit 47831 personnes)
+
+**Dans quel état était votre ancien téléphone au moment où il a été remplacé ?**
+
+```{r}
+variable = data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"RETAT_ANCIEN_TEL"]
+
+
+nb_de_modalites = 10
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+
+df <- data.frame(PHONE_CONDITION =mat[1,], Nb_people = round(mat[2,]), Percent= round(mat[2,]*100/sum(mat[2,]),1))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$PHONE_CONDITION = factor(df$PHONE_CONDITION,labels=c("My phone was working well","My phone worked but lacked one or more features","My phone was completely unusable","The battery life was low","My phone's storage was insufficient","My phone was slow","My phone was physically damaged","My phone had malfunctions", "Other reason","I don't remember"))
+
+total_row <- data.frame(
+  PHONE_CONDITION = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+print(sum(mat[2,])) # 80300
+# print(sum(data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"poids"])) # 47299
+```
+
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(PHONE_CONDITION, levels = c("My phone was working well","My phone worked but lacked one or more features","My phone was completely unusable","The battery life was low","My phone's storage was insufficient","My phone was slow","My phone was physically damaged","My phone had malfunctions", "Other reason","I don't remember")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "What was the condition of your old phone when it was replaced?",
+    x = "Condition",
+    y = "Count"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+
+#### **6 ) NB SMARTPHONE**
+
+**Combien de smartphones utilisez-vous en ce moment ?**
+
+
+```{r}
+don <- tapply(data$poids, data$NB_SMARTPHONE, sum)
+
+df <- data.frame(Nb_of_phones =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$Nb_of_phones = factor(df$Nb_of_phones,labels=c("1","2","3 or more"))
+
+total_row <- data.frame(
+  Nb_of_phones = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(Nb_of_phones, levels = c("1","2","3 or more")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "How many smartphones are you currently using ?",
+    x = "Number of phones used",
+    y = "Number of people"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+
+#### 7 ) CONTEXTE USAGE SMARTPHONE
+
+
+Nous allons nous intéresser au smartphone que vous utilisez le plus souvent. Quel est l'usage principale du smartphone que vous utilisez souvent ? 
+
+```{r}
+don <- tapply(data$poids, data$CONTEXTE_USAGE_SMARTPHONE, sum)
+
+df <- data.frame(Smartphone_usage_context =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_people))
+
+df$Smartphone_usage_context =
+  factor(df$Smartphone_usage_context,labels=c("Personal","Professional","Personal and professional"))
+
+total_row <- data.frame(
+  Smartphone_usage_context = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+
+```{r}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(Smartphone_usage_context, levels = c("Personal","Professional","Personal and professional")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "Smartphone usage context",
+    x = "Context of use",
+    y = "Number of people"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r include=FALSE }
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
+print(indice_colonne) # 106
+
+indice_colonne <- which(names(data) == "REPARATION_A1")
+print(indice_colonne) # 81
+
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
+print(indice_colonne) # 80
+
+indice_colonne <- which(names(data) == "REPARATION_A25")
+print(indice_colonne) #105
+
+81-31
+
+```
