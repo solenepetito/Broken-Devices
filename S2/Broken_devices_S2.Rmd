@@ -291,6 +291,8 @@ aussi. Les âges vont de 15 à 80 ans.
 
 ```{r echo=FALSE}
 df <- data.frame(Tranches_Age= data$Tage5)
+df$Tranches_Age = factor(df$Tranches_Age,labels=c("15-24 ans","25-34 ans","35-49 ans","50-64 ans","65-80 ans"))
+
 p <-ggplot(df)+aes(x=Tranches_Age)+geom_bar(fill="skyblue")+
   theme_minimal() +
   labs(title = "Nombre de personnes par tranches d'âges", x = "Tranche d'âges", y = "Nombre de personnes") +
@@ -348,6 +350,8 @@ df_hommes <- data.frame(categorie = c(1:9), valeurs = as.matrix(mat_hommes), Gen
 # Combiner les deux data frames
 df_combined <- rbind(df_femmes, df_hommes)
 
+df_combined$categorie = factor(df_combined$categorie,labels=c("Agriculteurs","Artisans","Cadres","Professions Intermédiaires","Employés","Ouvriers","Retraités","Etudiants","Autres Inactifs"))
+
 # Créer un diagramme en barres empilées
 p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) +
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côte à côte
@@ -357,7 +361,8 @@ p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) 
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),  
-        axis.title.y = element_text(face = "bold")) 
+        axis.title.y = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
 
 p_interactif <- ggplotly(p)
 
@@ -505,7 +510,7 @@ p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Genre)) 
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côteà côte
   labs(title = "Dysfonctionnements rencontrés en fonction du genre",
        x = "Dysfonctionnements",
-       y = "Nombre de personnes") +
+       y = "Nombre de problèmes") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),  
@@ -604,7 +609,7 @@ p <- ggplot(df_combined, aes(x = factor(categorie), y = valeurs, fill = Tranche_
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
   labs(title = "Dysfonctionnement rencontrés en fonction de l'âge",
        x = "Dysfonctionnements",
-       y = "Nombre de personnes") +
+       y = "Nombre de problèmes") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 

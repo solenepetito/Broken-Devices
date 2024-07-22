@@ -504,7 +504,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Type de gênes ressenties par catégorie",
        x = "Dysfonctionnements",
-       y = "Nombre de personnes ") +
+       y = "Pourcentage de dysfonctionnements ") +
   scale_fill_manual(values = c("Trés gênant" = "#1f77b4", 
                                "Plutôt gênant" = "#6baed6", 
                                "Plutôt pas gênant" = "#9ecae1", 
@@ -573,7 +573,7 @@ p <- ggplot(df_combined, aes(x = Résolution, y = valeurs, fill = Dysfonctionnem
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Résolution du problème en fonction de la catégorie",
        x = "Types de résolution",
-       y = "Pourcentage de personnes (%) ") +
+       y = "Pourcentage de dysfonctionnements") +
   
   scale_fill_brewer(palette = "Greens", name = "Dysfonctionnements") +
   theme_minimal() +
@@ -667,7 +667,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Dysfonctionnemen
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Temps de cohabitation en fonction de la catégorie",
        x = "Temps de cohabitation",
-       y = "Pourcentage de personnes (%) ") +
+       y = "Pourcentage de dysfonctionnements (%) ") +
   
   scale_fill_brewer(palette = "Purples", name = "Dysfonctionnements") +
   theme_minimal() +
@@ -809,7 +809,7 @@ print(head(days_elapsed))
 
 ```
 
-```{r}
+```{r include=FALSE}
 # Calcul du temps de cohabitation : 
 
 vec=c()
@@ -984,7 +984,7 @@ p <- ggplot(df3, aes(x = Obtention, y = Nb_personnes_concernees, fill =Nb_dysfon
   scale_fill_brewer(palette = "Reds", name = "Nb de Dysfonctionnements") +
   labs(title = "Nombre de dysfonctionnements par année d'obtention",
        x = "Année d'obtention",
-       y = "Nombre de personnes") +
+       y = "Nombre de personnes concernées") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="orangered3"),
         axis.title.x = element_text(face = "bold",colour="orangered3"),
@@ -1072,7 +1072,7 @@ p <- ggplot(df6, aes(x = Categorie, y = nb_concernees, fill =nb_dys)) +
   scale_fill_brewer(palette = "Reds", name = "Nb de Dysfonctionnements") +
   labs(title = "Nombre de dysfonctionnements et temps de cohabitation",
        x = "Temps de cohabitation",
-       y = "Nombre de personnes") +
+       y = "Nombre de personnes concernées") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="orangered3"),
         axis.title.x = element_text(face = "bold",colour="orangered3"),

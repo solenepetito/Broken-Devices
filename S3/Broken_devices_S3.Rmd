@@ -200,14 +200,14 @@ mat= t(as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"DATEOBT
 # Parmis toute la base combien ont leur téléphone de depuis 5 ans et rencontrent un pb ?
 
 pourcent2 <- round(sum(mat[11:15]) *100 / nrow(data)) # 91 %
-print(paste("Pourcentage de personnes dans la base qui rencontrent un pbs et qui ont leur smartphone depuis 5 ans :",pourcent2, "%"))
+print(paste("Pourcentage de personnes dans la base qui rencontrent un pbs et qui ont leur smartphone depuis moins de 5 ans :",pourcent2, "%"))
 
 
 # Années de 2019 à 2023 = position 11 à position 15 de l'objet "mat"
 
 nb_individus_avec_pbs <- nrow(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]) # 400 individus qui rencontrent un pbs dans la base 
 pourcent1 <- round(sum(mat[11:15]) *100 / nb_individus_avec_pbs) # 91 %
-print(paste("Pourcentage de personnes parmis celles qui rencontrent un pbs qui ont leur smartphone depuis 5 ans :",pourcent1, "%"))
+print(paste("Pourcentage de personnes parmis celles qui rencontrent un pbs qui ont leur smartphone depuis moins de 5 ans :",pourcent1, "%"))
 
 ```
 
@@ -310,13 +310,15 @@ dys <- as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"ACQUISI
 matrice=matrix(0,nrow=3,ncol=length(modalites))
 matrice[1,]=modalites
 matrice[2,]=val
-matrice[3,]=dys
+matrice[3,1:6]=dys
 
 Total=matrice[2,]+matrice[3,]
 Pourcentage=round(Total*100/nb_individus,1)
 df <- data.frame("Acquisition"=label_ACQUISITION,"Nombre de personnes"=Total,"Pourcentage"=Pourcentage)
 print(df)
 ```
+
+
 
 #### **2 ) Acquisition du smartphone et dysfonctionnements**
 
@@ -515,7 +517,7 @@ p <- ggplot(df, aes(x = Dysfonctionnement, y = Pourcentage)) +
   geom_bar(stat = "identity",fill = "darkgreen") + # mettre position = "dodge" si on veut des barres côteà côte
   labs(title = "10 principaux dysfonctionnements rencontrés ",
        x = "Dysfonctionnements",
-       y = "Nombre de personnes (en %)") +
+       y = "Pourcentage de dysfonctionnements") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="darkgreen"),
         axis.title.x = element_text(face = "bold",colour="darkgreen"),
@@ -548,7 +550,7 @@ for(i in 1:ncol(matrice)){
       num=as.character(pb)
       nom_colonne=paste0("REPARATION_A",num)
       valeur=df[j,nom_colonne]
-      if (!is.na(valeur) && (valeur == 1 )){
+      if (!is.na(valeur) && (valeur == 1 || valeur == 3 )){
         matrice[2,i]=matrice[2,i]+1
       }
     }
@@ -578,7 +580,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Legende)) +
   geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" so on veut des barres côtes à côtes
   labs(title = "Résolution du problème",
        x = "Dysfonctionnement",
-       y = "Nombre de personnes ") +
+       y = "Nombre de dysfonctionnements ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
@@ -714,7 +716,7 @@ p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
   geom_bar(stat = "identity",fill="thistle4") + 
   labs(title = "Temps de cohabitation avec le problème",
        x = "Temps de cohabitation",
-       y = "Nombre de personnes (en %) ") +
+       y = "Pourcentage de dysfonctionnements (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="thistle4"),
         axis.title.x = element_text( face = "bold",colour="thistle4"), 
@@ -785,7 +787,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Genre)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Temps de cohabitation avec le problème",
        x = "Temps de cohabitation",
-       y = "Pourcentage de personnes (en %) ") +
+       y = "Pourcentage de dysfonctionnements (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
@@ -903,7 +905,7 @@ p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
   geom_bar(stat = "identity",fill="tan4") + 
   labs(title = "Type de gênes ressenties",
        x = "Gênes ressenties par les propriétaires",
-       y = "Pourcentage de personnes (en %) ") +
+       y = "Pourcentage de dysfonctionnements (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="tan4"),
         axis.title.x = element_text( face = "bold",colour="tan4"), 
@@ -961,7 +963,7 @@ p <- ggplot(df3, aes(x = Categorie, y = valeurs)) +
   geom_bar(stat = "identity",fill="turquoise4") + 
   labs(title = "Récence des dysfonctionnements",
        x = "Récence des dysfonctionnements",
-       y = "Nombre de personnes (en %) ") +
+       y = "Pourcentage de dysfonctionnements (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="turquoise4"),
         axis.title.x = element_text( face = "bold",colour="turquoise4"), 
@@ -1034,7 +1036,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Type de gênes et temps de cohabitation",
        x = "Temps de cohabitation",
-       y = "Pourcentage de personnes (en %) ") +
+       y = "Pourcentage de dysfonctionnements (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
@@ -1202,7 +1204,7 @@ p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = CSP)) +
   geom_bar(stat = "identity", position = "stack") +
   labs(title = "Intention de réparation",
        x = "Intention de réparation",
-       y = "Pourcentage de personnes (en %) ") +
+       y = "Pourcentage de dysfonctionnements (en %) ") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
