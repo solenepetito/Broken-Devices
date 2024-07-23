@@ -147,6 +147,30 @@ matrice_cat[4, 1:length(dys_divers)] <- dys_divers
 print(matrice_cat)
 ```
 
+**OBJECTIF :** *Réaliser un graphe pour chaque question du questionnaire
+(en y incluant les poids)*
+
+## **ANALYSE DE LA BASE DE DONNÉES**
+
+```{r include=FALSE}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
 ```{r include=FALSE}
 REPARATION <- c(1:5)
 matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
@@ -170,36 +194,16 @@ for (i in 1 :ncol(df)){
   }
 ```
 
-**OBJECTIF :** *Réaliser un graphe pour chaque question du questionnaire (en y incluant les poids) *
+Remarque : En appliquant les poids à notre base de données, on se
+retrouve désormais avec 47831 individus et non plus 968. De base il y a
+49669 individus, mais 3.7 % de ceux-ci ont été enlevés, les individus en
+question correspondaient à ceux qui n'ont pas indiqué avoir un
+smartphone, lorsqu'on leur a demandé les types d'équipements numériques
+dont ils disposaient.
 
-## **ANALYSE DE LA BASE DE DONNÉES**
+### **I ) Module sociodémographique**
 
-```{r include=FALSE}
-# Import des données
-
-data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
-
-Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
-
-# nombre d'observations
-nb_obs <- nrow(data) # 968 
-
-# nombre de variables 
-nb_var <- ncol(data) # 164
-```
-
-```{r include=FALSE}
-View(data)
-View(Broken_Devices_Data)
-```
-
-
-Remarque : En appliquant les poids à notre base de données, on se retrouve désormais avec 47831 individus et non plus 968. De base il y a 49669 individus, mais 3.7 % de ceux-ci ont été enlevés, les indii=vidus en question correspondaient à ceux qui n'ont pas indiqué avoir un smartphone, lorsqu'on leur a demandé les types d'équipement numériques dont ils disposaient.
-
-
-### **I ) Module sociodémographique **
-
-#### 1 ) Genre du répondant 
+#### **1 ) Genre du répondant**
 
 **Filtre : À tous** (soit 47831 personnes)
 
@@ -214,13 +218,15 @@ print(round(pourcent_hommes))
 
 # print(floor(sum(mat[1,]))) # 47831
 ```
-Dans la base de données, il y a 52 % d'hommes et 48% de femmes. En incluant les poids, on tient compte de 47831 répondants.
 
-#### 2 ) Année de naissance du répondant 
+Dans la base de données, il y a 52 % d'hommes et 48% de femmes. En
+incluant les poids, on tient compte de 47831 répondants.
+
+#### **2 ) Année de naissance du répondant**
 
 **Filtre : À tous** (soit 47831 personnes)
 
-```{r}
+```{r echo=FALSE}
 don <- tapply(data$poids, data$AGE, sum)
 
 df <- data.frame(Age =names(don), Nb_personnes = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
@@ -228,15 +234,16 @@ df <- df %>%
   arrange( desc(Nb_personnes))
 
 
-print(df)
+print(head(df))
 
 #print(floor(sum(as.numeric(don)))) #47831
 
 ```
-```{r}
+
+```{r echo=FALSE}
 # Même histogramme que ci-dessus mais intéractif : 
   
-  p <-ggplot(data)+aes(x=Age,weight = round(poids))+geom_histogram(bins=30,fill="skyblue")+
+  p <-ggplot(data)+aes(x=AGE,weight = round(poids))+geom_histogram(bins=30,fill="skyblue")+
   theme_minimal() +
   labs(title = "Répartition des âges",
        x = "Age",
@@ -253,28 +260,34 @@ p_interactif <- ggplotly(p)
 p_interactif  
 ```
 
-
-
-
-
-#### 3 ) Tranches d'âge des répondants 
+#### **3 ) Tranches d'âge des répondants**
 
 **Filtre : À tous** (soit 47831 personnes)
 
-
-```{r}
+```{r echo=FALSE}
 don <- tapply(data$poids, data$Tage5, sum)
 
-df <- data.frame(Tranche_Age =names(don), Nb_personnes = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+df <- data.frame(Tranche_Age =names(don), Nb_personnes = round(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
 df <- df %>% 
   arrange( desc(Nb_personnes))
+
+df$Tranche_Age = factor(df$Tranche_Age,labels=c("15-24","25-34","35-49","50-64","65+"))
+
+total_row <- data.frame(
+  Tranche_Age = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
 
 
 print(df)
 #print(floor(sum(as.numeric(don)))) #47831
 ```
 
-```{r}
+```{r echo=FALSE}
   p <-ggplot(data)+aes(x=Tage5,weight = round(poids))+geom_bar(color="skyblue",fill="skyblue")+
   theme_minimal() +
   labs(title = "Répartition des âges",
@@ -292,18 +305,297 @@ p_interactif <- ggplotly(p)
 p_interactif  
 ```
 
-#### 4 ) Régions UDA5
+#### **4 ) Régions UDA5**
+
+**DEP :**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$DEP, sum)
+
+df <- data.frame(DEP =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+
+total_row <- data.frame(
+  DEP = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(head(df))
+```
+
+**UDA9 :**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$UDA9, sum)
+
+df <- data.frame(UDA9 =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$UDA9 = factor(df$UDA9,labels=c("Region Parisienne","Nord","Est","Bassin Parisien Est","Bassin Parisien Ouest" ,"Ouest","Sud Ouest","Sud Est","Mediterrannee"))
+
+total_row <- data.frame(
+  UDA9 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **5 ) NIVETUDES -- Niveau d'études du répondant**
+
+**Quel niveau d'études avez-vous atteint ?**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$NIVETUDES, sum)
+
+df <- data.frame(NIVETUDES =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$NIVETUDES = factor(df$NIVETUDES,labels=c("CAP/BEP","Baccalauréat","Baccalauréat +2/BTS","Baccalauréat +3/Licence","Baccalauréat +4, +5/ Master","Doctorat","Pas de diplôme"))
+
+total_row <- data.frame(
+  NIVETUDES = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+```{r echo=FALSE}
+  p <-ggplot(data)+aes(x=NIVETUDES,weight = round(poids))+geom_bar(color="skyblue",fill="skyblue")+
+  theme_minimal() +
+  labs(title = "Niveau d'étude",
+       x = "Niveau d'étude",
+       y = "Nombre de répondants") +
+  #scale_x_continuous(limits = c(1, 6),breaks = seq(0, 7, by = 1)) +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",color = "skyblue"),
+        axis.title.x = element_text(color = "skyblue", face = "bold"),  
+        axis.title.y = element_text(color = "skyblue", face = "bold")) 
+
+# Convertir le graphique ggplot en graphique interactif
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif  
+```
+
+#### **6 ) NOMBREFOYER -- Nombre de personnes au foyer**
+
+**Combien de personnes AU TOTAL vivent dans votre foyer y compris
+vous-même ?**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$NPF5, sum)
+
+df <- data.frame(NPF =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$NPF = factor(df$NPF,labels=c("1 personne","2 personnes","3 personnes","4 personnes","5 personnes ou plus"))
+
+total_row <- data.frame(
+  NPF = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **7 ) Activité professionelle**
+
+**Inactifs :**
+
+```{r echo=FALSE}
+df = data[,c("INACTIFS","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$INACTIFS, sum)
+
+df <- data.frame(Inactifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$Inactifs = factor(df$Inactifs,labels=c("Chômeur ayant déjà travaillé","Chômeur n'ayant jamais travaillé","Retraité","lycéen, collégien","Etudiant","Femme ou Homme au foyer","Autre"))
+
+total_row <- data.frame(
+  Inactifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+**Actifs :**
+
+```{r echo=FALSE}
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[-c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$QACTIF, sum)
+
+df <- data.frame(Actifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$Actifs = factor(df$Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+total_row <- data.frame(
+  Actifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+
+```
+
+**Si Inactifs = Chômeurs ayant déjà travaillé :**
+
+```{r echo=FALSE}
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$QACTIF, sum)
+
+df <- data.frame(Inactifs_Actifs =names(don), Nb_personnes = round(as.numeric(don),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$Inactifs_Actifs = factor(df$Inactifs_Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+df=df[rowSums(is.na(df)) != ncol(df)-1, ]
+df$Pourcent = round(df$Nb_personnes*100/sum(df$Nb_personnes),2)
+
+total_row <- data.frame(
+  Inactifs_Actifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+```{r include=FALSE}
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$QACTIF, sum)
+
+df <- data.frame(Actifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$Actifs = factor(df$Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+df=df[rowSums(is.na(df)) != 2, ]
+
+df
+```
+
+**CSP5 :**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$CSP5, sum)
+
+df <- data.frame(CSP5 =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$CSP5 = factor(df$CSP5,labels=c("CSP+","CSP-","Retraités","Etudiants","Autres Inactifs"))
+
+total_row <- data.frame(
+  CSP5 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+**CSP 9 :**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$CSP9, sum)
+
+df <- data.frame(CSP9 =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$CSP9 = factor(df$CSP9,labels=c("Agriculteurs","Artisans","Cadres","Professions Intermédiaires","Employés","Ouvriers","Retraités","Etudiants","Autres Inactifs"))
+
+total_row <- data.frame(
+  CSP9 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
 
 ### **II ) MODULE QUALIFICATION SMARTPHONE ACTUEL**
 
-
-#### 1 ) **APPETENCEDIGIT**
+#### **1 ) APPETENCEDIGIT**
 
 **Filtre : À tous** (soit 47829 personnes)
 
-**À quel niveau situez-vous votre maîtrise d’Internet et de vos équipements multimédia (ordinateur, téléphone mobile, tablette tactile, etc.) ?**
+**À quel niveau situez-vous votre maîtrise d'Internet et de vos
+équipements multimédia (ordinateur, téléphone mobile, tablette tactile,
+etc.) ?**
 
-```{r}
+```{r echo=FALSE}
 don <- tapply(data$poids, data$APPETENCEDIGIT, sum)
 
 label = c("Limited mastery","Basic mastery","Intermediate mastery","Expert mastery")
@@ -326,7 +618,7 @@ print(df)
 # print(floor(sum(as.numeric(don)))) #47831
 ```
 
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(Mastery,levels = c("Limited mastery","Basic mastery","Intermediate mastery","Expert mastery")),
@@ -354,16 +646,13 @@ p_interactif
 
 ```
 
-
-
-
 #### **2 ) QUALIFANCIENTEL**
 
 **Filtre : À tous** (soit 47831 personnes)
 
 **Aviez-vous un téléphone avant votre téléphone actuel ?**
 
-```{r}
+```{r echo=FALSE}
 don <- tapply(data$poids, data$QUALIFANCIENTEL, sum)
 
 df <- data.frame(QUALIFOLDPHONE =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don))))
@@ -385,7 +674,7 @@ print(df)
 # print(floor(sum(as.numeric(don)))) #47831
 ```
 
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(QUALIFOLDPHONE, levels = c("Yes, it was a smartphone", "Yes, but it wasn't a smartphone", "No, this is my first phone")),
@@ -412,10 +701,10 @@ p_interactif <- ggplotly(p)
 p_interactif
 ```
 
-
 #### **3 ) DUREE USAGE ANCIEN TEL**
 
-**Filtre : Si QUALIFANCIENTEL= "Oui, c’était un smartphone" ou "Oui, mais ce n’était pas un smartphone"** (soit 47299 personnes)
+**Filtre : Si QUALIFANCIENTEL= "Oui, c'était un smartphone" ou "Oui,
+mais ce n'était pas un smartphone"** (soit 47299 personnes)
 
 **Combien de temps pensez-vous avoir gardé votre ancien téléphone ?**
 
@@ -440,7 +729,7 @@ print(df)
 #print(floor(sum(as.numeric(don)))) #47299
 ```
 
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(DURATION_OF_USE_OLD_PHONE, levels = c("Less than 6 months", "Between 6 months and 1 year", "Between 1 and 2 years", "Between 2 and 3 years", "Between 3 and 5 years", "More than 5 years", "I don't know")),
@@ -472,9 +761,9 @@ p_interactif
 
 **Filtre : Si REQUIPMENT= "Un smartphone"** (soit 47831 personnes)
 
-**Qu’est-ce qui vous a motivé à obtenir votre smartphone actuel ?**
+**Qu'est-ce qui vous a motivé à obtenir votre smartphone actuel ?**
 
-```{r}
+```{r echo=FALSE}
 variable = data$RMOTIV_SMART_FORM
 nb_de_modalites = 6
 
@@ -497,7 +786,7 @@ df <- rbind(df, total_row)
 print(df)
 ```
 
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(PHONE_MOTIV, levels = c("I wanted a new one","I no longer had access to the old one ","The previous one was too limiting or no longer usable","I gave the old one to someone","I had the opportunity to get a new one", "Other")),
@@ -524,14 +813,15 @@ p_interactif <- ggplotly(p)
 p_interactif
 ```
 
-
 #### **5 ) ETAT ANCIEN TEL**
 
-**Filtre : Si QUALIFANCIENTEL= "Oui, c’était un smartphone" ou "Oui, mais ce n’était pas un smartphone"** ** (soit 47831 personnes)
+**Filtre : Si QUALIFANCIENTEL= "Oui, c'était un smartphone" ou "Oui,
+mais ce n'était pas un smartphone"** \*\* (soit 47831 personnes)
 
-**Dans quel état était votre ancien téléphone au moment où il a été remplacé ?**
+**Dans quel état était votre ancien téléphone au moment où il a été
+remplacé ?**
 
-```{r}
+```{r echo=FALSE}
 variable = data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"RETAT_ANCIEN_TEL"]
 
 
@@ -555,12 +845,11 @@ total_row <- data.frame(
 df <- rbind(df, total_row)
 
 print(df)
-print(sum(mat[2,])) # 80300
+#print(sum(mat[2,])) # 80300
 # print(sum(data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"poids"])) # 47299
 ```
 
-
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(PHONE_CONDITION, levels = c("My phone was working well","My phone worked but lacked one or more features","My phone was completely unusable","The battery life was low","My phone's storage was insufficient","My phone was slow","My phone was physically damaged","My phone had malfunctions", "Other reason","I don't remember")),
@@ -587,13 +876,11 @@ p_interactif <- ggplotly(p)
 p_interactif
 ```
 
-
 #### **6 ) NB SMARTPHONE**
 
 **Combien de smartphones utilisez-vous en ce moment ?**
 
-
-```{r}
+```{r echo=FALSE}
 don <- tapply(data$poids, data$NB_SMARTPHONE, sum)
 
 df <- data.frame(Nb_of_phones =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
@@ -613,8 +900,7 @@ df <- rbind(df, total_row)
 print(df)
 ```
 
-
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(Nb_of_phones, levels = c("1","2","3 or more")),
@@ -641,13 +927,13 @@ p_interactif <- ggplotly(p)
 p_interactif
 ```
 
+#### **7 ) CONTEXTE USAGE SMARTPHONE**
 
-#### 7 ) CONTEXTE USAGE SMARTPHONE
+Nous allons nous intéresser au smartphone que vous utilisez le plus
+souvent. Quel est l'usage principale du smartphone que vous utilisez
+souvent ?
 
-
-Nous allons nous intéresser au smartphone que vous utilisez le plus souvent. Quel est l'usage principale du smartphone que vous utilisez souvent ? 
-
-```{r}
+```{r echo=FALSE}
 don <- tapply(data$poids, data$CONTEXTE_USAGE_SMARTPHONE, sum)
 
 df <- data.frame(Smartphone_usage_context =names(don), Nb_people = floor(as.numeric(don)), Percent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
@@ -668,8 +954,7 @@ df <- rbind(df, total_row)
 print(df)
 ```
 
-
-```{r}
+```{r echo=FALSE}
 p <- ggplot(df[1:(nrow(df) - 1),]) +
   aes(
     x = factor(Smartphone_usage_context, levels = c("Personal","Professional","Personal and professional")),
@@ -696,23 +981,256 @@ p_interactif <- ggplotly(p)
 p_interactif
 ```
 
+#### **8 ) MARQMOB1 - Marque mobile principal**
+
+Quelle est la marque de ce smartphone ?
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$MARQMOB1, sum)
+
+df <- data.frame(Brand =names(don), Nb_people = round(as.numeric(don),1), Percent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df$Brand = c("Apple","Asus","Google Pixel","Honor", "Huawei", "Nokia", "OPPO", "Samsung", "Sony", "Wiko", "Xiaomi", "Another manufacturer")
+
+df <- df %>% arrange( desc(Nb_people))
 
 
+total_row <- data.frame(
+  Brand = "Total",
+  Nb_people = sum(df$Nb_people),
+  Percent = sum(df$Percent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+```{r echo=FALSE}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(Brand, levels = c("Apple","Asus","Google Pixel","Honor", "Huawei", "Nokia", "OPPO", "Samsung", "Sony", "Wiko","Xiaomi","Another manufacturer")),
+    y = Nb_people
+  ) +
+  geom_bar(stat = "identity", color = "skyblue", fill = "skyblue") +
+  theme_minimal() +
+  labs(
+    title = "What is the brand of the smartphone ?",
+    x = "Brand",
+    y = "Number of people"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "skyblue"),
+    axis.title.x = element_text(color = "skyblue", face = "bold"),
+    axis.title.y = element_text(color = "skyblue", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+#### **9 ) Équipement numériques**
+
+Nous allons maintenant nous intéresser aux équipements numériques que
+les répondants utilisent :
+
+```{r echo=FALSE}
+variable = data[,"REQUIPEMENT_NUM"]
 
 
+nb_de_modalites = 6
+
+mat = Count_VCM(variable,nb_de_modalites)
+```
+
+```{r echo=FALSE}
+df <- data.frame(REQUIPEMENT =mat[1,], Nb_personnes = floor(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$REQUIPEMENT = factor(df$REQUIPEMENT,labels=c("Un téléphone mobile (non smartphone)","Un smartphone","Aucun de ces équipements","Un ordinateur fixe","Un ordinateur portable","Une tablette tactile"))
+
+total_row <- data.frame(
+  REQUIPEMENT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+#print(sum(mat[2,])) # 80300
+# print(sum(data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"poids"])) # 47299
+```
+
+```{r echo=FALSE}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(REQUIPEMENT, levels = c("Un téléphone mobile (non smartphone)","Un smartphone","Un ordinateur fixe","Un ordinateur portable","Une tablette tactile","Aucun de ces équipements")),
+    y = Nb_personnes
+  ) +
+  geom_bar(stat = "identity", color = "turquoise4", fill = "turquoise4") +
+  theme_minimal() +
+  labs(
+    title = "Répartition des équipements numériques ",
+    x = "Équipements",
+    y = "Nombre d'équipements"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "turquoise4"),
+    axis.title.x = element_text(color = "turquoise4", face = "bold"),
+    axis.title.y = element_text(color = "turquoise4", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+#### **10 ) SOLUTION ALTERNATIVE PB**
+
+**Quelle(s) solution(s) avez-vous mise(s) en place pour pallier ces
+problèmes identifiés ?**
+
+```{r echo=FALSE}
+variable = data$RSOLUTION_ALTERNATIVE_PB_FORM
+
+nb_de_modalites = 7
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+df <- data.frame(SOLUTION =mat[1,], Nb_personnes = floor(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$SOLUTION = factor(df$SOLUTION,labels=c("J’utilise un autre appareil","J’utilise une alternative non-numérique","Je me débrouille avec mon smartphone","Je l'entretiens, je le nettoie","J’utilise moins, ou plus du tout, les fonctions impactées","J’ignore le(s) problème(s)","Autre"))
+
+total_row <- data.frame(
+  SOLUTION = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+#print(sum(mat[2,])) # 11858.29
+#print(sum(data[which(data$RSOLUTION_ALTERNATIVE_PB_FORM!="08"),"poids"])) # 9192.765
+```
+
+```{r echo=FALSE}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(SOLUTION, levels = c("J’utilise un autre appareil","J’utilise une alternative non-numérique","Je me débrouille avec mon smartphone","Je l'entretiens, je le nettoie","J’utilise moins, ou plus du tout, les fonctions impactées","J’ignore le(s) problème(s)","Autre")),
+    y = Nb_personnes
+  ) +
+  geom_bar(stat = "identity", color = "turquoise4", fill = "turquoise4") +
+  theme_minimal() +
+  labs(
+    title = "Solutions alternatives aux problèmes ",
+    x = "Solutions",
+    y = "Nombre de solutions"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "turquoise4"),
+    axis.title.x = element_text(color = "turquoise4", face = "bold"),
+    axis.title.y = element_text(color = "turquoise4", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+#### **11 ) INTENTION REMPLACEMENT**
+
+**Avez-vous l'intention de remplacer votre téléphone ?**
+
+```{r echo=FALSE}
+
+don <- tapply(data$poids, data$INTENTION_REMPLACEMENT, sum)
+
+df <- data.frame(REMPLACEMENT =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+df <- df %>% arrange( desc(Nb_personnes))
 
 
+total_row <- data.frame(
+  REMPLACEMENT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df$REMPLACEMENT = factor(df$REMPLACEMENT,labels=c("Oui, dans moins d’un mois","Oui, dans 1 à 6 mois","Oui, dans 6 à 12 mois","Oui, dans 1 an à 2 ans","Oui, dans 2 ans ou plus","Non, je n’ai pas envisagé de le remplacer","Je ne sais pas"))
+
+df <- rbind(df, total_row)
+
+print(df)
+
+```
+
+```{r echo=FALSE}
+p <- ggplot(df[1:(nrow(df) - 1),]) +
+  aes(
+    x = factor(REMPLACEMENT, levels = c("Oui, dans moins d’un mois","Oui, dans 1 à 6 mois","Oui, dans 6 à 12 mois","Oui, dans 1 an à 2 ans","Oui, dans 2 ans ou plus","Non, je n’ai pas envisagé de le remplacer","Je ne sais pas")),
+    y = Nb_personnes
+  ) +
+  geom_bar(stat = "identity", color = "turquoise4", fill = "turquoise4") +
+  theme_minimal() +
+  labs(
+    title = "Avez-vous l’intention de remplacer votre téléphone ?",
+    x = "Remplacement",
+    y = "Nombre de répondants"
+  ) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", color = "turquoise4"),
+    axis.title.x = element_text(color = "turquoise4", face = "bold"),
+    axis.title.y = element_text(color = "turquoise4", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+
+# Convert ggplot graph to interactive graph
+p_interactif <- ggplotly(p)
+
+# Display the interactive graph
+p_interactif
+```
+
+### **III ) Module RECONTACT**
+
+#### **RECONTACT**
+
+**Acceptez-vous d'être recontacté.e ?**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$RECONTACT, sum)
+
+df <- data.frame(RECONTACT =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+df <- df %>% arrange( desc(Nb_personnes))
 
 
+total_row <- data.frame(
+  RECONTACT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
 
+df$RECONTACT = factor(df$RECONTACT,labels=c("Oui","Non"))
 
+df <- rbind(df, total_row)
 
-
-
-
-
-
-
+print(df)
+```
 
 ```{r include=FALSE }
 indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")

@@ -463,7 +463,7 @@ subplot(
 ) %>%
   layout(
     title = list(
-      text = "Répartion des temps de cohabitation",
+      text = "Répartition des temps de cohabitation",
       font = list(size = 25, color = "black", family = "Arial", face = "bold")
     ),
     annotations = list(
