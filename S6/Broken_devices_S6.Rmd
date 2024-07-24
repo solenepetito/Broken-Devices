@@ -467,7 +467,7 @@ for (i in 2:13){
 
 # Créer un diagramme en barres empilées
 p <- ggplot(df_T, aes(x = Catégorie, y = Valeurs, fill = Légende)) +
-  geom_bar(stat = "identity", position = "stack") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  geom_bar(stat = "identity", position = "dodge") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "Raisons de ne pas réparer ",
        x = "Catégorie",
        y = "Nombre de dysfonctionnnements") +

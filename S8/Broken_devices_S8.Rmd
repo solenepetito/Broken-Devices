@@ -288,9 +288,9 @@ custom_names <- c("Mon téléphone fonctionnait bien","Mon téléphone fonctionn
 
 corrplot(mcor, type="upper", order="hclust", tl.col="black", tl.srt=45,diag=FALSE)
 ```
-### **2 ) Graphe du type de Résolution en fonction du degré de gêne**
+### **II ) Graphe du type de Résolution en fonction du degré de gêne**
 
-```{r}
+```{r include=FALSE}
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
 recence <- c()
 annee <- c()
@@ -336,12 +336,12 @@ print(head(rep))
 ```
 
 
-```{r echo=FALSE}
+```{r include=FALSE}
 gene_pbs_non_resolus=as.matrix(table(gene))
 gene_pbs_non_resolus
 ```
 
-```{r echo=FALSE}
+```{r include=FALSE}
 gene_tente_pas_reussi <- c()
 gene_pbs_resolus <- c()
 gene_resolu_seul <- c()
@@ -424,11 +424,8 @@ normalized_mat <- t(apply(mat, 2, normalize))
 print(normalized_mat)
 ```
 
-```{r}
-mat
-```
 
-```{r}
+```{r include=FALSE}
 resolution_label=c("Le problème est resolu","Le problème n'a pas pu être résolu","Le problème s’est résolu tout seul au bout d’un moment","Le problème sera peut-être résolu plus tard","Je ne pense pas tenter de résoudre le problème")
 
 Catégorie = factor(label_GENE[1:3], levels = label_GENE[1:3])
@@ -463,16 +460,15 @@ p5_interactif
 ```
 
 ```{r include=FALSE}
-resolution_label=c("Oui et le problème est resolu",
-"Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+resolution_label=c("Le problème est resolu","Le problème n'a pas pu être résolu","Le problème s’est résolu tout seul au bout d’un moment","Le problème sera peut-être résolu plus tard","Je ne pense pas tenter de résoudre le problème")
 
-Catégorie = factor(label_GENE, levels = label_GENE)
+Catégorie = factor(label_GENE[1:3], levels = label_GENE[1:3])
 
-df_T1 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[,1], Légende = factor("Oui et le problème est resolu",levels=resolution_label))
-df_T2 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[,2], Légende = factor("Oui mais le problème na pas pu être résolu",levels=resolution_label))
-df_T3 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[,3], Légende = factor("Non, le problème s’est résolu tout seul au bout d’un moment",levels=resolution_label))
-df_T4 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[,4], Légende = factor("Non, peut être plus tard",levels=resolution_label))
-df_T5 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[,5], Légende = factor("Non, je ne pense pas tenter de résoudre le problème",levels=resolution_label))
+df_T1 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[1,], Légende = factor("Le problème est resolu",levels=resolution_label))
+df_T2 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[2,], Légende = factor("Le problème n'a pas pu être résolu",levels=resolution_label))
+df_T3 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[3,], Légende = factor("Le problème s’est résolu tout seul au bout d’un moment",levels=resolution_label))
+df_T4 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[4,], Légende = factor("Le problème sera peut-être résolu plus tard",levels=resolution_label))
+df_T5 <- data.frame(Catégorie = Catégorie, valeurs = normalized_mat[5,], Légende = factor("Je ne pense pas tenter de résoudre le problème",levels=resolution_label))
 
 # Combiner les deux data frames
 df_combined <- rbind(df_T1, df_T2,df_T3,df_T4,df_T5)
@@ -483,8 +479,8 @@ p6 <- ggplot(df_combined, aes(x = Catégorie, y = valeurs, fill = Légende)) +
   labs(title = "Résolution en fonction du degrés de gêne",
        x = "Degrés de gêne",
        y = "Pourcentage de dysfonctionnements") +
-  scale_fill_manual(values = c("Oui et le problème est resolu"="#33a02c",
-"Oui mais le problème na pas pu être résolu"="#FFD700","Non, le problème s’est résolu tout seul au bout d’un moment"="gray","Non, peut être plus tard"="#fdb462","Non, je ne pense pas tenter de résoudre le problème"="#e31a1c")) +
+  scale_fill_manual(values = c("Le problème est resolu"="#33a02c",
+"Le problème n'a pas pu être résolu"="#FFD700","Le problème s’est résolu tout seul au bout d’un moment"="gray","Le problème sera peut-être résolu plus tard"="#fdb462","Je ne pense pas tenter de résoudre le problème"="#e31a1c")) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),  
@@ -533,7 +529,314 @@ subplot(
 ```
 
 
+### **III ) Pourquoi les gens n'ont pas voulu réparer**
 
+```{r include=FALSE}
+Count_VCM(data$RRAISON_UTIL_PB_FORM,13)
+```
+
+```{r include=FALSE}
+mat_raison_cat = matrix(0,nrow=13,ncol=4)
+mat_raison_gene = matrix(0,nrow=13,ncol=4)
+
+liste_pbs_pas_resolu = c()
+
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+
+for ( i in 81:105){
+  for (j in 1:nrow(df)){
+    res=df[j,i]
+    if (!is.na(res) && (res == 4 || res == 5)){
+      gene=df[j,i-50]
+      num_pb=i-80
+      liste_pbs_pas_resolu = c(liste_pbs_pas_resolu,num_pb)
+      result <- which(matrice_cat == num_pb, arr.ind = TRUE)
+      cat <- result[1]
+      liste = str_extract_all(df[j,"RRAISON_UTIL_PB_FORM"], ".{2}")[[1]]
+      liste=as.numeric(liste)
+      for (raison in liste){
+        mat_raison_cat[raison,cat]=mat_raison_cat[raison,cat]+1
+        mat_raison_gene[raison,gene]=mat_raison_gene[raison,gene]+1
+      }
+      
+    }
+    
+  }
+}
+
+
+
+print(mat_raison_cat)
+print(mat_raison_gene)
+
+print(length(liste_pbs_pas_resolu)) # 331
+print(sum(mat_raison_cat)) # 679
+print(sum(mat_raison_gene)) # 679
+
+
+normalize1 <- function(x) {
+  return(round(x*100/colSums(mat_raison_cat),1))
+}
+
+normalize2 <- function(x) {
+  return(round(x*100/colSums(mat_raison_gene),1))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat_raison_cat <- t(apply(mat_raison_cat,1, normalize1))
+normalized_mat_raison_gene <- t(apply(mat_raison_gene,1, normalize2))
+
+```
+
+```{r}
+mat_raison_cat
+```
+
+
+```{r}
+# STOCKAGE
+
+df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,1], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Stockage ",
+       x = "Raisons",
+       y = "Nombre de dysfonctionnnements") +
+  scale_fill_manual(values =c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#A52A2A", "#FFC0CB", "#808080", "#000000", "azure2","#00868B")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.title.y = element_text(face = "bold"),legend.position = "none") 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+```{r}
+# MATÉRIEL
+
+df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,2], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Matériel ",
+       x = "Raisons",
+       y = "Nombre de dysfonctionnnements") +
+  scale_fill_manual(values =c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#A52A2A", "#FFC0CB", "#808080", "#000000", "azure2","#00868B")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+
+
+```{r}
+# MAJ
+
+df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,3], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Maj ",
+       x = "Raisons",
+       y = "Nombre de dysfonctionnnements") +
+  scale_fill_manual(values =c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#A52A2A", "#FFC0CB", "#808080", "#000000", "azure2","#00868B")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+```{r}
+# DYS DIVERS
+
+df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,4], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+  geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
+  labs(title = "Dys divers ",
+       x = "Raisons",
+       y = "Nombre de dysfonctionnnements") +
+  scale_fill_manual(values =c("#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#A52A2A", "#FFC0CB", "#808080", "#000000", "azure2","#00868B")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"), 
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+### **IV ) Intention de remplacement en fonction de l'année d'obtention du smartphone**
+
+```{r include=FALSE}
+annees <- sort(unique(data$DATEOBTENTIONSMART_1))
+
+# Créer un dataframe vide avec les bonnes dimensions
+dataframe <- data.frame(REMPLACEMENT = 1:7)
+
+# Obtenir tous les niveaux de INTENTION_REMPLACEMENT
+all_levels <- sort(unique(data$INTENTION_REMPLACEMENT))
+
+# Remplir le dataframe dans une boucle for
+for (i in annees) {
+  # Filtrer les données pour l'année en cours
+  variable <- data[data$DATEOBTENTIONSMART_1 == i, "INTENTION_REMPLACEMENT"]
+  
+  # Créer une table de fréquences avec tous les niveaux et remplacer les niveaux manquants par zéro
+  freq_table <- table(factor(variable, levels = all_levels))
+  
+  # Convertir en matrice pour un accès facile
+  mat <- as.matrix(freq_table)
+  
+  # Ajouter les valeurs au dataframe, en s'assurant qu'elles soient correctement alignées avec les niveaux
+  dataframe[, as.character(i)] <- ifelse(is.na(mat), 0, mat[, 1])
+}
+
+dataframe$REMPLACEMENT = factor(dataframe$REMPLACEMENT,labels=c("Oui, dans moins d’un mois","Oui, dans 1 à 6 mois","Oui, dans 6 à 12 mois","Oui, dans 1 an à 2 ans","Oui, dans 2 ans ou plus","Non, je n’ai pas envisagé de le remplacer","Je ne sais pas"))
+
+# Afficher le dataframe résultant
+print(dataframe)
+
+
+```
+
+```{r echo=FALSE}
+# Initialiser les années
+annees <- sort(unique(data$DATEOBTENTIONSMART_1))
+
+# Obtenir tous les niveaux de INTENTION_REMPLACEMENT
+all_levels <- sort(unique(data$INTENTION_REMPLACEMENT))
+
+# Créer une liste pour stocker les résultats
+result_list <- list()
+
+# Remplir la liste dans une boucle for
+for (i in annees) {
+  # Filtrer les données pour l'année en cours
+  variable <- data[data$DATEOBTENTIONSMART_1 == i, "INTENTION_REMPLACEMENT"]
+  
+  # Créer une table de fréquences avec tous les niveaux et remplacer les niveaux manquants par zéro
+  freq_table <- table(factor(variable, levels = all_levels))
+  
+  # Convertir en DataFrame
+  df_temp <- data.frame(
+    Obtention = i,
+    Remplacement = names(freq_table),
+    Nb_personnes_concernees = as.numeric(freq_table)
+  )
+  
+  # Ajouter le DataFrame temporaire à la liste
+  result_list[[as.character(i)]] <- df_temp
+}
+
+# Combiner tous les DataFrames en un seul
+df2 <- do.call(rbind, result_list)
+# Filtrer les données pour exclure les points où la valeur est zéro
+df2 <- df2[df2$Nb_personnes_concernees > 0, ]
+df2$Remplacement = factor(df2$Remplacement,labels=c("Dans moins d’un mois","Dans 1 à 6 mois","Dans 6 à 12 mois","Dans 1 an à 2 ans","Dans 2 ans ou plus","Je n’ai pas envisagé de le remplacer","Je ne sais pas"))
+
+
+# Créer le graphique
+p <- ggplot(df2, aes(x = Obtention, y = Remplacement, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "turquoise4") +
+  theme_minimal() +
+  labs(title = "Intention de remplacement en fonction de l'année d'obtention",
+       x = "Année d'obtention",
+       y = "Intention de remplacement",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "turquoise4"),
+        axis.title.x = element_text(face = "bold", colour = "turquoise4"),
+        axis.title.y = element_text(face = "bold", colour = "turquoise4"))
+# Rendre le graphique interactif
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
+
+
+```
+
+### **V ) Intention de remplacement en fonction de la durée d’utilisation précédente du téléphone d’occasion**
+
+```{r include=FALSE}
+# Initialiser les années
+duree <- sort(unique(data$UTILISATIONSMARTOCCAS))
+
+data$DUREE_USAGE_ANCIEN_TEL
+# Obtenir tous les niveaux de INTENTION_REMPLACEMENT
+all_levels <- sort(unique(data$UTILISATIONSMARTOCCAS))
+
+# Créer une liste pour stocker les résultats
+result_list <- list()
+
+# Remplir la liste dans une boucle for
+for (i in duree) {
+  # Filtrer les données pour l'année en cours
+  variable <- data[data$DUREE_USAGE_ANCIEN_TEL == i, "INTENTION_REMPLACEMENT"]
+  
+  # Créer une table de fréquences avec tous les niveaux et remplacer les niveaux manquants par zéro
+  freq_table <- table(factor(variable, levels = all_levels))
+  
+  # Convertir en DataFrame
+  df_temp <- data.frame(
+    Duree_usage_ancien_tel = i,
+    Remplacement = names(freq_table),
+    Nb_personnes_concernees = as.numeric(freq_table)
+  )
+  
+  # Ajouter le DataFrame temporaire à la liste
+  result_list[[as.character(i)]] <- df_temp
+}
+
+# Combiner tous les DataFrames en un seul
+df2 <- do.call(rbind, result_list)
+# Filtrer les données pour exclure les points où la valeur est zéro
+df2 <- df2[df2$Nb_personnes_concernees > 0, ]
+df2$Remplacement = factor(df2$Remplacement,labels=c("Dans moins d’un mois","Dans 1 à 6 mois","Dans 6 à 12 mois","Dans 1 an à 2 ans","Dans 2 ans ou plus","Je n’ai pas envisagé de le remplacer","Je ne sais pas"))
+
+df2$Duree_usage_ancien_tel = factor(df2$Duree_usage_ancien_tel,labels=c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas"))
+```
+
+
+```{r echo=FALSE}
+p <- ggplot(df2, aes(x = Duree_usage_ancien_tel, y = Remplacement, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "skyblue2") +
+  theme_minimal() +
+  labs(title = "Intention de remplacement en fonction de la durée d’utilisation précédente du téléphone d’occasion",
+       x = "Durée usage ancien téléphone",
+       y = "Intention de remplacement",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "skyblue2"),
+        axis.title.x = element_text(face = "bold", colour = "skyblue2"),
+        axis.title.y = element_text(face = "bold", colour = "skyblue2"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# Rendre le graphique interactif
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
+```
 
 
 ```{r echo=FALSE }
