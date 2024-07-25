@@ -1,11 +1,11 @@
 ---
-title: 'Project : Broken devices S7'
+title: 'Project : Broken devices S8'
 author: "Solène PETITO"
 output:
   html_document: default
   pdf_document: default
   word_document: default
-date: "2024-07-01"
+date: "2024-07-22"
 editor_options: 
   markdown: 
     wrap: 72
@@ -148,8 +148,7 @@ matrice_cat[4, 1:length(dys_divers)] <- dys_divers
 print(matrice_cat)
 ```
 
-
-**OBJECTIF :** *Analyser la base de données *
+**OBJECTIF :** *Analyser la base de données*
 
 ## **ANALYSE DE LA BASE DE DONNÉES**
 
@@ -198,9 +197,35 @@ for (i in 1 :ncol(df)){
   }
 ```
 
-### **I ) Variable ETAT ANCIEN TEL **
+### **I ) Variable ETAT ANCIEN TEL**
 
-```{r echo=FALSE}
+**Question :** Dans quel état était votre ancien téléphone au moment où
+il a été remplacé ?
+
+Les réponses possibles étaient :
+
+-   1 : Mon téléphone fonctionnait bien
+
+-   2 : Mon téléphone fonctionnait mais il lui manquait une ou plusieurs
+    fonctionnalités
+
+-   3 : Mon téléphone était complètement inutilisable
+
+-   4 : La durée de vie de la batterie était faible
+
+-   5 : Le stockage de mon téléphone était insuffisant
+
+-   6 : Mon téléphone était lent
+
+-   7 : Mon téléphone était physiquement endommagé
+
+-   8 : Mon téléphone avait des dysfonctionnements
+
+-   9 : Autre raison
+
+-   10 : Je ne me souviens pas
+
+```{r include=FALSE}
 variable=data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
 nb_de_modalites=10
 matrice=Count_VCM(variable,nb_de_modalites)
@@ -212,7 +237,13 @@ df = data.frame(Num_ETAT_ANCIEN_TEL=matrice[1,],ETAT_ANCIEN_TEL=labels,Nb_person
 print(df)
 ```
 
+#### **1 ) Matrice de "corrélation" donnant les liens entre chaque modalité (en valeur absolue)**
 
+La matrice ci dessous étant symétrique, les valeurs en dessous de la
+diagonale ont été remplacées par des 0, pour faciliter la lecture. La
+diagonale de la matrice quant à elle correspond au nombre de fois où la
+modalité est a été la seule à être choisie sans être liée à une ou
+plusieurs autres modalités :
 
 ```{r echo=FALSE}
 variable = data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
@@ -247,6 +278,11 @@ mat1
 
 ```
 
+#### **2 ) Matrice de "corrélation" donnant les liens entre chaque modalité (en pourcentage)**
+
+La matrice ci-dessous permet d'observer les mêmes informations que la
+matrice précédente mais en terme de poucentage :
+
 ```{r echo=FALSE}
 mat_pourcent1 = mat
 
@@ -261,6 +297,8 @@ diag(mat_pourcent2) = mat_pourcent1[1:10,11]
 
 mat_pourcent2
 ```
+
+#### **3 ) Graphique permettant de visualiser ces matrices**
 
 ```{r echo=FALSE}
 df <- as.data.frame(as.table(mat_pourcent2))
@@ -291,52 +329,7 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-
-```{r}
-# cor.mtest est une fonction qui calcule la matrice de corrélation d'un jeu de donnée à l'aide la fonction cor.test, et qui renvoit la matrice de corrélation en question :
-
-cor.mtest <- function(mat, ...) {
-        mat <- as.matrix(mat)
-        n <- ncol(mat)
-        p.mat<- matrix(NA, n, n)
-        diag(p.mat) <- 0
-        for (i in 1:(n - 1)) {
-            for (j in (i + 1):n) {
-                tmp <- cor.test(mat[, i], mat[, j], ...)
-                p.mat[i, j] <- p.mat[j, i] <- tmp$p.value
-            }
-        }
-      colnames(p.mat) <- rownames(p.mat) <- colnames(mat)
-      p.mat
-}
-col <- colorRampPalette(c("#BB4444", "#EE9988", "#FFFFFF", "#77AADD", "#4477AA"))
- p.mat <- cor.mtest(mat) # on stocke le résultat de notre fonction dans une variable p.mat
- 
-# On représente graphiquement la matrice obtenue, grâce à la foonction corrplot : 
- 
-corrplot(cor(mat), method="color", col=col(200),  
-             type="upper", order="hclust", 
-             addCoef.col = "black", # Ajout du coefficient de corrélation
-             tl.col="black", tl.srt=45, #Rotation des etiquettes de textes
-             # Combiner avec le niveau de significativité
-             p.mat = p.mat, sig.level = 0.8, insig = "blank", 
-             # Cacher les coefficients de corrélation sur la diagonale
-             diag=FALSE)
-```
-
-
-```{r}
-library(corrplot)
-
-mcor=cor(mat)
-
-custom_names <- c("Mon téléphone fonctionnait bien","Mon téléphone fonctionnait mais il lui manquait une ou plusieurs fonctionnalités" ,"Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent","Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas")
-#colnames(mcor) <- custom_names
-#rownames(mcor) <- custom_names
-
-corrplot(mcor, type="upper", order="hclust", tl.col="black", tl.srt=45,diag=FALSE)
-```
-### **II ) Graphe du type de Résolution en fonction du degré de gêne**
+### **II ) Type de Résolution en fonction du degré de gêne**
 
 ```{r include=FALSE}
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
@@ -382,7 +375,6 @@ print(head(mois))
 print(head(gene))
 print(head(rep))
 ```
-
 
 ```{r include=FALSE}
 gene_pbs_non_resolus=as.matrix(table(gene))
@@ -436,7 +428,6 @@ print(gene_tente_pas_reussi)
 print(gene_resolu_seul)
 ```
 
-
 ```{r include=FALSE}
 # Types de résolution en abscisse et gêne en ordonné
 indices_rep_4= which(rep==4)
@@ -471,7 +462,6 @@ normalize <- function(x) {
 normalized_mat <- t(apply(mat, 2, normalize))
 print(normalized_mat)
 ```
-
 
 ```{r include=FALSE}
 resolution_label=c("Le problème est resolu","Le problème n'a pas pu être résolu","Le problème s’est résolu tout seul au bout d’un moment","Le problème sera peut-être résolu plus tard","Je ne pense pas tenter de résoudre le problème")
@@ -576,8 +566,12 @@ subplot(
 
 ```
 
-
 ### **III ) Pourquoi les gens n'ont pas voulu réparer**
+
+Les graphes qui suic=vent permettent de visualiser pour chacune des
+catégories (Stockage, Matériel, Mise à jour, Dysfonctionnement divers)
+la répartition des raisons qui ont fait que les gens n'ont pas voulu
+réparer leur téléphone.
 
 ```{r include=FALSE}
 Count_VCM(data$RRAISON_UTIL_PB_FORM,13)
@@ -636,12 +630,9 @@ normalized_mat_raison_gene <- t(apply(mat_raison_gene,1, normalize2))
 
 ```
 
-```{r}
-mat_raison_cat
-```
+-   **Stockage :**
 
-
-```{r}
+```{r echo=FALSE}
 # STOCKAGE
 
 df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,1], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
@@ -656,7 +647,7 @@ p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
-        axis.title.y = element_text(face = "bold"),legend.position = "none") 
+        axis.title.y = element_text(face = "bold")) 
 
 p_interactif <- ggplotly(p)
 
@@ -664,7 +655,9 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-```{r}
+-   **Matériel :**
+
+```{r echo=FALSE}
 # MATÉRIEL
 
 df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,2], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
@@ -679,7 +672,7 @@ p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
-        axis.title.y = element_text(face = "bold"),legend.position="none") 
+        axis.title.y = element_text(face = "bold")) 
 
 p_interactif <- ggplotly(p)
 
@@ -687,9 +680,9 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+-   **Mise à jour :**
 
-
-```{r}
+```{r echo=FALSE}
 # MAJ
 
 df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,3], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
@@ -704,7 +697,7 @@ p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
-        axis.title.y = element_text(face = "bold"),legend.position="none") 
+        axis.title.y = element_text(face = "bold")) 
 
 p_interactif <- ggplotly(p)
 
@@ -712,7 +705,9 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-```{r}
+-   **Dysfonctionnement divers :**
+
+```{r echo=FALSE}
 # DYS DIVERS
 
 df_T <- data.frame(Raisons=c(1:length(label_RAISON_UTIL_PB)),Valeurs = mat_raison_cat[,4], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
@@ -727,7 +722,7 @@ p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"), 
-        axis.title.y = element_text(face = "bold"),legend.position="none") 
+        axis.title.y = element_text(face = "bold")) 
 
 p_interactif <- ggplotly(p)
 
@@ -736,6 +731,10 @@ p_interactif
 ```
 
 ### **IV ) Intention de remplacement en fonction de l'année d'obtention du smartphone**
+
+**Remarque :** La taille du point dépend du nombre de personnes
+concernées par le cas concidéré, plus le point est gros, plus le nombre
+de personnes dans le cas concidéré est important
 
 ```{r include=FALSE}
 annees <- sort(unique(data$DATEOBTENTIONSMART_1))
@@ -830,8 +829,11 @@ p_interactif
 
 ```
 
+### **V ) Intention de remplacement en fonction de la durée d'utilisation précédente du téléphone d'occasion**
 
-### **V ) Intention de remplacement en fonction de la durée d’utilisation précédente du téléphone d’occasion**
+**Remarque :** La taille du point dépend du nombre de personnes
+concernées par le cas concidéré, plus le point est gros, plus le nombre
+de personnes dans le cas concidéré est important
 
 ```{r include=FALSE}
 # Initialiser les années
@@ -872,8 +874,6 @@ df2$Duree_usage_ancien_tel = factor(df2$Duree_usage_ancien_tel,labels=c("Moins d
 
 # sum(df2$Nb_personnes_concernees) # 88
 ```
-
-
 
 ```{r echo=FALSE}
 p <- ggplot(df2, aes(x =Remplacement, y = Duree_usage_ancien_tel, size = Nb_personnes_concernees)) +
@@ -1019,7 +1019,6 @@ nrow(don)
 nrow(don2)
 ```
 
-
 ```{r include=FALSE}
 # calcul du nombre de personnes pour les différents cas possibles
 
@@ -1155,9 +1154,6 @@ subplot(
     yaxis2 = list(showticklabels = FALSE))
 ```
 
-
-
-
 ```{r include=FALSE}
 # 1 à 6 mois
 un_et_6_mois <- don[don$Cohab==3,] 
@@ -1258,8 +1254,6 @@ subplot(
     yaxis2 = list(showticklabels = FALSE))
 ```
 
-
-
 ```{r include=FALSE}
 ############### 6 mois à 2 ans
 
@@ -1339,7 +1333,6 @@ p5 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
 p5_interactif <- ggplotly(p5)
 ```
 
-
 ```{r echo=FALSE}
 subplot(
   p4_interactif, p5_interactif,
@@ -1360,7 +1353,6 @@ subplot(
     xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
     yaxis2 = list(showticklabels = FALSE))
 ```
-
 
 ```{r include=FALSE}
 ############### Plus de 2 ans
@@ -1441,7 +1433,6 @@ p7 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
 p7_interactif <- ggplotly(p7)
 ```
 
-
 ```{r echo=FALSE}
 subplot(
   p6_interactif, p7_interactif,
@@ -1462,8 +1453,6 @@ subplot(
     xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
     yaxis2 = list(showticklabels = FALSE))
 ```
-
-
 
 ```{r include=FALSE}
 ############### Je ne sais pas
@@ -1567,17 +1556,29 @@ subplot(
 
 ### **VII ) Catégorie de dysfonctionnements**
 
-#### **1 ) Catégorie 1** 
+#### **1 ) Catégorie 1 :**
 
-**Problèmes matériels :** Problème de sensibilité du tactile, Problème avec la lampe torche ou le flash, Problème de son, Problème de prise jack, Problème de chargement,Problème de batterie
-Problème de capteurs, Problème de téléphonie, Problème avec les boutons, Problème de vibreur
+-   Les catégories de la catégorisation 1 sont les suivantes :
 
-**Problèmes matériels + logiciels :** Problème avec l’écran, Problème avec l’appareil photo, Problème avec le GPS, Problème avec le micro, Problème de Wi-Fi, Problème d’accès à Internet, Problème lié à une fonctionnalité manquante
+**Problèmes matériels :** Problème de sensibilité du tactile, Problème
+avec la lampe torche ou le flash, Problème de son, Problème de prise
+jack, Problème de chargement,Problème de batterie Problème de capteurs,
+Problème de téléphonie, Problème avec les boutons, Problème de vibreur
 
-**Problèmes logiciels :** Système d’exploitation non mis à jour, Applications ne pouvant pas être téléchargées ou mises à jour, Fonctionnalité qui ne marche plus, Dysfonctionnement logiciel, Problèmes avec des applications, Problème de lenteur, Problème de Bluetooth ou de transferts de fichiers sans fil, Stockage saturé
+**Problèmes matériels + logiciels :** Problème avec l'écran, Problème
+avec l'appareil photo, Problème avec le GPS, Problème avec le micro,
+Problème de Wi-Fi, Problème d'accès à Internet, Problème lié à une
+fonctionnalité manquante
 
-La représentation graphique qui suit permet de visualiser cette
-répartition :
+**Problèmes logiciels :** Système d'exploitation non mis à jour,
+Applications ne pouvant pas être téléchargées ou mises à jour,
+Fonctionnalité qui ne marche plus, Dysfonctionnement logiciel, Problèmes
+avec des applications, Problème de lenteur, Problème de Bluetooth ou de
+transferts de fichiers sans fil, Stockage saturé
+
+-   La représentation graphique qui suit permet de visualiser la
+    répartition des dysfonctionnements concernés par chacune des
+    catégories :
 
 ```{r include=FALSE}
 label_dys <- c("Problèmes matériels","Problèmes matériels + logiciels","Problèmes logiciels")
@@ -1600,7 +1601,6 @@ matrice_cat[3, 1:length(logiciel)] <- logiciel
 # Afficher la matrice
 print(matrice_cat)
 ```
-
 
 ```{r include=FALSE}
 variable=data$RIDENTIFICATION_PROBLEMES
@@ -1640,8 +1640,6 @@ nrow(dataframe[which(dataframe$Categorie=="Problèmes logiciels"),]) # 8
 
 ```
 
-
-
 ```{r echo=FALSE}
 
 label <- dataframe$Dys
@@ -1672,17 +1670,31 @@ p_interactif <- ggplotly(p)
 p_interactif
 ```
 
-#### **2 ) Catégorie 2**
+#### **2 ) Catégorie 2 : Gênes ressenties en fonction de la catégorie du dysfonctionnement :**
 
-Gênes ressenties en fonction de la catégorie du dysfonctionnement :
+-   Les catégories de la catégorisation 2 sont les suivantes :
 
 **Stockage :** Stockage saturé
 
-**Mise à jour :** Système d’exploitation (par ex : Android, iOS…) non mis à jour, Applications ne pouvant pas être téléchargées ou mises à jour
+**Mise à jour :** Système d'exploitation (par ex : Android, iOS...) non
+mis à jour, Applications ne pouvant pas être téléchargées ou mises à
+jour
 
-**Matériel :** Problème avec l’écran, Problème de sensibilité du tactile, Problème avec les boutons, Problème de vibreur, Problème de capteurs, Problème de batterie, Problème de chargement, Problème de prise jack, Problème de son, Problème avec le micro, Problème avec la lampe torche ou le flash
+**Matériel :** Problème avec l'écran, Problème de sensibilité du
+tactile, Problème avec les boutons, Problème de vibreur, Problème de
+capteurs, Problème de batterie, Problème de chargement, Problème de
+prise jack, Problème de son, Problème avec le micro, Problème avec la
+lampe torche ou le flash
 
-**Dysfonctionnement divers :** Problème lié à une fonctionnalité manquante, Fonctionnalité qui ne marche plus, Dysfonctionnement logiciel, Problèmes avec des applications, Problème d’accès à Internet, Problème de téléphonie, Problème de Bluetooth ou de transferts de fichiers sans fil, Problème de Wi-Fi, Problème avec le GPS, Problème de lenteur, Problème avec l’appareil photo
+**Dysfonctionnement divers :** Problème lié à une fonctionnalité
+manquante, Fonctionnalité qui ne marche plus, Dysfonctionnement
+logiciel, Problèmes avec des applications, Problème d'accès à Internet,
+Problème de téléphonie, Problème de Bluetooth ou de transferts de
+fichiers sans fil, Problème de Wi-Fi, Problème avec le GPS, Problème de
+lenteur, Problème avec l'appareil photo
+
+-   Le graphe qui suit permet de visualiser les types de gênes
+    ressenties pour chacune de ces catégories :
 
 ```{r include=FALSE}
 # Catégorisation des dysfonctionnements
@@ -1710,8 +1722,7 @@ matrice_cat[4, 1:length(dys_divers)] <- dys_divers
 print(matrice_cat)
 ```
 
-
-```{r}
+```{r include=FALSE}
 pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
 nb_total_pbs <- sum(pbs[2,])
 
@@ -1744,10 +1755,7 @@ don <- data.frame("Dysfonctionnements"=label_dys,"Nb_dys"=mat[2,],"Pourcentage_d
 print(don)
 ```
 
-
-
-
-```{r}
+```{r include=FALSE}
 CATEGORIE <- c(1:4)
 
 mat <- matrix(0,nrow=5,ncol=length(CATEGORIE))
@@ -1779,15 +1787,26 @@ df <- data.frame("Dysfonctionnements"=label_dys, "Nb_dys"=don$Nb_dys,"Trés gên
 print(df)
 ```
 
+```{r include=FALSE}
+matrice = mat[2:5,]
 
+normalize <- function(x) {
+  return(round(x*100/colSums(matrice)))
+}
 
-```{r}
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat <- t(apply(matrice,1, normalize))
+print(normalized_mat)
+
+```
+
+```{r include=FALSE}
 Categorie <- factor(label_dys, levels = label_dys)
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = round((mat[2,]*100/nb_total_pbs),2), Gêne = "Très gênant")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = round(mat[3,]*100/nb_total_pbs,2), Gêne = "Plutôt gênant")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = round(mat[4,]*100/nb_total_pbs,2), Gêne = "Plutôt pas gênant")
-df_T4 <- data.frame(Categorie = Categorie, valeurs = round(mat[5,]*100/nb_total_pbs,2), Gêne = "Pas gênant du tout")
+df_T1 <- data.frame(Categorie = Categorie, valeurs =normalized_mat[1,], Gêne = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[2,], Gêne = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[3,], Gêne = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = normalized_mat[4,], Gêne = "Pas gênant du tout")
 
 
 # Combiner les deux data frames
@@ -1816,8 +1835,7 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-
-```{r}
+```{r include=FALSE}
 Categorie <- factor(label_dys, levels = label_dys)
 
 df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,], Gêne = "Très gênant")
@@ -1852,27 +1870,37 @@ p1_interactif <- ggplotly(p1)
 p1_interactif 
 ```
 
+```{r echo=FALSE}
+subplot(
+  p1_interactif, p_interactif,
+  nrows = 1, 
+  titleX = TRUE, 
+  titleY = TRUE,
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
+) %>%
+  layout(
+    title = list(
+      text = "Gênes ressenties en fonction de la catégorie de dysfonctionnement",
+      font = list(size = 15, color = "black", family = "Arial", face = "bold")
+    
+    ),
+    annotations = list(
+      list(
+        x = 0.2, y = 1.05, text = "Pour 835 dysfonctionnements", 
+        showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#1f77b4", family = "Arial", weight = "bold")
+      ),
+      list(
+        x = 0.8, y = 1.05, text = "Sur le même niveau", 
+        showarrow = FALSE, xref = "paper", yref = "paper", xanchor = 'center', yanchor = 'bottom', font = list(size = 14, color = "#1f77b4", family = "Arial", weight = "bold")
+      )
+    ),
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1)))
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-```{r echo=FALSE }
+```{r include=FALSE }
 indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
 print(indice_colonne) # 106
 
