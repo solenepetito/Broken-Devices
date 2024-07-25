@@ -127,7 +127,7 @@ label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
 
 label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
 
-materiel <- c(1,2,1,3,4,6,7,8,9,10,12,16,17)
+materiel <- c(1,2,3,4,6,7,8,9,10,12,16,17)
 dys_divers <- c(5,11,13,14,15,21,22,23,24,25)
 stockage <- c(18)
 maj <- c(19,20)
@@ -200,20 +200,24 @@ for (i in 1 :ncol(df)){
 
 ### **I ) Variable ETAT ANCIEN TEL **
 
-```{r}
+```{r echo=FALSE}
 variable=data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
 nb_de_modalites=10
 matrice=Count_VCM(variable,nb_de_modalites)
 matrice[2,]=round(matrice[2,])
 
-matrice
+labels= c("Mon téléphone fonctionnait bien","Mon téléphone fonctionnait mais il lui manquait une ou plusieurs fonctionnalités","Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent","Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas")
+
+df = data.frame(Num_ETAT_ANCIEN_TEL=matrice[1,],ETAT_ANCIEN_TEL=labels,Nb_personnes=matrice[2,] )
+print(df)
 ```
 
 
-```{r}
+
+```{r echo=FALSE}
 variable = data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
 
-mat = matrix(0,ncol=10,nrow=10)
+mat = matrix(0,ncol=11,nrow=11)
 for (i in 1:ncol(mat)){
   for (j in 1:length(variable)){
     liste_etats=str_extract_all(variable[j], ".{2}")[[1]]
@@ -224,23 +228,67 @@ for (i in 1:ncol(mat)){
         mat[etat,i]=mat[etat,i]+1
       }
     }
+    if (length(liste_etats)==1 && i %in% liste_etats ){
+      mat[11,i]=mat[11,i]+1
+    }
   }
 }
 
-mat
+mat=t(mat)
+
+# la matrice étant symétrique, on remplace les valeurs en dessous de la diagonale par des 0
+mat[lower.tri(mat)] <- 0
+
+mat1=mat[1:10,1:10]
+diag(mat1)=mat[1:10,11]
+diag_mat=diag(mat)
+
+mat1
 
 ```
 
-```{r}
-sum(mat[2,-2])
-```
+```{r echo=FALSE}
+mat_pourcent1 = mat
 
-
-```{r}
-for (i in 1:ncol(mat)){
-  mat[i,i]=mat[i,i]-sum(mat[i,-i])
+for (i in 1:(ncol(mat)-1)){
+  mat_pourcent1[,i]=round(mat_pourcent1[,i]*100/mat_pourcent1[i,i])
 }
-mat
+
+mat_pourcent1[,11]=round(mat_pourcent1[,11]*100/diag_mat)
+
+mat_pourcent2=mat_pourcent1[1:10,1:10]
+diag(mat_pourcent2) = mat_pourcent1[1:10,11]
+
+mat_pourcent2
+```
+
+```{r echo=FALSE}
+df <- as.data.frame(as.table(mat_pourcent2))
+colnames(df) <- c("Etat_1", "Etat_2", "Value")
+
+labels= c("Mon téléphone fonctionnait bien","Mon téléphone fonctionnait mais il lui manquait une ou plusieurs fonctionnalités","Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent","Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas")
+
+
+df$Etat_1 = factor(df$Etat_1, labels=c(1:10))
+df$Etat_2 = factor(df$Etat_2, labels=c(1:10))
+
+# Créer la heatmap
+p <- ggplot(df, aes(x = Etat_2, y = Etat_1, fill = Value)) +
+  geom_tile() +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Etat(s) de l'ancien téléphone",
+       x = "Etat",
+       y = "Etat",
+       fill = "Valeur") +
+  theme_minimal() +
+  theme(axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold"),
+        plot.title = element_text(hjust = 0.5, face = "bold"))
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
 ```
 
 
@@ -756,6 +804,7 @@ df2 <- do.call(rbind, result_list)
 df2 <- df2[df2$Nb_personnes_concernees > 0, ]
 df2$Remplacement = factor(df2$Remplacement,labels=c("Dans moins d’un mois","Dans 1 à 6 mois","Dans 6 à 12 mois","Dans 1 an à 2 ans","Dans 2 ans ou plus","Je n’ai pas envisagé de le remplacer","Je ne sais pas"))
 
+# sum(df2$Nb_personnes_concernees) # 968
 
 # Créer le graphique
 p <- ggplot(df2, aes(x = Obtention, y = Remplacement, size = Nb_personnes_concernees)) +
@@ -777,13 +826,17 @@ p_interactif
 
 ```
 
+```{r}
+
+```
+
+
 ### **V ) Intention de remplacement en fonction de la durée d’utilisation précédente du téléphone d’occasion**
 
 ```{r include=FALSE}
 # Initialiser les années
 duree <- sort(unique(data$UTILISATIONSMARTOCCAS))
 
-data$DUREE_USAGE_ANCIEN_TEL
 # Obtenir tous les niveaux de INTENTION_REMPLACEMENT
 all_levels <- sort(unique(data$UTILISATIONSMARTOCCAS))
 
@@ -793,7 +846,7 @@ result_list <- list()
 # Remplir la liste dans une boucle for
 for (i in duree) {
   # Filtrer les données pour l'année en cours
-  variable <- data[data$DUREE_USAGE_ANCIEN_TEL == i, "INTENTION_REMPLACEMENT"]
+  variable <- data[data$UTILISATIONSMARTOCCAS == i, "INTENTION_REMPLACEMENT"]
   
   # Créer une table de fréquences avec tous les niveaux et remplacer les niveaux manquants par zéro
   freq_table <- table(factor(variable, levels = all_levels))
@@ -816,20 +869,23 @@ df2 <- df2[df2$Nb_personnes_concernees > 0, ]
 df2$Remplacement = factor(df2$Remplacement,labels=c("Dans moins d’un mois","Dans 1 à 6 mois","Dans 6 à 12 mois","Dans 1 an à 2 ans","Dans 2 ans ou plus","Je n’ai pas envisagé de le remplacer","Je ne sais pas"))
 
 df2$Duree_usage_ancien_tel = factor(df2$Duree_usage_ancien_tel,labels=c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas"))
+
+# sum(df2$Nb_personnes_concernees) # 88
 ```
 
 
+
 ```{r echo=FALSE}
-p <- ggplot(df2, aes(x = Duree_usage_ancien_tel, y = Remplacement, size = Nb_personnes_concernees)) +
-  geom_point(alpha = 0.7, col = "skyblue2") +
+p <- ggplot(df2, aes(x =Remplacement, y = Duree_usage_ancien_tel, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "turquoise4") +
   theme_minimal() +
   labs(title = "Intention de remplacement en fonction de la durée d’utilisation précédente du téléphone d’occasion",
-       x = "Durée usage ancien téléphone",
-       y = "Intention de remplacement",
+       x = "Intention de remplacement",
+       y = "Durée usage ancien téléphone",
        size = "Nb de personne(s) concernée(s)") +
-  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "skyblue2"),
-        axis.title.x = element_text(face = "bold", colour = "skyblue2"),
-        axis.title.y = element_text(face = "bold", colour = "skyblue2"),  
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "turquoise4"),
+        axis.title.x = element_text(face = "bold", colour = "turquoise4"),
+        axis.title.y = element_text(face = "bold", colour = "turquoise4"),  
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
 # Rendre le graphique interactif
 p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
@@ -837,6 +893,983 @@ p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
 # Afficher le graphique interactif
 p_interactif
 ```
+
+### **VI ) Degrés de gêne et temps de cohabitation par catégorie de dysfonctionnements**
+
+```{r include=FALSE}
+### Création d'un dataframe avec 4 colonnes : le numéro du dys, la catégorie du dys, le degre de gêne du dys et le temps de cohabitation du dys :
+
+# dys qui ont tenté d'être résoud ou qui ont été résolus
+
+pbs = c()
+cate_dys = c()
+deg_gene = c()
+cohab = c()
+
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27" & data$RIDENTIFICATION_PROBLEMES != "26"),]
+variable = df$RIDENTIFICATION_PROBLEMES
+
+for (i in 1:length(variable)){
+  liste_pbs =str_extract_all(variable[i], ".{2}")[[1]]
+  liste_pbs = as.numeric(liste_pbs)
+  for (j in 1:length(liste_pbs)){
+    pb = liste_pbs[j]
+    num=as.character(pb)
+    g=paste0("GENE_PROBLEMES_A",num)
+    gene=df[i,g]
+    c= paste0("COHABITATION_DYSFONCTION_A",num)
+    coha = df[i,c]
+    if(!is.null(gene) && !is.na(gene) && !is.null(coha) && !is.na(coha)){
+      
+      result <- which(matrice_cat == pb, arr.ind = TRUE)
+      cat <- result[1]
+      pbs = c(pbs,pb)
+      cate_dys = c(cate_dys,cat)
+      deg_gene = c(deg_gene,gene)
+      cohab = c(cohab,coha)
+        }
+  }
+}
+
+#print(head(pbs))
+#print(head(cate_dys))
+#print(head(deg_gene))
+#print((head(cohab)))
+
+print(length(pbs))
+print(length(cate_dys))
+print(length(deg_gene))
+print(length(cohab))
+
+
+
+don = data.frame()
+don <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=deg_gene,"Cohab"=cohab)
+don[which(don$Cohab==1),"Cohab"]=2 # On lie les "moins d'un mois" et les "dès que j'ai décelé le dys" ensemble
+print(head(don))
+print(nrow(don))
+```
+
+```{r include=FALSE}
+COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
+
+nb_non_resolus <- length(COHAB_non_resolus) # 316
+```
+
+```{r include=FALSE}
+# dys qui  n'ont pas été résolus
+
+# Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
+recence <- c()
+annee <- c()
+mois <- c()
+gene <- c()
+pbs = c()
+cate_dys = c()
+
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105 (indice des colonnes reparation)
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 4 || val == 5)) {
+      RECENCE <- df[j, i - 25]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(RECENCE)) {
+        recence <- c(recence, RECENCE)
+        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
+        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+        gene <- c(gene,df[j, i - 50])
+        result <- which(matrice_cat == (i-80), arr.ind = TRUE)
+        cat <- result[1]
+        pbs = c(pbs,i-80)
+        cate_dys = c(cate_dys,cat)
+      }
+    }
+  }
+}
+
+# Suppression de la raison 7 dans la liste recence 
+
+indices_rec_7= which(recence==7)
+gene=gene[-c(indices_rec_7)]
+pbs=pbs[-c(indices_rec_7)]
+cate_dys=cate_dys[-c(indices_rec_7)]
+
+don2 <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=gene,"Cohab"=COHAB_non_resolus+1)
+
+# Afficher les résultats pour vérifier
+print(head(pbs))
+print(head(cate_dys))
+print(head(gene))
+
+# Jointure des dataframe entre eux 
+don <- rbind(don,don2)
+
+# Création d'un autre dataframe pour une future jointure 
+don1 <- rbind(don,don2)
+
+head(don)
+nrow(don)
+nrow(don2)
+```
+
+
+```{r include=FALSE}
+# calcul du nombre de personnes pour les différents cas possibles
+
+liste = c()
+for (k in 1:nrow(don)){
+  i = don[k,"Gêne"]
+  j = don[k,"Categorie_dys"]
+  l = don[k,"Cohab"]
+  df2 <- don[which(don$Categorie_dys==j & don$Gêne==i & don$Cohab==l),]
+  nb = nrow(df2)
+  liste = c(liste,nb)
+  
+}
+don$nb <- liste
+don <- unique(don)
+don <- don %>% 
+  arrange( Cohab,Categorie_dys,Gêne)
+
+lab<- c("Dys Stockage trés gênant","Dys Stockage plutôt gênant","Dys Stockage plutôt pas gênant","Dys Matériel trés gênant","Dys Matériel plutôt gênant","Dys Matériel plutôt pas gênant","Dys Maj trés gênant","Dys Maj plutôt gênant","Dys Maj plutôt pas gênant", "Dys divers trés gênant","Dys divers plutôt gênant","Dys divers plutôt pas gênant")
+
+df <- data.frame(
+  Colonne1 = lab[1:3],
+  Colonne2 = lab[4:6],
+  Colonne3 = lab[7:9],
+  Colonne4 = lab[10:12]
+)
+
+label=c()
+for(i in 1:nrow(don)){
+  gene = don[i,"Gêne"]
+  cat = don[i,"Categorie_dys"]
+  label=c(label,df[gene,cat])
+}
+
+don$label= label
+
+print(don)
+nrow(don)
+```
+
+```{r include=FALSE}
+# moins d'un mois
+moins_1_mois <- don[don$Cohab==2,]
+matrice = matrix(0,nrow=3,ncol=4)
+
+for ( i in 1:ncol(matrice)){
+  for (j in 1:nrow(matrice)){
+    matrice[j,i]=moins_1_mois[which(moins_1_mois$Gêne==j & moins_1_mois$Categorie_dys==i),"nb"]
+  }
+}
+matrice
+
+normalize3 <- function(x) {
+  return(round(x*100/colSums(matrice)))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat3 <- t(apply(matrice,1, normalize3))
+print(normalized_mat3)
+
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[1,], GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = (-1)*normalized_mat3[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$abs_valeurs <- abs(df_combined$valeurs)
+
+df_combined$GÊNE <- factor(df_combined$GÊNE, levels = c("Très gênant", "Plutôt gênant", "Plutôt pas gênant"))
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "Moins d'un mois ",
+       x = "Catégorie dysfonctionnement ",
+       y = "Frequency ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+p_interactif <- ggplotly(p)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = (matrice[1,]), GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$GÊNE = factor(df_combined$GÊNE,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p1 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "Mois d'un mois",
+       x = " ",
+       y = "Count ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p1_interactif <- ggplotly(p1)
+
+```
+
+```{r echo=FALSE}
+subplot(
+  p_interactif, p1_interactif,
+  nrows = 1, 
+  titleX = TRUE, 
+  titleY = TRUE,
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
+) %>%
+  layout(
+    title = list(
+      text = "Cohabitation : Mois d'un mois",
+      font = list(size = 20, color = "black", family = "Arial", face = "bold")
+    
+    ),
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
+    yaxis2 = list(showticklabels = FALSE))
+```
+
+
+
+
+```{r include=FALSE}
+# 1 à 6 mois
+un_et_6_mois <- don[don$Cohab==3,] 
+un_et_6_mois$nb[is.na(un_et_6_mois$nb)] <- 0
+
+# Initialiser la matrice avec des zéros
+matrice <- matrix(0, nrow = max(un_et_6_mois$Gêne), ncol = max(un_et_6_mois$Categorie_dys))
+
+# Remplir la matrice avec des valeurs du dataframe 'un_et_6_mois'
+for (i in 1:ncol(matrice)) {
+  for (j in 1:nrow(matrice)) {
+    val <- un_et_6_mois[which(un_et_6_mois$Gêne == j & un_et_6_mois$Categorie_dys == i), "nb"]
+    if (length(val) > 0 && !is.na(val)) {
+      matrice[j, i] <- val
+    }
+  }
+}
+
+normalize3 <- function(x) {
+  return(round(x*100/colSums(matrice)))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat3 <- t(apply(matrice,1, normalize3))
+print(normalized_mat3)
+
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[1,], GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = (-1)*normalized_mat3[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$abs_valeurs <- abs(df_combined$valeurs)
+
+df_combined$GÊNE <- factor(df_combined$GÊNE, levels = c("Très gênant", "Plutôt gênant", "Plutôt pas gênant"))
+
+# Créer un diagramme en barres empilées
+p2 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "1 à 6 mois ",
+       x = "Catégorie dysfonctionnement ",
+       y = "Frequency ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+p2_interactif <- ggplotly(p2)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = (matrice[1,]), GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$GÊNE = factor(df_combined$GÊNE,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p3 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "1 à 6 mois",
+       x = " ",
+       y = "Count ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p3_interactif <- ggplotly(p3)
+```
+
+```{r echo=FALSE}
+subplot(
+  p2_interactif, p3_interactif,
+  nrows = 1, 
+  titleX = TRUE, 
+  titleY = TRUE,
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
+) %>%
+  layout(
+    title = list(
+      text = "Cohabitation : Entre 1 mois et 6 mois",
+      font = list(size = 20, color = "black", family = "Arial", face = "bold")
+    
+    ),
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
+    yaxis2 = list(showticklabels = FALSE))
+```
+
+
+
+```{r include=FALSE}
+############### 6 mois à 2 ans
+
+six_mois_2ans <- don[don$Cohab==4,] 
+six_mois_2ans$nb[is.na(six_mois_2ans$nb)] <- 0
+
+# Initialiser la matrice avec des zéros
+matrice <- matrix(0, nrow = max(six_mois_2ans$Gêne), ncol = max(six_mois_2ans$Categorie_dys))
+
+for (i in 1:ncol(matrice)) {
+  for (j in 1:nrow(matrice)) {
+    val <- six_mois_2ans[which(six_mois_2ans$Gêne == j & six_mois_2ans$Categorie_dys == i), "nb"]
+    if (length(val) > 0 && !is.na(val)) {
+      matrice[j, i] <- val
+    }
+  }
+}
+
+normalize3 <- function(x) {
+  return(round(x*100/colSums(matrice)))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat3 <- t(apply(matrice,1, normalize3))
+print(normalized_mat3)
+
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[1,], GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = (-1)*normalized_mat3[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$abs_valeurs <- abs(df_combined$valeurs)
+
+df_combined$GÊNE <- factor(df_combined$GÊNE, levels = c("Très gênant", "Plutôt gênant", "Plutôt pas gênant"))
+
+# Créer un diagramme en barres empilées
+p4 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "6 mois à 2 ans ",
+       x = " Catégorie dysfonctionnement",
+       y = "Frequency ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+p4_interactif <- ggplotly(p4)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = (matrice[1,]), GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$GÊNE = factor(df_combined$GÊNE,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p5 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "6 mois et 2 ans",
+       x = " ",
+       y = "Count ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p5_interactif <- ggplotly(p5)
+```
+
+
+```{r echo=FALSE}
+subplot(
+  p4_interactif, p5_interactif,
+  nrows = 1, 
+  titleX = TRUE, 
+  titleY = TRUE,
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
+) %>%
+  layout(
+    title = list(
+      text = "Cohabitation : Entre 6 mois et 2 ans",
+      font = list(size = 20, color = "black", family = "Arial", face = "bold")
+    
+    ),
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
+    yaxis2 = list(showticklabels = FALSE))
+```
+
+
+```{r include=FALSE}
+############### Plus de 2 ans
+
+plus_de_2ans <- don[don$Cohab==5,] 
+plus_de_2ans$nb[is.na(plus_de_2ans$nb)] <- 0
+
+# Initialiser la matrice avec des zéros
+matrice <- matrix(0, nrow = max(plus_de_2ans$Gêne), ncol = max(plus_de_2ans$Categorie_dys))
+
+for (i in 1:ncol(matrice)) {
+  for (j in 1:nrow(matrice)) {
+    val <- plus_de_2ans[which(plus_de_2ans$Gêne == j & plus_de_2ans$Categorie_dys == i), "nb"]
+    if (length(val) > 0 && !is.na(val)) {
+      matrice[j, i] <- val
+    }
+  }
+}
+
+normalize3 <- function(x) {
+  return(round(x*100/colSums(matrice)))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat3 <- t(apply(matrice,1, normalize3))
+print(normalized_mat3)
+
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[1,], GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = (-1)*normalized_mat3[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$abs_valeurs <- abs(df_combined$valeurs)
+
+df_combined$GÊNE <- factor(df_combined$GÊNE, levels = c("Très gênant", "Plutôt gênant", "Plutôt pas gênant"))
+
+# Créer un diagramme en barres empilées
+p6 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "Plus de 2 ans ",
+       x = "Catégorie dysfonctionnement ",
+       y = "Frequency ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+p6_interactif <- ggplotly(p6)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = (matrice[1,]), GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$GÊNE = factor(df_combined$GÊNE,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p7 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "Plus de 2 ans",
+       x = " ",
+       y = "Count ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p7_interactif <- ggplotly(p7)
+```
+
+
+```{r echo=FALSE}
+subplot(
+  p6_interactif, p7_interactif,
+  nrows = 1, 
+  titleX = TRUE, 
+  titleY = TRUE,
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
+) %>%
+  layout(
+    title = list(
+      text = "Cohabitation : Plus de 2 ans",
+      font = list(size = 20, color = "black", family = "Arial", face = "bold")
+    
+    ),
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
+    yaxis2 = list(showticklabels = FALSE))
+```
+
+
+
+```{r include=FALSE}
+############### Je ne sais pas
+
+jsp <- don[don$Cohab==6,] 
+jsp$nb[is.na(jsp$nb)] <- 0
+
+# Initialiser la matrice avec des zéros
+matrice <- matrix(0, nrow = max(jsp$Gêne), ncol = max(jsp$Categorie_dys))
+
+for (i in 1:ncol(matrice)) {
+  for (j in 1:nrow(matrice)) {
+    val <- jsp[which(jsp$Gêne == j & jsp$Categorie_dys == i), "nb"]
+    if (length(val) > 0 && !is.na(val)) {
+      matrice[j, i] <- val
+    }
+  }
+}
+
+normalize3 <- function(x) {
+  return(round(x*100/colSums(matrice)))
+}
+
+# Transposer le résultat pour obtenir la même structure que la matrice originale
+normalized_mat3 <- t(apply(matrice,1, normalize3))
+print(normalized_mat3)
+
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[1,], GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = normalized_mat3[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = (-1)*normalized_mat3[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$abs_valeurs <- abs(df_combined$valeurs)
+
+df_combined$GÊNE <- factor(df_combined$GÊNE, levels = c("Très gênant", "Plutôt gênant", "Plutôt pas gênant"))
+
+# Créer un diagramme en barres empilées
+p8 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "Je ne sais pas ",
+       x = " Catégorie dysfonctionnement ",
+       y = "Frequency ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold")) 
+
+p8_interactif <- ggplotly(p8)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = (matrice[1,]), GÊNE = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2,], GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice[3,], GÊNE = "Plutôt pas gênant")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3)
+df_combined$GÊNE = factor(df_combined$GÊNE,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p9 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
+  geom_bar(stat = "identity", position = "stack",width = 0.5) +
+  labs(title = "Je ne sais pas",
+       x = " ",
+       y = "Count ") +
+  theme_minimal() +
+  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
+  coord_flip() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text( face = "bold"),
+        axis.title.y = element_text(face = "bold"),legend.position="none") 
+
+p9_interactif <- ggplotly(p9)
+```
+
+```{r echo=FALSE}
+subplot(
+  p8_interactif, p9_interactif,
+  nrows = 1, 
+  titleX = TRUE, 
+  titleY = TRUE,
+  shareY = FALSE,
+  widths = c(0.45, 0.45)
+) %>%
+  layout(
+    title = list(
+      text = "Cohabitation : Je ne sais pas",
+      font = list(size = 20, color = "black", family = "Arial", face = "bold")
+    
+    ),
+    margin = list(t = 100),  # Ajuster les marges pour plus d'espace
+    xaxis = list(domain = c(0, 0.45)),  # Déplacer le premier graphique vers la gauche
+    xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
+    yaxis2 = list(showticklabels = FALSE))
+```
+
+### **VII ) Catégorie de dysfonctionnements**
+
+#### **1 ) Catégorie 1** 
+
+**Problèmes matériels :** Problème de sensibilité du tactile, Problème avec la lampe torche ou le flash, Problème de son, Problème de prise jack, Problème de chargement,Problème de batterie
+Problème de capteurs, Problème de téléphonie, Problème avec les boutons, Problème de vibreur
+
+**Problèmes matériels + logiciels :** Problème avec l’écran, Problème avec l’appareil photo, Problème avec le GPS, Problème avec le micro, Problème de Wi-Fi, Problème d’accès à Internet, Problème lié à une fonctionnalité manquante
+
+**Problèmes logiciels :** Système d’exploitation non mis à jour, Applications ne pouvant pas être téléchargées ou mises à jour, Fonctionnalité qui ne marche plus, Dysfonctionnement logiciel, Problèmes avec des applications, Problème de lenteur, Problème de Bluetooth ou de transferts de fichiers sans fil, Stockage saturé
+
+La représentation graphique qui suit permet de visualiser cette
+répartition :
+
+```{r include=FALSE}
+label_dys <- c("Problèmes matériels","Problèmes matériels + logiciels","Problèmes logiciels")
+
+materiel <- c(2,4,7,8,9,10,12,14,16,17)
+materiel_logiciel <-c(1,3,5,6,11,15,21)
+logiciel <- c(13,18,19,20,22,23,24,25)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(materiel_logiciel), length(logiciel))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 3, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(materiel)] <- materiel
+matrice_cat[2, 1:length(materiel_logiciel)] <- materiel_logiciel
+matrice_cat[3, 1:length(logiciel)] <- logiciel
+
+# Afficher la matrice
+print(matrice_cat)
+```
+
+
+```{r include=FALSE}
+variable=data$RIDENTIFICATION_PROBLEMES
+nb_de_modalites = 25
+valeurs = Count_VCM(variable,nb_de_modalites)
+
+num_pb = c()
+nb_pb = c()
+cat_pb = c()
+
+valeurs = Count_VCM(variable,nb_de_modalites)
+
+for (i in 1:ncol(valeurs)){
+  num_pb=c(num_pb,valeurs[1,i])
+  nb_pb = c(nb_pb,valeurs[2,i])
+  
+  result <- which(matrice_cat == i, arr.ind = TRUE)
+  cat <- result[1]
+  
+  cat_pb=c(cat_pb,cat)
+}
+
+dataframe = data.frame(Dys = num_pb, nb = nb_pb, Categorie = cat_pb)
+
+dataframe <- dataframe %>% 
+  arrange( Categorie,desc(nb))
+
+dataframe$Dys = factor(dataframe$Dys, levels=1:length(label_RIDENTIFICATION_PROBLEME),labels=label_RIDENTIFICATION_PROBLEME)
+
+dataframe$Categorie= factor(dataframe$Categorie, levels = 1:length(label_dys),labels=label_dys)
+
+dataframe
+
+nrow(dataframe[which(dataframe$Categorie=="Problèmes matériels"),]) # 10
+nrow(dataframe[which(dataframe$Categorie=="Problèmes matériels + logiciels"),]) # 7
+nrow(dataframe[which(dataframe$Categorie=="Problèmes logiciels"),]) # 8
+
+```
+
+
+
+```{r echo=FALSE}
+
+label <- dataframe$Dys
+
+# Teintes de Rouge
+teintes <- c("#8B0000","#B22222", "#CD5C5C", "#DC143C", "#FF0000","#FF6347","#FF4500","#FF7F7F","#FF8C69","#FFA07A","#8B8000","#BDB76B","#F0E68C","#EEE8AA","#FFFF00","#FFFFE0", "#FFFFF0","orange","#FF4500","#FF8C00","#FFA500","#FFB347","#FFCC99","#FFDAB9","#FFE4B5","#FFFAF0")
+
+
+dataframe$Dys = factor(dataframe$Dys,levels=label)
+
+p <- ggplot(dataframe, aes(x = Categorie, y = nb, fill =Dys)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("#8B0000","#B22222", "#CD5C5C", "#DC143C", "#FF0000","#FF6347","#FF4500","#FF7F7F","#FF8C69","#FFA07A","#8B8000","#BDB76B","#F0E68C","#EEE8AA","#FFFF00","#FFFFE0", "#FFFFF0","#FF4500","#FF8C00","#FFA500","#FFB347","#FFCC99","#FFDAB9","#FFE4B5","#FFFAF0")) +
+  labs(title = "Répartition des dysfonctionnements",
+       x = "Catégorie",
+       y = "Nombre de dysfonctionnements",
+       fill = "Problème") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"),
+        axis.title.x = element_text(face = "bold"), 
+        axis.title.y = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+
+# Affichage du graphique
+p_interactif <- ggplotly(p)
+
+# Affichage du graphique interactif
+p_interactif
+```
+
+#### **2 ) Catégorie 2**
+
+Gênes ressenties en fonction de la catégorie du dysfonctionnement :
+
+**Stockage :** Stockage saturé
+
+**Mise à jour :** Système d’exploitation (par ex : Android, iOS…) non mis à jour, Applications ne pouvant pas être téléchargées ou mises à jour
+
+**Matériel :** Problème avec l’écran, Problème de sensibilité du tactile, Problème avec les boutons, Problème de vibreur, Problème de capteurs, Problème de batterie, Problème de chargement, Problème de prise jack, Problème de son, Problème avec le micro, Problème avec la lampe torche ou le flash
+
+**Dysfonctionnement divers :** Problème lié à une fonctionnalité manquante, Fonctionnalité qui ne marche plus, Dysfonctionnement logiciel, Problèmes avec des applications, Problème d’accès à Internet, Problème de téléphonie, Problème de Bluetooth ou de transferts de fichiers sans fil, Problème de Wi-Fi, Problème avec le GPS, Problème de lenteur, Problème avec l’appareil photo
+
+```{r include=FALSE}
+# Catégorisation des dysfonctionnements
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+materiel <- c(1,2,4,6,7,8,9,10,12,16,17)
+dys_divers <- c(3,5,11,13,14,15,21,22,23,24,25)
+stockage <- c(18)
+maj <- c(19,20)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(dys_divers), length(stockage), length(maj))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 4, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(stockage)] <- stockage
+matrice_cat[2, 1:length(materiel)] <- materiel
+matrice_cat[3, 1:length(maj)] <- maj
+matrice_cat[4, 1:length(dys_divers)] <- dys_divers
+
+# Afficher la matrice
+print(matrice_cat)
+```
+
+
+```{r}
+pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+nb_total_pbs <- sum(pbs[2,])
+
+mat=matrix(0,nrow=2,ncol=length(label_dys))
+mat[1,]=c(1:length(label_dys))
+
+df = data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable = df$RIDENTIFICATION_PROBLEMES
+
+for (i in 1:length(variable)){
+  liste_pbs=str_extract_all(variable[i],".{2}")[[1]]
+  liste_pbs=as.numeric(liste_pbs)
+  for (j in liste_pbs){
+    if (j %in% stockage){
+      mat[2,1]=mat[2,1]+1
+    }
+    if (j %in% materiel){
+      mat[2,2]=mat[2,2]+1
+    }
+    if (j %in% maj){
+      mat[2,3]=mat[2,3]+1
+    }
+    if (j %in% dys_divers){
+      mat[2,4]=mat[2,4]+1
+    }
+  }
+}
+
+don <- data.frame("Dysfonctionnements"=label_dys,"Nb_dys"=mat[2,],"Pourcentage_dys"=round(mat[2,]*100/nb_total_pbs))
+print(don)
+```
+
+
+
+
+```{r}
+CATEGORIE <- c(1:4)
+
+mat <- matrix(0,nrow=5,ncol=length(CATEGORIE))
+mat[1,] <- CATEGORIE
+
+df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
+variable=df$RIDENTIFICATION_PROBLEMES
+
+for (i in 1:ncol(mat)){
+  liste_val=matrice_cat[i,]
+  for (j in 1:length(variable)){
+  liste_pbs=str_extract_all(variable[j],".{2}")[[1]]
+  liste_pbs=as.numeric(liste_pbs)
+  for (k in liste_pbs){
+    if (k %in% liste_val){
+      num=as.character(k)
+      nom_colonne=paste0("GENE_PROBLEMES_A",num)
+      valeur=df[j,nom_colonne]
+      if(!is.null(valeur) && !is.na(valeur)){
+        mat[valeur+1,i]=mat[valeur+1,i]+1
+        }
+    }
+  }
+  }
+  
+}
+
+df <- data.frame("Dysfonctionnements"=label_dys, "Nb_dys"=don$Nb_dys,"Trés gênant"=round(mat[2,]*100/don$Nb_dys),"Plutôt gênant"=round(mat[3,]*100/don$Nb_dys),"Plutôt pas gênant"=round(mat[4,]*100/don$Nb_dys),"Pas gênant du tout"=round(mat[5,]*100/don$Nb_dys))
+print(df)
+```
+
+
+
+```{r}
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = round((mat[2,]*100/nb_total_pbs),2), Gêne = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = round(mat[3,]*100/nb_total_pbs,2), Gêne = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = round(mat[4,]*100/nb_total_pbs,2), Gêne = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = round(mat[5,]*100/nb_total_pbs,2), Gêne = "Pas gênant du tout")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+df_combined$Gêne=factor(df_combined$Gêne,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Type de gênes ressenties par catégorie",
+       x = "Dysfonctionnements",
+       y = "Pourcentage de dysfonctionnements ") +
+  scale_fill_manual(values = c("Très gênant" = "#1f77b4", 
+                               "Plutôt gênant" = "#6baed6", 
+                               "Plutôt pas gênant" = "#9ecae1", 
+                               "Pas gênant du tout" = "#c6dbef")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
+        axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+```
+
+
+```{r}
+Categorie <- factor(label_dys, levels = label_dys)
+
+df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,], Gêne = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[3,], Gêne = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[4,], Gêne = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = mat[5,], Gêne = "Pas gênant du tout")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+df_combined$Gêne=factor(df_combined$Gêne,levels=label_GENE)
+
+# Créer un diagramme en barres empilées
+p1 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(title = "Type de gênes ressenties par catégorie",
+       x = "Dysfonctionnements",
+       y = "Nombre de dysfonctionnements ") +
+  scale_fill_manual(values = c("Très gênant" = "#1f77b4", 
+                               "Plutôt gênant" = "#6baed6", 
+                               "Plutôt pas gênant" = "#9ecae1", 
+                               "Pas gênant du tout" = "#c6dbef")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
+        axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+
+p1_interactif <- ggplotly(p1)
+
+# Afficher le graphique interactif
+p1_interactif 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ```{r echo=FALSE }
