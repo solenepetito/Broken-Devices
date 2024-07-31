@@ -11,7 +11,7 @@ editor_options:
     wrap: 72
 ---
 
-# **SEMAINE DU 15 JUILLET 2024 au 20 JUILLET 2024 :**
+# **SEMAINE DU 22 JUILLET 2024 au 26 JUILLET 2024 :**
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -331,6 +331,18 @@ p_interactif
 
 ### **II ) Type de Résolution en fonction du degré de gêne**
 
+**Légende :**
+
+-   Vert : Leproblème est résolu
+
+-   Jaune : Le problème n'a pas pu être résolu
+
+-   Gris : Le problème s'est résolu tout seul au bout d'un moment
+
+-   Orange : Le problème sera peut-être résolu plus tard
+
+-   Rouge : Je ne pense pas tenter de résoudre le problème
+
 ```{r include=FALSE}
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
 recence <- c()
@@ -523,7 +535,7 @@ p6 <- ggplot(df_combined, aes(x = Catégorie, y = valeurs, fill = Légende)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),  
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-        axis.title.y = element_text(face = "bold"),legend.position="none") 
+        axis.title.y = element_text(face = "bold"),legend.position = "none") 
 
 p6_interactif <- ggplotly(p6)
 
@@ -568,7 +580,7 @@ subplot(
 
 ### **III ) Pourquoi les gens n'ont pas voulu réparer**
 
-Les graphes qui suic=vent permettent de visualiser pour chacune des
+Les graphes qui suivent permettent de visualiser pour chacune des
 catégories (Stockage, Matériel, Mise à jour, Dysfonctionnement divers)
 la répartition des raisons qui ont fait que les gens n'ont pas voulu
 réparer leur téléphone.
@@ -730,7 +742,9 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-### **IV ) Intention de remplacement en fonction de l'année d'obtention du smartphone**
+### **IV ) Intention de remplacement** 
+
+#### **1 ) Intention de remplacement en fonction de l'année d'obtention du smartphone**
 
 **Remarque :** La taille du point dépend du nombre de personnes
 concernées par le cas concidéré, plus le point est gros, plus le nombre
@@ -829,7 +843,7 @@ p_interactif
 
 ```
 
-### **V ) Intention de remplacement en fonction de la durée d'utilisation précédente du téléphone d'occasion**
+#### **2 ) Intention de remplacement en fonction de la durée d'utilisation précédente du téléphone d'occasion**
 
 **Remarque :** La taille du point dépend du nombre de personnes
 concernées par le cas concidéré, plus le point est gros, plus le nombre
@@ -894,7 +908,7 @@ p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
 p_interactif
 ```
 
-### **VI ) Degrés de gêne et temps de cohabitation par catégorie de dysfonctionnements**
+### **V ) Degrés de gêne et temps de cohabitation par catégorie de dysfonctionnements**
 
 ```{r include=FALSE}
 ### Création d'un dataframe avec 4 colonnes : le numéro du dys, la catégorie du dys, le degre de gêne du dys et le temps de cohabitation du dys :
@@ -1127,7 +1141,7 @@ p1 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold"),legend.position="none") 
+        axis.title.y = element_text(face = "bold")) 
 
 p1_interactif <- ggplotly(p1)
 
@@ -1554,7 +1568,7 @@ subplot(
     yaxis2 = list(showticklabels = FALSE))
 ```
 
-### **VII ) Catégorie de dysfonctionnements**
+### **VI ) Catégorie de dysfonctionnements**
 
 #### **1 ) Catégorie 1 :**
 
