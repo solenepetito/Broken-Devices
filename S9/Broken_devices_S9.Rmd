@@ -202,6 +202,9 @@ for (i in 1 :ncol(df)){
 Question : Dans quel état était votre ancien téléphone au moment où il a
 été remplacé ?
 
+Cette question n'a été posée qu'aux personnes qui possédaient un ancien
+téléphone (957 personnes).
+
 Les réponses possibles étaient :
 
 -   1 : Mon téléphone fonctionnait bien
@@ -225,7 +228,7 @@ Les réponses possibles étaient :
 
 -   10 : Je ne me souviens pas
 
-#### **1 ) Distribution des réponses** 
+#### **1 ) Distribution des réponses**
 
 ```{r echo=FALSE}
 variable=data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
@@ -261,14 +264,17 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
 ```{r echo=FALSE}
 df_T
 ```
 
-
 #### **2 ) Combinaisons qui reviennent souvent**
 
-```{r}
+Les tableaux qui suivent montrent pour chacunes des 10 madalités les
+combinaisons qui reviennent le plus pour chacunes d'entres-elles :
+
+```{r echo=FALSE}
 combinaisons_etats <- function(num){
   variable = data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
   vec = c()
@@ -301,86 +307,147 @@ combinaisons_etats <- function(num){
 }
 ```
 
+-   **Modalité 1 :** "Mon téléphone fonctionnait bien"
 
-Modalités 1 : "Mon téléphone fonctionnait bien"
-```{r}
-# Modalités 1 : "Mon téléphone fonctionnait bien"
+```{r echo=FALSE}
+# Modalité 1 : "Mon téléphone fonctionnait bien"
 res = combinaisons_etats(1)
 res
 ```
 
-```{r}
-# Modalités 2 : "Il manquait une ou plusieurs fonctionnalités"
+-   **Modalité 2 :** "Il manquait une ou plusieurs fonctionnalités"
+
+```{r echo=FALSE}
+# Modalité 2 : "Il manquait une ou plusieurs fonctionnalités"
 res = combinaisons_etats(2)
 res
 ```
 
+-   **Modalité 3 :** "Mon téléphone était complètement inutilisable"
 
-```{r}
-# Modalités 3 : "Mon téléphone était complètement inutilisable"
+```{r echo=FALSE}
+# Modalité 3 : "Mon téléphone était complètement inutilisable"
 res = combinaisons_etats(3)
 res
 ```
 
-```{r}
-# Modalités 4 : "La durée de vie de la batterie était faible"
+-   **Modalité 4 :** "La durée de vie de la batterie était faible"
+
+```{r echo=FALSE}
+# Modalité 4 : "La durée de vie de la batterie était faible"
 res = combinaisons_etats(4)
 res
 ```
 
-```{r}
-# Modalités 5 : "Le stockage de mon téléphone était insuffisant"
+-   **Modalité 5 :** "Le stockage de mon téléphone était insuffisant"
+
+```{r echo=FALSE}
+# Modalité 5 : "Le stockage de mon téléphone était insuffisant"
 res = combinaisons_etats(5)
 res
 ```
 
-```{r}
-# Modalités 6 : "Mon téléphone était lent"
+-   **Modalité 6 :** "Mon téléphone était lent"
+
+```{r echo=FALSE}
+# Modalité 6 : "Mon téléphone était lent"
 res = combinaisons_etats(6)
 res
 ```
 
-```{r}
-# Modalités 7 : "Mon téléphone était physiquement endommagé"
+-   **Modalité 7 :** "Mon téléphone était physiquement endommagé"
+
+```{r echo=FALSE}
+# Modalité 7 : "Mon téléphone était physiquement endommagé"
 res = combinaisons_etats(7)
 res
 ```
 
-```{r}
-# Modalités 8 : "Mon téléphone avait des dysfonctionnements"
+-   **Modalité 8 :** "Mon téléphone avait des dysfonctionnements"
+
+```{r echo=FALSE}
+# Modalité 8 : "Mon téléphone avait des dysfonctionnements"
 res = combinaisons_etats(8)
 res
 ```
 
-```{r}
-# Modalités 9 : "Autre raison"
+-   **Modalité 9 :** "Autre raison"
+
+```{r echo=FALSE}
+# Modalité 9 : "Autre raison"
 res = combinaisons_etats(9)
 res
 ```
 
-```{r}
-# Modalités 10 : "Je ne me souviens pas"
+-   **Modalité 10 :** "Je ne me souviens pas"
+
+```{r echo=FALSE}
+# Modalité 10 : "Je ne me souviens pas"
 res = combinaisons_etats(10)
 res
 ```
 
+#### **3 ) Etat de l'ancien téléphone en fonction de l'année d'usage de l'ancien téléphone**
+
+On sépare les individus en 2 groupes, ceux qui ont utlisé leur ancien
+téléphone moins de 2 ans (319 personnes) et ceux qui ont utlisé leur
+ancien téléphone plus de 2 ans (619 personnes) :
+
+```{r echo=FALSE}
+df = data[data$DUREE_USAGE_ANCIEN_TEL!=7,]
+
+# usage de moins de 2 ans 
+df1 = df[df$DUREE_USAGE_ANCIEN_TEL==1 | df$DUREE_USAGE_ANCIEN_TEL==2 | df$DUREE_USAGE_ANCIEN_TEL==3,]
+etat1 = df1[df1$RETAT_ANCIEN_TEL!="","RETAT_ANCIEN_TEL"]
+etat1 = na.omit(etat1) 
+# length(etat1) # 319
+
+# usage de plus de 2 ans
+df2 = df[df$DUREE_USAGE_ANCIEN_TEL==4 | df$DUREE_USAGE_ANCIEN_TEL==5 | df$DUREE_USAGE_ANCIEN_TEL==6,]
+etat2 = df2[df2$RETAT_ANCIEN_TEL!="","RETAT_ANCIEN_TEL"]
+etat2 = na.omit(etat2)
+# length(etat2) # 619
+
+
+```
+
+-   **Usage inférieur à 2 ans**
+
+```{r echo=FALSE}
+nb_de_modalites=10
+matrice=Count_VCM(etat1,nb_de_modalites)
+
+labels= c("Mon téléphone fonctionnait bien","Il manquait une ou plusieurs fonctionnalités","Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent","Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas")
 
 
 
+df_T <- data.frame(Etat=labels,Valeurs = matrice[2,],Pourcent=round(matrice[2,]*100/length(etat1),1))
+
+df_T <- df_T %>% 
+  arrange( desc(Valeurs))%>%
+  mutate(Etat = factor(Etat, levels = rev(Etat)))
+
+df_T
+```
+
+-   **Usage supérieur à 2 ans**
+
+```{r echo=FALSE}
+nb_de_modalites=10
+matrice=Count_VCM(etat2,nb_de_modalites)
+
+labels= c("Mon téléphone fonctionnait bien","Il manquait une ou plusieurs fonctionnalités","Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent","Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas")
 
 
 
+df_T <- data.frame(Etat=labels,Valeurs = matrice[2,],Pourcent=round(matrice[2,]*100/length(etat2),1))
 
+df_T <- df_T %>% 
+  arrange( desc(Valeurs))%>%
+  mutate(Etat = factor(Etat, levels = rev(Etat)))
 
-
-
-
-
-
-
-
-
-
+df_T
+```
 
 ```{r include=FALSE }
 indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
