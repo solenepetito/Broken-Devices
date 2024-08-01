@@ -578,7 +578,7 @@ subplot(
 
 ```
 
-### **III ) Pourquoi les gens n'ont pas voulu réparer**
+### **III ) Pourquoi les gens n'ont pas voulu réparer ?**
 
 Les graphes qui suivent permettent de visualiser pour chacune des
 catégories (Stockage, Matériel, Mise à jour, Dysfonctionnement divers)
