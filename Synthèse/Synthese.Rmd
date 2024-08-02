@@ -1,0 +1,127 @@
+---
+title: 'Project : Broken devices Synthèse'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-08-05"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **SEMAINE DU 5 AOÛT 2024 au 10 AOÛT 2024 :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(openxlsx)
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+library(viridis) # palette de couleurs > 25 nuances
+library(Polychrome)
+library(gridExtra) # afficher les graphes côte à côte
+library(grid)
+
+```
+
+```{r}
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+```
+
+```{r include=FALSE}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+# Exporter la base de données en format Excel
+write.xlsx(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/database.xlsx")
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+Questions pour lesquelles on attend des réponses : 
+
+Quel pourcentage de la population française vit avec un smartphone endommagé ? et depuis combien de temps ? • Quel est l'impact des dommages sur l'utilisation ? • Quand l'appareil a-t-il été endommagé après l'achat ? • Quels types de dommages sont les plus répandus ? • Quel est l'impact fonctionnel de ces dommages ? • Combien de temps s'écoule entre les dommages et le changement de smartphone ? • Quelles actions les répondants ont-ils entreprises (réparation, achat, acceptation, ...)
+
+## **I ) Quel pourcentage de la population française vit avec un smartphone endommagé ?**
+
+C'est 42 % de la population française qui vit avec un smartphone endommagé : sur nos 47831 individus, 19889 recontrent au mois un dysfonctionnement sur leur smartphone actuel, soit 42% des individus.
+
+```{r include=FALSE}
+# nb de personnes dans la base 
+n = floor(sum(data$poids)) # 47831
+print(n)
+
+# nb de personnes qui rencontrent un dys
+don <- data[data$RIDENTIFICATION_PROBLEMES!="27",c("RIDENTIFICATION_PROBLEMES","poids")]
+n_dys = floor(sum(don$poids)) # 19889
+print(n_dys)
+
+# pourcentage de personnes qui rencontrent un dys 
+
+pourcent_dys = round(n_dys*100/n) # 42%
+print(pourcent_dys)
+```
+
+### **II ) Depuis combien de temps ?**
+
+```{r}
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+var = data$renc
+
+```
+
+
+```{r include=FALSE }
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
+print(indice_colonne) # 106
+
+indice_colonne <- which(names(data) == "REPARATION_A1")
+print(indice_colonne) # 81
+
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
+print(indice_colonne) # 80
+
+indice_colonne <- which(names(data) == "REPARATION_A25")
+print(indice_colonne) #105
+
+81-31
+
+```
