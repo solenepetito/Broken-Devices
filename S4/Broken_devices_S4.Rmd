@@ -939,7 +939,7 @@ On remarque que le temps de cohabitation avec le problème, lorsqu'on ne l'a pas
 
 ### **VI ) Nombre de dysfonctionnements** 
 
-#### 1 ) **Nombre de dysfonctionnements rencontrés par année d'obtention** 
+#### **1 ) Nombre de dysfonctionnements rencontrés par année d'obtention** 
 
 ```{r include=FALSE}
 annees <- c()

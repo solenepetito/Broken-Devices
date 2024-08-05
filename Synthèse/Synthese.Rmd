@@ -79,7 +79,7 @@ Questions pour lesquelles on attend des réponses :
 
 Quel pourcentage de la population française vit avec un smartphone endommagé ? et depuis combien de temps ? • Quel est l'impact des dommages sur l'utilisation ? • Quand l'appareil a-t-il été endommagé après l'achat ? • Quels types de dommages sont les plus répandus ? • Quel est l'impact fonctionnel de ces dommages ? • Combien de temps s'écoule entre les dommages et le changement de smartphone ? • Quelles actions les répondants ont-ils entreprises (réparation, achat, acceptation, ...)
 
-## **I ) Quel pourcentage de la population française vit avec un smartphone endommagé ?**
+### **I ) Quel pourcentage de la population française vit avec un smartphone endommagé ?**
 
 C'est 42 % de la population française qui vit avec un smartphone endommagé : sur nos 47831 individus, 19889 recontrent au mois un dysfonctionnement sur leur smartphone actuel, soit 42% des individus.
 
@@ -99,21 +99,347 @@ pourcent_dys = round(n_dys*100/n) # 42%
 print(pourcent_dys)
 ```
 
-### **II ) Depuis combien de temps ?**
+### **II ) Et depuis combien de temps ?**
 
-```{r}
-label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+En moyenne les gens cohabitent avec le ou les dysfonctionnement(s) entre 1 et 6 mois. 
 
-var = data$renc
+```{r include=FALSE}
+### Création d'un dataframe avec 4 colonnes : le numéro du dys, la catégorie du dys, le degre de gêne du dys et le temps de cohabitation du dys :
+
+# dys qui ont tenté d'être résoud ou qui ont été résolus
+
+pbs = c()
+cate_dys = c()
+deg_gene = c()
+cohab = c()
+
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27" & data$RIDENTIFICATION_PROBLEMES != "26"),]
+variable = df$RIDENTIFICATION_PROBLEMES
+
+for (i in 1:length(variable)){
+  liste_pbs =str_extract_all(variable[i], ".{2}")[[1]]
+  liste_pbs = as.numeric(liste_pbs)
+  for (j in 1:length(liste_pbs)){
+    pb = liste_pbs[j]
+    num=as.character(pb)
+    g=paste0("GENE_PROBLEMES_A",num)
+    gene=df[i,g]
+    c= paste0("COHABITATION_DYSFONCTION_A",num)
+    coha = df[i,c]
+    if(!is.null(gene) && !is.na(gene) && !is.null(coha) && !is.na(coha)){
+      
+      result <- which(matrice_cat == pb, arr.ind = TRUE)
+      cat <- result[1]
+      pbs = c(pbs,pb)
+      cate_dys = c(cate_dys,cat)
+      deg_gene = c(deg_gene,gene)
+      cohab = c(cohab,coha)
+        }
+  }
+}
+
+#print(head(pbs))
+#print(head(cate_dys))
+#print(head(deg_gene))
+#print((head(cohab)))
+
+print(length(pbs))
+print(length(cate_dys))
+print(length(deg_gene))
+print(length(cohab))
+
+
+
+don = data.frame()
+don <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=deg_gene,"Cohab"=cohab)
+don[which(don$Cohab==1),"Cohab"]=2 # On lie les "moins d'un mois" et les "dès que j'ai décelé le dys" ensemble
+print(head(don))
+print(nrow(don))
+```
+
+```{r include=FALSE}
+COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
+
+nb_non_resolus <- length(COHAB_non_resolus) # 316
+```
+
+```{r include=FALSE}
+# dys qui  n'ont pas été résolus
+
+# Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
+recence <- c()
+annee <- c()
+mois <- c()
+gene <- c()
+pbs = c()
+cate_dys = c()
+
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105 (indice des colonnes reparation)
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 4 || val == 5)) {
+      RECENCE <- df[j, i - 25]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(RECENCE)) {
+        recence <- c(recence, RECENCE)
+        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
+        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+        gene <- c(gene,df[j, i - 50])
+        result <- which(matrice_cat == (i-80), arr.ind = TRUE)
+        cat <- result[1]
+        pbs = c(pbs,i-80)
+        cate_dys = c(cate_dys,cat)
+      }
+    }
+  }
+}
+
+# Suppression de la raison 7 dans la liste recence 
+
+indices_rec_7= which(recence==7)
+gene=gene[-c(indices_rec_7)]
+pbs=pbs[-c(indices_rec_7)]
+cate_dys=cate_dys[-c(indices_rec_7)]
+
+don2 <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=gene,"Cohab"=COHAB_non_resolus+1)
+
+# Afficher les résultats pour vérifier
+print(head(pbs))
+print(head(cate_dys))
+print(head(gene))
+
+# Jointure des dataframe entre eux 
+don <- rbind(don,don2)
+
+# Création d'un autre dataframe pour une future jointure 
+don1 <- rbind(don,don2)
+
+head(don)
+nrow(don)
+nrow(don2)
+```
+
+```{r include=FALSE}
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+freq = table(don$Cohab)
+
+vec1 = as.numeric(names(freq))
+vec2 = as.numeric(freq)
+
+moyenne = round(sum(vec1*vec2)/sum(vec2))
+
+print(label_COHABITATION[moyenne])
+
 
 ```
 
 
+
+### **III ) Quand l'appareil a-t-il été endommagé après l'achat ?**
+
+En moyenne l'appareil a été endommagé entre 1 an et 2 ans après l'achat. 
+
+```{r}
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+colonne_deb <- which(names(data) == "RECENCE_PROBLEMES_A1") # 56
+
+colonne_fin <- which(names(data) == "RECENCE_PROBLEMES_A25") # 80
+
+matrice = matrix(0,nrow=1,ncol=length(label_RECENCE))
+
+don <- data[data$RIDENTIFICATION_PROBLEMES!="26" & data$RIDENTIFICATION_PROBLEMES!="27", ]
+
+for (i in colonne_deb:colonne_fin){
+  for (j in 1:nrow(don)){
+  recence = don[j,i]
+  if (!is.null(recence) && !is.na(recence)){
+    matrice[1,recence]=matrice[1,recence] + floor(don[j,"poids"])
+  }
+  }
+}
+
+vec = 1:ncol(matrice)
+moyenne <- round(sum(vec*matrice[1,])/sum(matrice[1,]))
+ 
+print(label_RECENCE[moyenne]) # "Entre 1 et 2 ans"
+
+```
+
+### **IV ) Quels types de dommages sont les plus répandus ?**
+
+Les problèmes qui sont les plus répandus sont les problèmes de batteries ( concernent 29% des personnes qui rencontrent un dysfonctionnement), suivis du sotkcage saturé (23%), suivi des problèmes de lenteur (21%).
+
+```{r echo=FALSE}
+variable = data$RIDENTIFICATION_PROBLEMES
+nb_de_modalites = 26
+
+res = Count_VCM(variable,nb_de_modalites)
+
+df = data.frame(Dysfonctionnement = label_RIDENTIFICATION_PROBLEME, Valeurs = res[2,], Pourcentage = round(res[2,]*100/nrow(data[data$RIDENTIFICATION_PROBLEMES!="26" & data$RIDENTIFICATION_PROBLEMES!="27", ])))
+
+df <- df %>% 
+  arrange(desc(Valeurs))
+
+head(df)
+
+
+```
+
+### **V ) Quel est l'impact fonctionnel de ces dommages ?**
+
+Les dommages en question ont surtout un impact sur la navigation web (12% des dysfonctionnements rencontrés), sur l'usage global du smartphone (11.5%) et sur les jeux (11%).
+
+```{r}
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+
+var = data[data$RIMPACT_PB!="","RIMPACT_PB"]
+
+res <- Count_VCM(var,length(label_IMPACT))
+
+df = data.frame(Impact = label_IMPACT, Valeurs = res[2,], Pourcentage = round(res[2,]*100/sum(res[2,]),2))
+
+# sum(res[2,]) = 806
+
+df <- df %>% 
+  arrange(desc(Valeurs))
+
+head(df)
+
+```
+
+### **VI ) Combien de temps s'écoule entre les dommages et le changement de smartphone ?**
+
+
+
+```{r}
+don = data[ data$RIDENTIFICATION_PROBLEMES != "27",]
+
+# Remplacer les valeurs 99 par 6
+don[don$DATEOBTENTIONSMART_2 == 99, "DATEOBTENTIONSMART_2"] = 6
+
+
+# Indices colonnes recence 
+colonne_deb <- which(names(data) == "RECENCE_PROBLEMES_A1") # 56
+colonne_fin <- which(names(data) == "RECENCE_PROBLEMES_A25")
+
+# Calcul de la durée d'usage
+for (i in 1:nrow(don)) {
+  for (j in colonne_deb:colonne_fin){
+    recence_pb = don[i,j]
+    if (!is.null(recence_pb) && !is.na(recence_pb)){
+      mois = var[i, "DATEOBTENTIONSMART_2"]
+      annee = var[i, "DATEOBTENTIONSMART_1"]
+      date_obtention = ISOdate(annee, mois, 1)
+    }
+  }
+}
+```
+
+
+
+```{r include=FALSE}
+# Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
+recence <- c()
+annee <- c()
+mois <- c()
+remplacement = c()
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 4 || val == 5)) {
+      RECENCE <- df[j, i - 25]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(RECENCE)) {
+        recence <- c(recence, RECENCE)
+        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
+        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+        remplacement = c(remplacement,df[j,"INTENTION_REMPLACEMENT"])
+      }
+    }
+  }
+}
+
+# Suppression de la raison 7 dans la liste recence 
+
+indices_rec_7= which(recence==7)
+recence=recence[-c(indices_rec_7)]
+annee=annee[-c(indices_rec_7)]
+mois=mois[-c(indices_rec_7)]
+remplacement=remplacement[-c(indices_rec_7)]
+
+# Afficher les résultats pour vérifier
+print(head(recence))
+print(head(annee))
+print(head(mois))
+
+```
+
+```{r}
+COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
+```
+
+
+```{r}
+# on enleve les individus qui ont indiqué ne pas savoir quand est ce qu'il comptait remplacé leur téléphone
+
+indices_remplacement_6_7= which(remplacement==7 | remplacement==6)
+recence=recence[-c(indices_remplacement_6_7)]
+annee=annee[-c(indices_remplacement_6_7)]
+mois=mois[-c(indices_remplacement_6_7)]
+COHAB_non_resolus=COHAB_non_resolus[-c(indices_remplacement_6_7)] 
+remplacement=remplacement[-c(indices_remplacement_6_7)]
+
+```
+
+```{r}
+remplacement 
+COHAB_non_resolus
+```
+
+```{r}
+label = c("moins d'un mois","entre 2 mois et 7 mois","entre 2 mois et 2 ans","entre 7 mois et 2 ans","Plus de 2 ans","entre 1 an et 2 ans","entre 1 an et 3 ans","entre 1 an et 4 ans","Plus de 3 ans","Plus de 4 ans")
+
+liste = c(1,2,4,6,5,2,3,4,7,5,4,4,7,8,5,5,5,5,9,10)
+matrice = matrix(liste,nrow=4,ncol=5,byrow=TRUE)
+matrice 
+```
+
+```{r}
+cohab_remplacement = c()
+for (i in 1:length(remplacement)){
+  cohab = COHAB_non_resolus[i]
+  remp = remplacement[i]
+  val = matrice[cohab,remp]
+  cohab_remplacement=c(cohab_remplacement,val)
+}
+
+moy = round(mean(cohab_remplacement))
+label[moy]
+```
+
+
+
 ```{r include=FALSE }
-indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
+indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A1") 
 print(indice_colonne) # 106
 
-indice_colonne <- which(names(data) == "REPARATION_A1")
+indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A25")
 print(indice_colonne) # 81
 
 indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")

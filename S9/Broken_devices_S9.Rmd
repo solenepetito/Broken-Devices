@@ -1695,9 +1695,7 @@ subplot(
     xaxis2 = list(domain = c(0.55, 1)))
 ```
 
-Questions pour lesquelles on attend des réponses : 
 
-Quel pourcentage de la population française vit avec un smartphone endommagé ? et depuis combien de temps ? • Quel est l'impact des dommages sur l'utilisation ? • Quand l'appareil a-t-il été endommagé après l'achat ? • Quels types de dommages sont les plus répandus ? • Quel est l'impact fonctionnel de ces dommages ? • Combien de temps s'écoule entre les dommages et le changement de smartphone ? • Quelles actions les répondants ont-ils entreprises (réparation, achat, acceptation, ...)
 
 
 ```{r include=FALSE }
