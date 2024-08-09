@@ -344,7 +344,7 @@ for (i in 1:nrow(don)) {
 }
 ```
 
-
+#### 1 ) Ceux qui n'ont pas réparé 
 
 ```{r include=FALSE}
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
@@ -433,21 +433,68 @@ moy = round(mean(cohab_remplacement))
 label[moy]
 ```
 
+#### Ceux qui ont réparé 
+
+
+```{r}
+COHAB <- c()
+annee <- c()
+mois <- c()
+remplacement = c()
+
+# Filtrer les données pour exclure les problèmes identifiés avec le code "27"
+df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
+
+# Parcourir les colonnes de 81 à 105
+for (i in 81:105) {
+  # Parcourir les lignes du dataframe filtré
+  for (j in 1:nrow(df)) {
+    val <- df[j, i]
+    # Vérifier si la valeur n'est pas NA avant de vérifier si elle est 4 ou 5
+    if (!is.na(val) && (val == 1 || val == 2 )) {
+      COH <- df[j, i + 25]
+      # Vérifier si RECENCE n'est pas NA et val n'est pas NULL
+      if (!is.na(COH)) {
+        COHAB <- c(COHAB, COH)
+        annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
+        mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+        remplacement = c(remplacement,df[j,"INTENTION_REMPLACEMENT"])
+      }
+    }
+  }
+}
+
+# Suppression de la raison 6 dans la liste COHABITATION 
+
+indices_rec_7= which(COHAB==7)
+recence=recence[-c(indices_rec_7)]
+annee=annee[-c(indices_rec_7)]
+mois=mois[-c(indices_rec_7)]
+remplacement=remplacement[-c(indices_rec_7)]
+
+# Afficher les résultats pour vérifier
+print(head(COHAB))
+print(head(annee))
+print(head(mois))
+
+```
+```
 
 
 ```{r include=FALSE }
-indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A1") 
+indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A1") 
 print(indice_colonne) # 106
 
-indice_colonne <- which(names(data) == "RECENCE_PROBLEMES_A25")
+indice_colonne <- which(names(data) == "COHABITATION_DYSFONCTION_A25")
 print(indice_colonne) # 81
 
-indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
+indice_colonne <- which(names(data) == "REPARATION_A1")
 print(indice_colonne) # 80
 
 indice_colonne <- which(names(data) == "REPARATION_A25")
 print(indice_colonne) #105
 
 81-31
+
 
 ```
