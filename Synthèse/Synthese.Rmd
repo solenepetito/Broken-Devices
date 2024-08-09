@@ -241,6 +241,14 @@ print(label_COHABITATION[moyenne])
 
 ```
 
+```{r}
+df = data.frame(Cohabitation = label_COHABITATION[2:6],Nb_dys=vec2)
+df <- df %>% 
+  arrange(desc(Nb_dys))
+
+df
+
+```
 
 
 ### **III ) Quand l'appareil a-t-il été endommagé après l'achat ?**
@@ -273,6 +281,16 @@ moyenne <- round(sum(vec*matrice[1,])/sum(matrice[1,]))
 print(label_RECENCE[moyenne]) # "Entre 1 et 2 ans"
 
 ```
+
+```{r}
+df = data.frame(Recence_dys= label_RECENCE[vec],Nb_dys = matrice[1,])
+
+df <- df %>% 
+  arrange(desc(Nb_dys))
+
+df
+```
+
 
 ### **IV ) Quels types de dommages sont les plus répandus ?**
 
@@ -318,40 +336,17 @@ head(df)
 
 ### **VI ) Combien de temps s'écoule entre les dommages et le changement de smartphone ?**
 
-
-
-```{r}
-don = data[ data$RIDENTIFICATION_PROBLEMES != "27",]
-
-# Remplacer les valeurs 99 par 6
-don[don$DATEOBTENTIONSMART_2 == 99, "DATEOBTENTIONSMART_2"] = 6
-
-
-# Indices colonnes recence 
-colonne_deb <- which(names(data) == "RECENCE_PROBLEMES_A1") # 56
-colonne_fin <- which(names(data) == "RECENCE_PROBLEMES_A25")
-
-# Calcul de la durée d'usage
-for (i in 1:nrow(don)) {
-  for (j in colonne_deb:colonne_fin){
-    recence_pb = don[i,j]
-    if (!is.null(recence_pb) && !is.na(recence_pb)){
-      mois = var[i, "DATEOBTENTIONSMART_2"]
-      annee = var[i, "DATEOBTENTIONSMART_1"]
-      date_obtention = ISOdate(annee, mois, 1)
-    }
-  }
-}
-```
-
-#### 1 ) Ceux qui n'ont pas réparé 
+En moyenne, il s'écoule deux entre les dommages et le changement de smartphone. Les personnes ayant réparé ou tenté de réparer leur téléphone mettent 7 mois à 2 ans à remplacer leur téléphone et les personnes na'ayant pas réparer mettent entre 1 an et 2 ans à le remplacer.
 
 ```{r include=FALSE}
+
+# Ceux qui n'ont pas réparé 
+
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
 recence <- c()
 annee <- c()
 mois <- c()
-remplacement = c()
+remplacement1 = c()
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
@@ -369,7 +364,7 @@ for (i in 81:105) {
         recence <- c(recence, RECENCE)
         annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
         mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
-        remplacement = c(remplacement,df[j,"INTENTION_REMPLACEMENT"])
+        remplacement1 = c(remplacement1,df[j,"INTENTION_REMPLACEMENT"])
       }
     }
   }
@@ -381,7 +376,7 @@ indices_rec_7= which(recence==7)
 recence=recence[-c(indices_rec_7)]
 annee=annee[-c(indices_rec_7)]
 mois=mois[-c(indices_rec_7)]
-remplacement=remplacement[-c(indices_rec_7)]
+remplacement1=remplacement1[-c(indices_rec_7)]
 
 # Afficher les résultats pour vérifier
 print(head(recence))
@@ -390,29 +385,29 @@ print(head(mois))
 
 ```
 
-```{r}
+```{r include=FALSE}
 COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
 ```
 
 
-```{r}
-# on enleve les individus qui ont indiqué ne pas savoir quand est ce qu'il comptait remplacé leur téléphone
+```{r include=FALSE}
+# on enleve les individus qui ont indiqué ne pas savoir quand est ce qu'il comptait remplacé leur téléphone et ceux aussi qui ont indiqué qu'ils ne voulait pas le remplacer
 
-indices_remplacement_6_7= which(remplacement==7 | remplacement==6)
+indices_remplacement_6_7= which(remplacement1==7 | remplacement1==6)
 recence=recence[-c(indices_remplacement_6_7)]
 annee=annee[-c(indices_remplacement_6_7)]
 mois=mois[-c(indices_remplacement_6_7)]
 COHAB_non_resolus=COHAB_non_resolus[-c(indices_remplacement_6_7)] 
-remplacement=remplacement[-c(indices_remplacement_6_7)]
+remplacement1=remplacement1[-c(indices_remplacement_6_7)]
 
 ```
 
-```{r}
-remplacement 
+```{r include=FALSE}
+remplacement1 
 COHAB_non_resolus
 ```
 
-```{r}
+```{r include=FALSE}
 label = c("moins d'un mois","entre 2 mois et 7 mois","entre 2 mois et 2 ans","entre 7 mois et 2 ans","Plus de 2 ans","entre 1 an et 2 ans","entre 1 an et 3 ans","entre 1 an et 4 ans","Plus de 3 ans","Plus de 4 ans")
 
 liste = c(1,2,4,6,5,2,3,4,7,5,4,4,7,8,5,5,5,5,9,10)
@@ -420,11 +415,11 @@ matrice = matrix(liste,nrow=4,ncol=5,byrow=TRUE)
 matrice 
 ```
 
-```{r}
+```{r include=FALSE}
 cohab_remplacement = c()
-for (i in 1:length(remplacement)){
+for (i in 1:length(remplacement1)){
   cohab = COHAB_non_resolus[i]
-  remp = remplacement[i]
+  remp = remplacement1[i]
   val = matrice[cohab,remp]
   cohab_remplacement=c(cohab_remplacement,val)
 }
@@ -433,14 +428,13 @@ moy = round(mean(cohab_remplacement))
 label[moy]
 ```
 
-#### Ceux qui ont réparé 
+```{r include=FALSE}
+# Ceux qui ont réparé 
 
-
-```{r}
 COHAB <- c()
 annee <- c()
 mois <- c()
-remplacement = c()
+remplacement2 = c()
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
@@ -458,7 +452,7 @@ for (i in 81:105) {
         COHAB <- c(COHAB, COH)
         annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
         mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
-        remplacement = c(remplacement,df[j,"INTENTION_REMPLACEMENT"])
+        remplacement2 = c(remplacement2,df[j,"INTENTION_REMPLACEMENT"])
       }
     }
   }
@@ -466,11 +460,11 @@ for (i in 81:105) {
 
 # Suppression de la raison 6 dans la liste COHABITATION 
 
-indices_rec_7= which(COHAB==7)
-recence=recence[-c(indices_rec_7)]
+indices_rec_7= which(COHAB==6)
+COHAB=COHAB[-c(indices_rec_7)]
 annee=annee[-c(indices_rec_7)]
 mois=mois[-c(indices_rec_7)]
-remplacement=remplacement[-c(indices_rec_7)]
+remplacement2=remplacement2[-c(indices_rec_7)]
 
 # Afficher les résultats pour vérifier
 print(head(COHAB))
@@ -478,7 +472,88 @@ print(head(annee))
 print(head(mois))
 
 ```
+
+
+
+```{r include=FALSE}
+# on enleve les individus qui ont indiqué ne pas savoir quand est ce qu'il comptait remplacé leur téléphone et ceux aussi qui ont indiqué qu'ils ne voulait pas le remplacer
+
+indices_remplacement_6_7= which(remplacement2==7 | remplacement2==6)
+annee=annee[-c(indices_remplacement_6_7)]
+mois=mois[-c(indices_remplacement_6_7)]
+COHAB=COHAB[-c(indices_remplacement_6_7)] 
+remplacement2=remplacement2[-c(indices_remplacement_6_7)]
+
 ```
+
+
+```{r include=FALSE}
+remplacement2 
+COHAB
+```
+
+```{r include=FALSE}
+# On remplace la valeur 1 de COHAB par la valeur 2
+
+COHAB[which(COHAB==1)]=2
+```
+
+```{r include=FALSE}
+COHAB
+```
+
+
+```{r include=FALSE}
+label = c("moins d'un mois","entre 2 mois et 7 mois","entre 2 mois et 2 ans","entre 7 mois et 2 ans","Plus de 2 ans","entre 1 an et 2 ans","entre 1 an et 3 ans","entre 1 an et 4 ans","Plus de 3 ans","Plus de 4 ans")
+
+liste = c(1,2,4,6,5,2,3,4,7,5,4,4,7,8,5,5,5,5,9,10)
+matrice = matrix(liste,nrow=4,ncol=5,byrow=TRUE)
+matrice 
+```
+
+```{r include=FALSE}
+cohab_remplacement = c()
+for (i in 1:length(remplacement2)){
+  cohab = COHAB[i]
+  remp = remplacement2[i]
+  val = matrice[cohab-1,remp]
+  cohab_remplacement=c(cohab_remplacement,val)
+}
+
+moy = round(mean(cohab_remplacement))
+label[moy]
+```
+
+```{r include=FALSE}
+# En liant tous le monde 
+
+COHAB_fin = c(COHAB_non_resolus,COHAB-1)
+remplacement_fin = c(remplacement1,remplacement2)
+
+cohab_remplacement = c()
+for (i in 1:length(remplacement_fin)){
+  cohab = COHAB_fin[i]
+  remp = remplacement_fin[i]
+  val = matrice[cohab,remp]
+  cohab_remplacement=c(cohab_remplacement,val)
+}
+
+moy = round(mean(cohab_remplacement))
+label[moy]
+```
+
+```{r}
+res = table(cohab_remplacement)
+vec1 = as.numeric(names(res))
+vec2 = as.numeric(res)
+
+df = data.frame(Temps_ecoule = label , Nb_dys = vec2)
+df <- df %>% 
+  arrange(desc(Nb_dys))
+
+df
+```
+
 
 
 ```{r include=FALSE }
