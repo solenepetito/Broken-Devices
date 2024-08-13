@@ -49,13 +49,69 @@ Count_VCM <- function(variable,nb_de_modalites){
     for (j in 1:length(vec)){
       for (k in 1:ncol(mat)){
         if (vec[j]==mat[1,k]){
-          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+          mat[2,k]=mat[2,k]+data[i,"poids"] # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
         }
       }
     }
   }
   return(mat)
 }
+
+##########################################
+
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
+
+label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
+label_RAISON_UTIL_PB <- c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité", "Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas","Je ne sais pas comment résoudre le(s) problème(s)","Je veux faire durer mon téléphone le plus longtemps possible","Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien","Je n’ai pas pris le temps de m’en occuper, de chercher une solution","Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace","La résolution du (ou des) problème(s) est trop difficile ou incertaine","Ça me donne un prétexte pour moins l’utiliser","Cela ne vaut pas la peine de résoudre le(s) problème(s)","Mon smartphone a une particularité difficile à retrouver si je devais le remplacer","Autre")
+
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+```
+
+```{r include=FALSE}
+# Catégorisation des dysfonctionnements
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+materiel <- c(1,2,1,3,4,6,7,8,9,10,12,16,17)
+dys_divers <- c(5,11,13,14,15,21,22,23,24,25)
+stockage <- c(18)
+maj <- c(19,20)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(dys_divers), length(stockage), length(maj))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 4, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(stockage)] <- stockage
+matrice_cat[2, 1:length(materiel)] <- materiel
+matrice_cat[3, 1:length(maj)] <- maj
+matrice_cat[4, 1:length(dys_divers)] <- dys_divers
+
+# Afficher la matrice
+print
+
 ```
 
 ```{r include=FALSE}
@@ -112,6 +168,7 @@ pbs = c()
 cate_dys = c()
 deg_gene = c()
 cohab = c()
+poids = c()
 
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27" & data$RIDENTIFICATION_PROBLEMES != "26"),]
 variable = df$RIDENTIFICATION_PROBLEMES
@@ -130,10 +187,12 @@ for (i in 1:length(variable)){
       
       result <- which(matrice_cat == pb, arr.ind = TRUE)
       cat <- result[1]
+      poid = df[i,"poids"]
       pbs = c(pbs,pb)
       cate_dys = c(cate_dys,cat)
       deg_gene = c(deg_gene,gene)
       cohab = c(cohab,coha)
+      poids = c(poids,poid)
         }
   }
 }
@@ -151,11 +210,16 @@ print(length(cohab))
 
 
 don = data.frame()
-don <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=deg_gene,"Cohab"=cohab)
+don <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=deg_gene,"Cohab"=cohab, Poids = poids)
 don[which(don$Cohab==1),"Cohab"]=2 # On lie les "moins d'un mois" et les "dès que j'ai décelé le dys" ensemble
 print(head(don))
 print(nrow(don))
 ```
+
+```{r}
+poids
+```
+
 
 ```{r include=FALSE}
 COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
@@ -173,6 +237,7 @@ mois <- c()
 gene <- c()
 pbs = c()
 cate_dys = c()
+poids = c()
 
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
@@ -195,7 +260,9 @@ for (i in 81:105) {
         result <- which(matrice_cat == (i-80), arr.ind = TRUE)
         cat <- result[1]
         pbs = c(pbs,i-80)
+        poid = df[i,"poids"]
         cate_dys = c(cate_dys,cat)
+        poids = c(poids,poid)
       }
     }
   }
@@ -207,8 +274,9 @@ indices_rec_7= which(recence==7)
 gene=gene[-c(indices_rec_7)]
 pbs=pbs[-c(indices_rec_7)]
 cate_dys=cate_dys[-c(indices_rec_7)]
+poids = poids[-c(indices_rec_7)]
 
-don2 <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=gene,"Cohab"=COHAB_non_resolus+1)
+don2 <- data.frame( "Categorie_dys"=cate_dys, "Gêne"=gene,"Cohab"=COHAB_non_resolus+1,Poids = poids)
 
 # Afficher les résultats pour vérifier
 print(head(pbs))
@@ -226,13 +294,21 @@ nrow(don)
 nrow(don2)
 ```
 
+```{r}
+table_ponderee <- xtabs(Poids ~ Cohab, data = don)
+
+# Afficher la table pondérée
+print(table_ponderee)
+```
+
+
 ```{r include=FALSE}
 label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
 
 freq = table(don$Cohab)
 
-vec1 = as.numeric(names(freq))
-vec2 = as.numeric(freq)
+vec1 = as.numeric(names(table_ponderee))
+vec2 = as.numeric(table_ponderee)
 
 moyenne = round(sum(vec1*vec2)/sum(vec2))
 
@@ -242,10 +318,7 @@ print(label_COHABITATION[moyenne])
 ```
 
 ```{r}
-df = data.frame(Cohabitation = label_COHABITATION[2:6],Nb_dys=vec2)
-df <- df %>% 
-  arrange(desc(Nb_dys))
-
+df = data.frame(Cohabitation = label_COHABITATION[2:6],Nb_dys=round(vec2), Pourcent = round(vec2*100/sum(vec2)))
 df
 
 ```
@@ -283,10 +356,7 @@ print(label_RECENCE[moyenne]) # "Entre 1 et 2 ans"
 ```
 
 ```{r}
-df = data.frame(Recence_dys= label_RECENCE[vec],Nb_dys = matrice[1,])
-
-df <- df %>% 
-  arrange(desc(Nb_dys))
+df = data.frame(Recence_dys= label_RECENCE[vec],Nb_dys = matrice[1,], Pourcent = round( matrice[1,]*100/sum(matrice[1,])))
 
 df
 ```
@@ -302,7 +372,7 @@ nb_de_modalites = 26
 
 res = Count_VCM(variable,nb_de_modalites)
 
-df = data.frame(Dysfonctionnement = label_RIDENTIFICATION_PROBLEME, Valeurs = res[2,], Pourcentage = round(res[2,]*100/nrow(data[data$RIDENTIFICATION_PROBLEMES!="26" & data$RIDENTIFICATION_PROBLEMES!="27", ])))
+df = data.frame(Dysfonctionnement = label_RIDENTIFICATION_PROBLEME, Valeurs = round(res[2,]), Pourcentage = round(res[2,]*100/sum(data[data$RIDENTIFICATION_PROBLEMES!="26" & data$RIDENTIFICATION_PROBLEMES!="27","poids" ])))
 
 df <- df %>% 
   arrange(desc(Valeurs))
@@ -323,7 +393,7 @@ var = data[data$RIMPACT_PB!="","RIMPACT_PB"]
 
 res <- Count_VCM(var,length(label_IMPACT))
 
-df = data.frame(Impact = label_IMPACT, Valeurs = res[2,], Pourcentage = round(res[2,]*100/sum(res[2,]),2))
+df = data.frame(Impact = label_IMPACT, Valeurs = round(res[2,]), Pourcentage = round(res[2,]*100/sum(res[2,]),2))
 
 # sum(res[2,]) = 806
 
@@ -347,6 +417,7 @@ recence <- c()
 annee <- c()
 mois <- c()
 remplacement1 = c()
+poids1 = c()
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
@@ -365,6 +436,7 @@ for (i in 81:105) {
         annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
         mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
         remplacement1 = c(remplacement1,df[j,"INTENTION_REMPLACEMENT"])
+        poids1 = c(poids1,df[i,"poids"])
       }
     }
   }
@@ -376,6 +448,7 @@ indices_rec_7= which(recence==7)
 recence=recence[-c(indices_rec_7)]
 annee=annee[-c(indices_rec_7)]
 mois=mois[-c(indices_rec_7)]
+poids1 = poids1[-c(indices_rec_7)]
 remplacement1=remplacement1[-c(indices_rec_7)]
 
 # Afficher les résultats pour vérifier
@@ -398,7 +471,9 @@ recence=recence[-c(indices_remplacement_6_7)]
 annee=annee[-c(indices_remplacement_6_7)]
 mois=mois[-c(indices_remplacement_6_7)]
 COHAB_non_resolus=COHAB_non_resolus[-c(indices_remplacement_6_7)] 
+poids1 = poids1[-c(indices_remplacement_6_7)]
 remplacement1=remplacement1[-c(indices_remplacement_6_7)]
+
 
 ```
 
@@ -435,6 +510,7 @@ COHAB <- c()
 annee <- c()
 mois <- c()
 remplacement2 = c()
+poids2 =c()
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
@@ -453,6 +529,7 @@ for (i in 81:105) {
         annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
         mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
         remplacement2 = c(remplacement2,df[j,"INTENTION_REMPLACEMENT"])
+        poids2 = c(poids2,df[i,"poids"])
       }
     }
   }
@@ -465,6 +542,7 @@ COHAB=COHAB[-c(indices_rec_7)]
 annee=annee[-c(indices_rec_7)]
 mois=mois[-c(indices_rec_7)]
 remplacement2=remplacement2[-c(indices_rec_7)]
+poids2 = poids2[-c(indices_rec_7)]
 
 # Afficher les résultats pour vérifier
 print(head(COHAB))
@@ -482,6 +560,7 @@ indices_remplacement_6_7= which(remplacement2==7 | remplacement2==6)
 annee=annee[-c(indices_remplacement_6_7)]
 mois=mois[-c(indices_remplacement_6_7)]
 COHAB=COHAB[-c(indices_remplacement_6_7)] 
+poids2 = poids2[-c(indices_remplacement_6_7)]
 remplacement2=remplacement2[-c(indices_remplacement_6_7)]
 
 ```
@@ -529,6 +608,7 @@ label[moy]
 
 COHAB_fin = c(COHAB_non_resolus,COHAB-1)
 remplacement_fin = c(remplacement1,remplacement2)
+poids_fin = c(poids1,poids2)
 
 cohab_remplacement = c()
 for (i in 1:length(remplacement_fin)){
@@ -542,14 +622,57 @@ moy = round(mean(cohab_remplacement))
 label[moy]
 ```
 
+
 ```{r}
-res = table(cohab_remplacement)
+COHAB_finale = COHAB_fin + 1
+COHAB_finale = factor(COHAB_finale,levels =1:length(label_COHABITATION) ,labels=label_COHABITATION)
+
+head(COHAB_finale)
+
+resultat = table(COHAB_finale)
+resultat
+
+df <- data.frame(Cohabitation = label_COHABITATION[2:5], Valeurs = as.numeric(resultat[2:5] ))
+df
+
+```
+
+```{r}
+df <- data.frame(Cohabitation = factor(label_COHABITATION[2:5],levels=label_COHABITATION),valeurs=as.numeric(resultat[2:5]),
+  start = c(0, 1, 6, 24),  # Début de l'intervalle en mois
+  end = c(1, 6, 24, 48)    # Fin de l'intervalle en mois (Inf pour plus de 2 ans)
+)
+
+ggplot(df) +
+  geom_rect(aes(xmin = start, xmax = end, ymin = 0, ymax = valeurs, fill = Cohabitation)) +
+  scale_x_continuous(breaks = seq(0, 48, by = 6), limits = c(0, 48)) +  # Ajuster les limites et les breaks de l'axe des x
+  scale_y_continuous(expand = c(0, 0)) +  # Ajuster les limites et les breaks de l'axe des y
+  labs(title = "Répartition des temps de cohabitation",
+       x = "Durée (mois)",
+       y = "Valeurs") +
+  theme_minimal() +
+  scale_fill_brewer(palette = "Greens", name = "Temps de cohabitation")+
+  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
+        axis.title.x = element_text( face = "bold",colour="palegreen3"),
+        axis.title.y = element_text(face = "bold",colour="palegreen3"))   # Choisir les couleurs des barres
+
+```
+
+```{r}
+label_COHABITATION[2:5]
+
+as.numeric(resultat[2:5])
+```
+
+
+```{r}
+res = xtabs(poids_fin ~ cohab_remplacement)
 vec1 = as.numeric(names(res))
 vec2 = as.numeric(res)
 
-df = data.frame(Temps_ecoule = label , Nb_dys = vec2)
-df <- df %>% 
-  arrange(desc(Nb_dys))
+df = data.frame(Temps_ecoule = label , Nb_dys = round(vec2),Pourcent = round(vec2*100/sum(vec2)))
+
+df <- rbind(df[1:4, ], df[6:8, ], df[5, ], df[9:nrow(df), ])
 
 df
 ```

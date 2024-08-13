@@ -197,7 +197,29 @@ for (i in 1 :ncol(df)){
   }
 ```
 
-### **I ) **
+### **I ) Pouecentage de personnes ne renconcontrant qu'un dysfonctionnement**
+
+Au total, c'est 400 personnes qui rencontrent un dysfonctionnement, ce qui représente 48% des dysfonctionnements au total.
+
+```{r include=FALSE}
+
+variable = data[data$RIDENTIFICATION_PROBLEMES!="27","RIDENTIFICATION_PROBLEMES"]
+res = Count_VCM(variable,26)
+total = sum(res[2,])
+
+nb= 0 
+for (i in variable){
+  ligne = str_extract_all(variable[i],".{2}")[[1]]
+  if (length(ligne)==1){
+    nb = nb+1
+  }
+}
+nb
+round(nb*100/total)
+
+
+```
+
 
 
 

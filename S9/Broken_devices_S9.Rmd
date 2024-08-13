@@ -256,8 +256,7 @@ p <- ggplot(df_T, aes(x = Etat, y = Valeurs)) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",color="#DC143C"),
         axis.title.x = element_text( face = "bold",colour="#DC143C"), 
-        axis.title.y = element_text(face = "bold",colour="#DC143C"),
-        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) 
+        axis.title.y = element_text(face = "bold",colour="#DC143C")) 
 
 p_interactif <- ggplotly(p)
 
