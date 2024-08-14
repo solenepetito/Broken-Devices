@@ -197,7 +197,7 @@ for (i in 1 :ncol(df)){
   }
 ```
 
-### **I ) Pouecentage de personnes ne renconcontrant qu'un dysfonctionnement**
+### **I ) Pourcentage de personnes ne renconcontrant qu'un dysfonctionnement**
 
 Au total, c'est 400 personnes qui rencontrent un dysfonctionnement, ce qui représente 48% des dysfonctionnements au total.
 
@@ -220,16 +220,262 @@ round(nb*100/total)
 
 ```
 
-### Intention de remplacement en fonction de la durée d'usage du téléphone 
+### **II ) Intention de remplacement en fonction de la durée d'usage du téléphone**
 
-```{r}
+#### **1 ) Intention de remplacement en fonction de la durée d'usage (téléphone occasion)**
+
+
+```{r include=FALSE}
+############# Calcul de la durée total d'utilisation des téléphones d'occassion en prenant l'ancienne durée et en calculant la durée actuelle à partir de la date d'obtention
+
+# Initialisation des vecteurs pour stocker les résultats
+usage1 <- c()
+ancienne_duree <- c()
+remplacement1 =c()
+
+# Liste des catégories
+liste <- c("Moins de 6 mois", "Entre 6 mois et 1 an", "Entre 1 et 2 ans", "Entre 2 et 3 ans", "Entre 3 et 5 ans", "Plus de 5 ans", "Je ne sais pas")
+
+# Filtrage et préparation des données
+var <- data[data$ETATSMARTPHONE == 2, c("DATEOBTENTIONSMART_1", "DATEOBTENTIONSMART_2", "UTILISATIONSMARTOCCAS","INTENTION_REMPLACEMENT")]
+
+# Remplacer les valeurs 99 par 6
+var$DATEOBTENTIONSMART_2[var$DATEOBTENTIONSMART_2 == 99] <- 6
+
+# Calcul de la durée d'usage
+for (u in 1:nrow(var)) {
+  mois <- var[u, "DATEOBTENTIONSMART_2"]
+  annee <- var[u, "DATEOBTENTIONSMART_1"]
+  date_debut <- ISOdate(annee, mois, 1)
+  date_fin <- ISOdate(2023, 11, 1) # Utilisation de l'année et du mois actuels pour la date de fin
+  diff <- as.numeric(difftime(date_fin, date_debut, units = "days")) / 30  # Convertir en mois
+  ancienne_dur <- var[u, "UTILISATIONSMARTOCCAS"]
+  
+  if (!is.na(ancienne_dur)) {
+    if (diff < 6) {
+      usage1 <- c(usage1, liste[1])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 6 && diff < 12) {
+      usage1 <- c(usage1, liste[2])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 12 && diff < 24) {
+      usage1 <- c(usage1, liste[3])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 24 && diff < 36) {
+      usage1 <- c(usage1, liste[4])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 36 && diff < 60) {
+      usage1 <- c(usage1, liste[5])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 60) {
+      usage1 <- c(usage1, liste[6])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    }
+  } 
+}
+
+```
+
+
+```{r include=FALSE}
+# on enelève dans nos deux listes les individus ayant indiqué qu'ils ne savaient pas l'ancienne durée de leur smartphone d'occassion : s
+
+indices_7= which(ancienne_duree==7)
+ancienne_duree=ancienne_duree[-c(indices_7)]
+usage1 = usage1[-c(indices_7)]
+remplacement1=remplacement1[-c(indices_7)]
+
+length(ancienne_duree)
+length(usage1)
+length(remplacement1)
+
+#indices_remp_6_7= which(remplacement1==7 | remplacement1==6 )
+#ancienne_duree=ancienne_duree[-c(indices_remp_6_7)]
+#usage1 = usage1[-c(indices_remp_6_7)]
+#remplacement1=remplacement1[-c(indices_remp_6_7)]
+
+length(ancienne_duree)
+length(usage1)
+length(remplacement1)
+
+ancienne_duree
+usage1
+remplacement1
+```
+
+```{r include=FALSE}
+l = c()
+
+for (i in 1:length(ancienne_duree)){
+  val1 = ancienne_duree[i]
+  val2 = usage1[i]
+  if (val1==1){
+    diff = c(0,167)
+    l= c(l,diff)
+  }
+  if (val1==2){
+    diff = c(168,364)
+    l= c(l,diff)
+  }
+  if (val1==3){
+    diff = c(365,729)
+    l= c(l,diff)
+  }
+  if (val1==4){
+    diff = c(730,1094)
+    l= c(l,diff)
+  }
+  if (val1==5){
+    diff = c(1095,1824)
+    l= c(l,diff)
+  }
+  if (val1==6){
+    diff = c(1825,0)
+    l= c(l,diff)
+  }
+}
+```
+
+```{r include=FALSE}
+l
+usage1
+
+length(l)
+length(usage1)
+```
+
+```{r include=FALSE}
+# Initialiser liste_val
+liste_val <- c()
+
+# Liste des intervalles en jours pour chaque catégorie
+categories <- list(
+  "Moins de 6 mois" = c(0, 167),
+  "Entre 6 mois et 1 an" = c(168, 364),
+  "Entre 1 et 2 ans" = c(365, 729),
+  "Entre 2 et 3 ans" = c(730, 1094),
+  "Entre 3 et 5 ans" = c(1095, 1824),
+  "Plus de 5 ans" = c(1825, Inf)
+)
+
+# Boucle pour parcourir les éléments de `usage`
+for (i in 1:length(usage1)) {
+  u <- usage1[i]
+  # Vérifier si la catégorie existe dans la liste
+  if (u %in% names(categories)) {
+    deb <- l[(i * 2) - 1]
+    fin <- l[i * 2]
+    val <- abs(deb - fin)
+    
+    # Obtenir les bornes de la catégorie actuelle
+    borne <- categories[[u]]
+    val1 <- val + borne[1]
+    val2 <- val + borne[2]
+    
+    # Calculer la différence
+    diff <- abs(val1 - val2)
+    liste_val <- c(liste_val, diff)
+  }
+}
+
+# Afficher les valeurs calculées
+
+length(liste_val)
+liste_val
+
+
+```
+
+
+```{r include=FALSE}
+usage2 = c()
+liste = c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
+
+for ( i in 1:length(liste_val)){
+  diff = liste_val[i]
+  if (diff < 168) {
+    usage2 = c(usage2, liste[1])
+  } else if (diff >= 168 && diff < 365) {
+    usage2 = c(usage2, liste[2])
+  } else if (diff >= 365 && diff < 730) {
+    usage2 = c(usage2, liste[3])
+  } else if (diff >= 730 && diff < 1095) {
+    usage2 = c(usage2, liste[4])
+  } else if (diff >= 1095 && diff < 1825) {
+    usage2 = c(usage2, liste[5])
+  } else if (diff >= 1825) {
+    usage2 = c(usage2, liste[6])
+  }
+}
+
+df_temp1 <- data.frame(
+    Remplacement = remplacement1,
+    Duree_Usage = usage2
+  )
+
+# u = sort(unique(df_temp1$Duree_Usage))
+# r = sort(unique(df_temp1$Remplacement))
+
+nbs = c()
+for (i in 1:nrow(df_temp1)){
+   u = df_temp1[i,"Duree_Usage"]
+   r = df_temp1[i,"Remplacement"]
+   don <- df_temp1[df_temp1$Remplacement==r & df_temp1$Duree_Usage==u,]
+   nbs = c(nbs,nrow(don))
+     }
+
+df_temp1$Nb_personnes_concernees = nbs
+  
+df_temp1 = unique(df_temp1)
+df_temp1
+```
+
+
+
+```{r echo=FALSE}
+#sum(df2$Nb_personnes_concernees) # 880
+
+df_temp1$Duree_Usage = factor(df_temp1$Duree_Usage,levels=liste)
+df_temp1$Remplacement <- factor(df_temp1$Remplacement, levels = c("1", "2", "3", "4", "5", "6", "7"), 
+                           labels = c("Dans moins d’un mois", "Dans 1 à 6 mois", "Dans 6 à 12 mois", "Dans 1 an à 2 ans", "Dans 2 ans ou plus", "Je n’ai pas envisagé de le remplacer", "Je ne sais pas"))
+
+# Créer le graphique
+p <- ggplot(df_temp1, aes(y = Remplacement, x = Duree_Usage, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "turquoise4") +
+  theme_minimal() +
+  labs(title = "Intention de remplacement en fonction de la durée d'usage (téléphone occasion)",
+       x = "Durée d'usage",
+       y = "Intention de remplacement",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "turquoise4"),
+        axis.title.x = element_text(face = "bold", colour = "turquoise4"),
+        axis.title.y = element_text(face = "bold", colour = "turquoise4"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# Rendre le graphique interactif
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
+```
+
+
+#### **2 ) Intention de remplacement en fonction de la durée d'usage (tous types de téléphones confondus)**
+
+```{r include=FALSE}
+############### Téléphone non d'occassion
+
 # Initialisation des variables
 usage = c()
 liste = c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
-ancienne_duree = c()
 
 # Filtrage et préparation des données
-var = data[ data$ETATSMARTPHONE == 2, c("DATEOBTENTIONSMART_1", "DATEOBTENTIONSMART_2", "INTENTION_REMPLACEMENT", "ETATSMARTPHONE","DUREE_USAGE_ANCIEN_TEL")]
+var = data[ data$ETATSMARTPHONE != 2, c("DATEOBTENTIONSMART_1", "DATEOBTENTIONSMART_2", "INTENTION_REMPLACEMENT", "ETATSMARTPHONE")]
 
 # Remplacer les valeurs 99 par 6
 var[var$DATEOBTENTIONSMART_2 == 99, "DATEOBTENTIONSMART_2"] = 6
@@ -241,25 +487,19 @@ for (u in 1:nrow(var)) {
   date_debut = ISOdate(annee, mois, 1)
   date_fin = ISOdate(2023, 11, 1) # Utilisation de l'année et du mois actuels pour la date de fin
   diff = as.numeric(difftime(date_fin, date_debut, units = "days"))
-  ancienne_dur = var[u,"DUREE_USAGE_ANCIEN_TEL"]
   
-  if (diff < 168 && !is.na(ancienne_duree)) {
+  if (diff < 168) {
     usage = c(usage, liste[1])
-  } else if (diff >= 168 && diff < 365 && !is.na(ancienne_duree) && !is.null(ancienne_dur)) {
+  } else if (diff >= 168 && diff < 365) {
     usage = c(usage, liste[2])
-    ancienne_duree = c(ancienne_duree,ancienne_dur)
-  } else if (diff >= 365 && diff < 730 && !is.na(ancienne_duree)&& !is.null(ancienne_dur)) {
+  } else if (diff >= 365 && diff < 730) {
     usage = c(usage, liste[3])
-    ancienne_duree = c(ancienne_duree,ancienne_dur)
-  } else if (diff >= 730 && diff < 1095 && !is.na(ancienne_duree)&& !is.null(ancienne_dur)) {
+  } else if (diff >= 730 && diff < 1095) {
     usage = c(usage, liste[4])
-    ancienne_duree = c(ancienne_duree,ancienne_dur)
-  } else if (diff >= 1095 && diff < 1825 && !is.na(ancienne_duree)&& !is.null(ancienne_dur)) {
+  } else if (diff >= 1095 && diff < 1825) {
     usage = c(usage, liste[5])
-    ancienne_duree = c(ancienne_duree,ancienne_dur)
-  } else if (diff >= 1825 && !is.na(ancienne_duree)&& !is.null(ancienne_dur)) {
+  } else if (diff >= 1825) {
     usage = c(usage, liste[6])
-    ancienne_duree = c(ancienne_duree,ancienne_dur)
   }
 }
 
@@ -309,58 +549,43 @@ print(df2)
 
 ```
 
-```{r}
-# Initialisation des vecteurs pour stocker les résultats
-usage <- c()
-ancienne_duree <- c()
+```{r include=FALSE}
+df_fin = rbind(df2,df_temp1)
 
-# Liste des catégories
-liste <- c("Moins de 6 mois", "Entre 6 mois et 1 an", "Entre 1 et 2 ans", "Entre 2 et 3 ans", "Entre 3 et 5 ans", "Plus de 5 ans", "Je ne sais pas")
+nbs = c()
+for (i in 1:nrow(df_fin)){
+   u = df_fin[i,"Duree_Usage"]
+   r = df_fin[i,"Remplacement"]
+   don <- df_fin[df_fin$Remplacement==r & df_fin$Duree_Usage==u,]
+   nbs = c(nbs,sum(don$Nb_personnes_concernees))
+     }
 
-# Filtrage et préparation des données
-var <- data[data$ETATSMARTPHONE == 2, c("DATEOBTENTIONSMART_1", "DATEOBTENTIONSMART_2", "DUREE_USAGE_ANCIEN_TEL")]
-
-# Remplacer les valeurs 99 par 6
-var$DATEOBTENTIONSMART_2[var$DATEOBTENTIONSMART_2 == 99] <- 6
-
-# Calcul de la durée d'usage
-for (u in 1:nrow(var)) {
-  mois <- var[u, "DATEOBTENTIONSMART_2"]
-  annee <- var[u, "DATEOBTENTIONSMART_1"]
-  date_debut <- ISOdate(annee, mois, 1)
-  date_fin <- ISOdate(2023, 11, 1) # Utilisation de l'année et du mois actuels pour la date de fin
-  diff <- as.numeric(difftime(date_fin, date_debut, units = "days")) / 30  # Convertir en mois
-  ancienne_dur <- var[u, "DUREE_USAGE_ANCIEN_TEL"]
-  
-  if (!is.na(ancienne_dur)) {
-    if (diff < 6) {
-      usage <- c(usage, liste[1])
-      ancienne_duree <- c(ancienne_duree, ancienne_dur)
-    } else if (diff >= 6 && diff < 12) {
-      usage <- c(usage, liste[2])
-      ancienne_duree <- c(ancienne_duree, ancienne_dur)
-    } else if (diff >= 12 && diff < 24) {
-      usage <- c(usage, liste[3])
-      ancienne_duree <- c(ancienne_duree, ancienne_dur)
-    } else if (diff >= 24 && diff < 36) {
-      usage <- c(usage, liste[4])
-      ancienne_duree <- c(ancienne_duree, ancienne_dur)
-    } else if (diff >= 36 && diff < 60) {
-      usage <- c(usage, liste[5])
-      ancienne_duree <- c(ancienne_duree, ancienne_dur)
-    } else if (diff >= 60) {
-      usage <- c(usage, liste[6])
-      ancienne_duree <- c(ancienne_duree, ancienne_dur)
-    }
-  } 
-}
+df_fin$Nb_personnes_concernees = nbs
+df_fin = unique(df_fin)
+df_fin
 
 ```
 
+```{r echo=FALSE}
+df_fin$Duree_Usage = factor(df_fin$Duree_Usage,levels=liste)
 
-```{r}
-length(ancienne_duree)
-length(usage)
+# Créer le graphique
+p <- ggplot(df_fin, aes(y = Remplacement, x = Duree_Usage, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "turquoise4") +
+  theme_minimal() +
+  labs(title = "Intention de remplacement en fonction de la durée d'usage",
+       x = "Durée d'usage",
+       y = "Intention de remplacement",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "turquoise4"),
+        axis.title.x = element_text(face = "bold", colour = "turquoise4"),
+        axis.title.y = element_text(face = "bold", colour = "turquoise4"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# Rendre le graphique interactif
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
 ```
 
 
