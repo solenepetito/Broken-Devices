@@ -509,6 +509,8 @@ p5_interactif <- ggplotly(p5)
 p5_interactif 
 ```
 
+
+
 ```{r include=FALSE}
 resolution_label=c("Le problème est resolu","Le problème n'a pas pu être résolu","Le problème s’est résolu tout seul au bout d’un moment","Le problème sera peut-être résolu plus tard","Je ne pense pas tenter de résoudre le problème")
 
@@ -542,6 +544,13 @@ p6_interactif <- ggplotly(p6)
 # Afficher le graphique interactif
 p6_interactif 
 ```
+
+```{r}
+df <- df_combined %>% 
+  arrange( Catégorie,Légende)
+df
+```
+
 
 ```{r echo=FALSE}
 # Utiliser subplot pour afficher les graphiques côte à côte

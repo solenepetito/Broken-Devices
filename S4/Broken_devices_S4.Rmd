@@ -178,6 +178,21 @@ p_interactif
 
 ```
 
+```{r echo=FALSE}
+don <- tapply(data$poids, data$OS, sum)
+
+df <- data.frame(OS =names(don), Nb_personnes = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$OS = factor(df$OS, labels=label_OS)
+
+print(head(df))
+
+#print(floor(sum(as.numeric(don)))) #47831
+```
+
+
 La plupart des propriétaires de smartphone ont donc des androids (67% des
 personnes de la base).
 
@@ -191,9 +206,9 @@ mat[1,]=sys
 
 for (i in 1:length(sys)){
   df=data[which(data$OS==i),]
-  nb_ind = nrow(df)
+  nb_ind = round(sum(df$poids))
   df2 = data[which(data$OS==i & data$RIDENTIFICATION_PROBLEMES!="27"),]
-  nb_ind_pb=nrow(df2)
+  nb_ind_pb=round(sum(df2$poids))
   mat[2,i]=nb_ind
   mat[3,i]=nb_ind_pb
 }
@@ -238,8 +253,8 @@ p_interactif
 Le graphe suivant nous apporte plus de détails :
 
 ```{r echo=FALSE}
-nb_individus=nrow(data)
-valeurs=as.matrix(table(data$ETATSMARTPHONE))
+nb_individus=sum(data$poids)
+valeurs=as.matrix(tapply(data$poids, data$ETATSMARTPHONE, sum)) 
 
 Categorie <- factor(label_ETAT, levels = label_ETAT)
 
@@ -273,11 +288,11 @@ mat[1,]=sys
 
 for (i in 1:length(etat)){
   df=data[which(data$ETATSMARTPHONE==i),]
-  nb_ind = nrow(df)
+  nb_ind = sum(df$poids)
   df2 = data[which(data$ETATSMARTPHONE==i & data$RIDENTIFICATION_PROBLEMES!="27"),]
-  nb_ind_pb=nrow(df2)
-  mat[2,i]=nb_ind
-  mat[3,i]=nb_ind_pb
+  nb_ind_pb=sum(df2$poids)
+  mat[2,i]=round(nb_ind)
+  mat[3,i]=round(nb_ind_pb)
 }
 
 dataframe <- data.frame("État"=label_ETAT,"Nb_personnes"=mat[2,],"Nb_personnes_dys"=mat[3,],"Pourcentage_dys"=round(mat[3,]*100/mat[2,]))
@@ -296,10 +311,10 @@ Le graphe suivant nous donne plus de détails :
 ```{r echo=FALSE}
 label_duree_occas <- c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
 
-df =data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),"UTILISATIONSMARTOCCAS"]
-total = nrow(data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),]) # 45 obs
+df =data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),c("UTILISATIONSMARTOCCAS","poids")]
+total = sum(data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),"poids"]) # 45 obs
 
-don2 <- as.matrix(table(df))
+don2 <- as.matrix(tapply(df$poids, df$UTILISATIONSMARTOCCAS, sum)) 
 Categorie <- factor(label_duree_occas, levels = label_duree_occas)
 
 don <- data.frame(Categorie=Categorie, valeurs=round(don2[,1]*100/total),2)
@@ -320,6 +335,22 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 
+
+```
+
+
+```{r echo=FALSE}
+
+label_duree_occas <- c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
+
+df =data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),c("UTILISATIONSMARTOCCAS","poids")]
+total = sum(data[which(data$ETATSMARTPHONE==2 & data$RIDENTIFICATION_PROBLEMES!="27"),"poids"]) # 45 obs
+
+don2 <- as.matrix(tapply(df$poids, df$UTILISATIONSMARTOCCAS, sum)) 
+Categorie <- factor(label_duree_occas, levels = label_duree_occas)
+
+don <- data.frame(Ancienne_duree_smart_occas=Categorie, Nb_personnes_dys=round(don2[,1]) ,Pourcent=round(don2[,1]*100/total),2)
+don
 
 ```
 
@@ -398,24 +429,24 @@ for (i in 1:length(variable)){
   liste_pbs=as.numeric(liste_pbs)
   for (j in liste_pbs){
     if (j %in% materiel){
-      mat[2,1]=mat[2,1]+1
-    }
+      mat[2,1]=mat[2,1]+df[i,"poids"]    
+      }
     if (j %in% logiciel){
-      mat[2,2]=mat[2,2]+1
+      mat[2,2]=mat[2,2]+df[i,"poids"] 
     }
     if (j %in% reseau){
-      mat[2,3]=mat[2,3]+1
+      mat[2,3]=mat[2,3]+df[i,"poids"] 
     }
     if (j %in% performance){
-      mat[2,4]=mat[2,4]+1
+      mat[2,4]=mat[2,4]+df[i,"poids"] 
     }
     if (j %in% divers){
-      mat[2,5]=mat[2,5]+1
+      mat[2,5]=mat[2,5]+df[i,"poids"] 
     }
   }
 }
 
-don <- data.frame("Dysfonctionnements"=label_dys,"Nb_dys"=mat[2,],"Pourcentage_dys"=round(mat[2,]*100/nb_total_pbs))
+don <- data.frame("Dysfonctionnements"=label_dys,"Nb_dys"=round(mat[2,]),"Pourcentage_dys"=round(mat[2,]*100/nb_total_pbs))
 print(don)
 
 ```
@@ -472,7 +503,7 @@ for (i in 1:ncol(mat)){
       nom_colonne=paste0("GENE_PROBLEMES_A",num)
       valeur=df[j,nom_colonne]
       if(!is.null(valeur) && !is.na(valeur)){
-        mat[valeur+1,i]=mat[valeur+1,i]+1
+        mat[valeur+1,i]=mat[valeur+1,i]+ df[i,"poids"]
         }
     }
   }

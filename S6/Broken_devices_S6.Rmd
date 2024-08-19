@@ -594,8 +594,7 @@ for(i in 1:nrow(data)){
       num_pb=j-80
       result <- which(matrice_cat == num_pb, arr.ind = TRUE)
       cat <- result[1]
-      matrice[val,cat]=matrice[val,cat]+1
-    }
+      matrice[val,cat]=matrice[val,cat]+round(data[i,"poids"])    }
   }
 }
 
@@ -684,6 +683,7 @@ p6_interactif <- ggplotly(p6)
 p6_interactif 
 ```
 
+
 ```{r echo=FALSE}
 # Utiliser subplot pour afficher les graphiques côte à côte
 library(plotly)
@@ -733,7 +733,7 @@ for(i in 1:nrow(data)){
       num_pb=j-30
       result <- which(matrice_cat == num_pb, arr.ind = TRUE)
       cat <- result[1]
-      matrice[val,cat]=matrice[val,cat]+1
+      matrice[val,cat]=matrice[val,cat]+round(data[i,"poids"])
     }
   }
 }
@@ -782,6 +782,9 @@ p7_interactif <- ggplotly(p7)
 p7_interactif 
 ```
 
+
+
+
 ```{r include=FALSE}
 gene_levels <- c("Pas du tout gênant","Plutôt pas gênant", "Plutôt gênant", "Très gênant")
 
@@ -813,6 +816,7 @@ p8_interactif <- ggplotly(p8)
 # Afficher le graphique interactif
 p8_interactif 
 ```
+
 
 ```{r echo=FALSE}
 p7_interactif <- p7_interactif %>% layout(showlegend = FALSE)
@@ -1258,17 +1262,19 @@ colonne_deb <- which(names(data) == "REPARATION_A1")
 colonne_fin <- which(names(data) == "REPARATION_A25")
 #print(colonne_fin) # 105
 
-df <- data[,colonne_deb:colonne_fin]
+df <- data[,c(colonne_deb:colonne_fin)]
 
-for (i in 1 :ncol(df)){
+for (i in 1 :(ncol(df))){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val)&& !is.null(val)){
-        matrice_REP[2,val]=matrice_REP[2,val]+1
+        matrice_REP[2,val]=matrice_REP[2,val]+ 1
       }
     }
   }
 ```
+
+
 
 
 ```{r include=FALSE}

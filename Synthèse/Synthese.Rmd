@@ -416,7 +416,7 @@ df = data.frame(Dysfonctionnement = label_RIDENTIFICATION_PROBLEME, Valeurs = ro
 df <- df %>% 
   arrange(desc(Valeurs))
 
-head(df)
+df
 
 
 ```

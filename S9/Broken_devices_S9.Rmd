@@ -82,7 +82,7 @@ Count_VCM <- function(variable,nb_de_modalites){
     for (j in 1:length(vec)){
       for (k in 1:ncol(mat)){
         if (vec[j]==mat[1,k]){
-          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+          mat[2,k]=mat[2,k]+ data[i,"poids"] # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
         }
       }
     }
@@ -1523,7 +1523,7 @@ print(matrice_cat)
 
 ```{r include=FALSE}
 pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-nb_total_pbs <- sum(pbs[2,])
+nb_total_pbs <- round(sum(pbs[2,]))
 
 mat=matrix(0,nrow=2,ncol=length(label_dys))
 mat[1,]=c(1:length(label_dys))
@@ -1536,21 +1536,23 @@ for (i in 1:length(variable)){
   liste_pbs=as.numeric(liste_pbs)
   for (j in liste_pbs){
     if (j %in% materiel){
-      mat[2,1]=mat[2,1]+1
+      mat[2,1]=mat[2,1]+df[i,"poids"]
     }
     if (j %in% materiel_logiciel){
-      mat[2,2]=mat[2,2]+1
+      mat[2,2]=mat[2,2]+df[i,"poids"]
     }
     if (j %in% logiciel){
-      mat[2,3]=mat[2,3]+1
+      mat[2,3]=mat[2,3]+df[i,"poids"]
     }
     
   }
 }
 
-don <- data.frame("Dysfonctionnements"=label_dys,"Nb_dys"=mat[2,],"Pourcentage_dys"=round(mat[2,]*100/nb_total_pbs))
+don <- data.frame("Dysfonctionnements"=label_dys,"Nb_dys"=round(mat[2,]),"Pourcentage_dys"=round(mat[2,]*100/nb_total_pbs))
 print(don)
 ```
+
+
 
 ```{r include=FALSE}
 CATEGORIE <- c(1:3)
@@ -1572,7 +1574,7 @@ for (i in 1:ncol(mat)){
       nom_colonne=paste0("GENE_PROBLEMES_A",num)
       valeur=df[j,nom_colonne]
       if(!is.null(valeur) && !is.na(valeur)){
-        mat[valeur+1,i]=mat[valeur+1,i]+1
+        mat[valeur+1,i]=mat[valeur+1,i]+df[j,"poids"]
         }
     }
   }
@@ -1632,13 +1634,19 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+```{r}
+df_combined
+```
+
+
+
 ```{r include=FALSE}
 Categorie <- factor(label_dys, levels = label_dys)
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,], Gêne = "Très gênant")
-df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[3,], Gêne = "Plutôt gênant")
-df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[4,], Gêne = "Plutôt pas gênant")
-df_T4 <- data.frame(Categorie = Categorie, valeurs = mat[5,], Gêne = "Pas gênant du tout")
+df_T1 <- data.frame(Categorie = Categorie, valeurs = round(mat[2,]), Gêne = "Très gênant")
+df_T2 <- data.frame(Categorie = Categorie, valeurs = round(mat[3,]), Gêne = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie, valeurs = round(mat[4,]), Gêne = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie, valeurs = round(mat[5,]), Gêne = "Pas gênant du tout")
 
 
 # Combiner les deux data frames
@@ -1666,6 +1674,7 @@ p1_interactif <- ggplotly(p1)
 # Afficher le graphique interactif
 p1_interactif 
 ```
+
 
 ```{r echo=FALSE}
 subplot(

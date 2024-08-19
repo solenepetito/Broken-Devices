@@ -348,7 +348,7 @@ for (i in 81:105){
       num_REP <- df[j,i]
       num_COHAB <- df[j,i+25]
       if (!is.na(num_COHAB) && !is.na(num_REP) ){
-        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+1
+        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+ df[j,"poids"]
       }
     }
 }
@@ -410,6 +410,7 @@ p3_interactif
 
 
 
+
 ```{r include=FALSE}
 pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
 nb_total_pbs <- sum(matrice_fin)
@@ -418,9 +419,9 @@ Categorie <- factor(label_COHABITATION, levels = label_COHABITATION)
 
 resolution_label <- c("Pas résolu","Tenté mais pas réussi","Résolu")
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = matrice_fin[1,], Résolution = factor("Résolu",levels=resolution_label))
-df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice_fin[2,], Résolution = factor("Tenté mais pas réussi",levels=resolution_label))
-df_T3 <- data.frame(Categorie = Categorie, valeurs = matrice_fin[3,], Résolution = factor("Pas résolu",levels=resolution_label))
+df_T1 <- data.frame(Categorie = Categorie, valeurs = round(matrice_fin[1,]), Résolution = factor("Résolu",levels=resolution_label))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = round(matrice_fin[2,]), Résolution = factor("Tenté mais pas réussi",levels=resolution_label))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = round(matrice_fin[3,]), Résolution = factor("Pas résolu",levels=resolution_label))
 
 
 # Combiner les deux data frames
@@ -447,6 +448,12 @@ p4_interactif <- ggplotly(p4)
 p4_interactif  
 ```
 
+```{r}
+df <- df_combined %>% 
+  arrange( Categorie,Résolution)
+
+df
+```
 
 
 
@@ -1012,7 +1019,7 @@ for (i in 1:ncol(valeurs)){
   cat_pb=c(cat_pb,cat)
 }
 
-dataframe = data.frame(Dys = num_pb, nb = nb_pb, Categorie = cat_pb)
+dataframe = data.frame(Dys = num_pb, nb = round(nb_pb), Categorie = cat_pb)
 
 dataframe <- dataframe %>% 
   arrange( Categorie,desc(nb))
@@ -1055,6 +1062,7 @@ p_interactif <- ggplotly(p)
 # Affichage du graphique interactif
 p_interactif
 ```
+
 
 ### **VI ) Graphes représentant les temps de cohabitation en fonction de la catégorie de dysfonctionnement et du degrés de gêne** 
 

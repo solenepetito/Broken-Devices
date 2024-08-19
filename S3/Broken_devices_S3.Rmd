@@ -139,20 +139,20 @@ pourcentage de personnes parmis celles-ci qui rencontrent des
 dysfonctionnements :
 
 ```{r echo=FALSE}
-valeurs <- t(as.matrix(table(data$DATEOBTENTIONSMART_1)))
+valeurs <- t(as.matrix(tapply(data$poids, data$DATEOBTENTIONSMART_1, sum))) 
 annees <- sort(unique(data$DATEOBTENTIONSMART_1))
-nb_individus <- nrow(data)
+nb_individus <- sum(data$poids)
 mat=matrix(0,nrow=3,ncol=length(annees))
 mat[1,]=annees
-mat[2,]=valeurs
+mat[2,]=round(valeurs)
 for (i in 1:length(annees)){
   df <- data[which(data$DATEOBTENTIONSMART_1==mat[1,i] & data$RIDENTIFICATION_PROBLEMES!="27"),]
-  nb_avec_pbs=nrow(df)
-  mat[3,i]=nb_avec_pbs
+  nb_avec_pbs=sum(df$poids)
+  mat[3,i]=round(nb_avec_pbs)
 
   
 }
-df <- data.frame("Année obtention"=mat[1,],"Nombre de personnes"=mat[2,],"Pourcentage de personnes avec pb"=round(mat[3,]*100/mat[2,]))
+df <- data.frame("Année obtention"=mat[1,],"Nombre de personnes"=mat[2,],"Nombre_personnes_pbs" =mat[3,] ,"Pourcentage de personnes avec pb"=round(mat[3,]*100/mat[2,]))
 print(df)
 ```
 
@@ -219,6 +219,7 @@ gros plus le nombre de personnes dans le cas concidéré est important :
 ```{r echo=FALSE}
 annees <- c()
 dys <- c()
+poids = c()
 df=data[which(data$RIDENTIFICATION_PROBLEMES!="27"),]
 date=df$DATEOBTENTIONSMART_1
 pbs=df$RIDENTIFICATION_PROBLEMES
@@ -226,19 +227,22 @@ for(i in 1:length(date)){
   annees=c(annees,date[i])
   liste_pbs=str_extract_all(pbs[i], ".{2}")[[1]]
   dys=c(dys,length(liste_pbs))
+  poids =c(poids,df[i,"poids"])
+
 }
 
-dataframe <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys)
+dataframe <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys, Poids = poids)
 
 Nb_personnes_concernees <- c()
 for (i in 1:nrow(dataframe)){
   annee=dataframe[i,1]
   dysfonc=dataframe[i,2]
   don <- dataframe[which(dataframe$Obtention==annee & dataframe$Nb_dysfonctionnements==dysfonc),]
-  Nb_personnes_concernees <- c(Nb_personnes_concernees,nrow(don))
+  Nb_personnes_concernees <- c(Nb_personnes_concernees,round(sum(don$Poids)))
 }
 
 df2 <- data.frame(Obtention=annees,Nb_dysfonctionnements=dys,Nb_personnes_concernees=Nb_personnes_concernees)
+df2 <- unique(df2)
 
 # Créer le graphique interactif
 p <- ggplot(df2, aes(x = Obtention, y = Nb_dysfonctionnements, size = Nb_personnes_concernees)) +
@@ -258,6 +262,14 @@ p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
 p_interactif
 
 ```
+
+```{r echo=FALSE}
+df <- df2 %>% 
+  arrange( Obtention,Nb_dysfonctionnements)
+
+df
+```
+
 
 ### **III ) Acquisition du smartphone**
 
@@ -305,17 +317,23 @@ détails :
 
 ```{r echo=FALSE}
 modalites <- sort(unique(data$ACQUISITIONTEL))
-val=as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES=="27"),"ACQUISITIONTEL"]))
-dys <- as.matrix(table(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"ACQUISITIONTEL"]))
+val=as.matrix(tapply(data[which(data$RIDENTIFICATION_PROBLEMES=="27"),"poids"], data[which(data$RIDENTIFICATION_PROBLEMES=="27"),"ACQUISITIONTEL"], sum)) 
+dys <- as.matrix(tapply(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"poids"], data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"ACQUISITIONTEL"], sum))
 matrice=matrix(0,nrow=3,ncol=length(modalites))
 matrice[1,]=modalites
 matrice[2,]=val
 matrice[3,1:6]=dys
 
-Total=matrice[2,]+matrice[3,]
-Pourcentage=round(Total*100/nb_individus,1)
+Total=round(matrice[2,]+matrice[3,])
+Pourcentage=round(Total*100/sum(data$poids),1)
 df <- data.frame("Acquisition"=label_ACQUISITION,"Nombre de personnes"=Total,"Pourcentage"=Pourcentage)
 print(df)
+
+Total=round(matrice[3,])
+Pourcentage=round(Total*100/(matrice[2,]+matrice[3]),1)
+
+df2 <- data.frame("Acquisition"=label_ACQUISITION,"Nombre de personnes dys"=Total,"Pourcentage"=Pourcentage)
+print(df2)
 ```
 
 
@@ -448,13 +466,13 @@ colonne_deb <- which(names(data) == "REPARATION_A1")
 colonne_fin <- which(names(data) == "REPARATION_A25")
 #print(colonne_fin) # 105
 
-df <- data[,colonne_deb:colonne_fin]
+df <- data[,c(colonne_deb:colonne_fin,which(names(data) == "poids"))]
 
-for (i in 1 :ncol(df)){
+for (i in 1 :(ncol(df)-1)){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val)&& !is.null(val)){
-        matrice_REP[2,val]=matrice_REP[2,val]+1
+        matrice_REP[2,val]=matrice_REP[2,val]+ df[j,"poids"]
       }
     }
   }
@@ -481,6 +499,12 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+```{r}
+df <- data.frame(Resolution = Categorie,Nb_dys = round(matrice_REP[2,]), Pourcent = round(matrice_REP[2, ]*100/total_pbs))
+df
+```
+
+
 Les problèmes ayant **tenté d'être résolus** représentent 32% des
 problèmes rencontrés et ceux ayant **été résolus** représentent 18%.
 
@@ -490,7 +514,7 @@ Les 10 principaux dysfonctionnements rencontrés sont les suivants :
 
 ```{r echo=FALSE}
 matrice=Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-n=nrow(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),])
+n=sum(data[which(data$RIDENTIFICATION_PROBLEMES!="27"),"poids"])
 
 # Extraire les valeurs et les indices
 values <- matrice[2, ]
@@ -551,7 +575,7 @@ for(i in 1:ncol(matrice)){
       nom_colonne=paste0("REPARATION_A",num)
       valeur=df[j,nom_colonne]
       if (!is.na(valeur) && (valeur == 1 || valeur == 3 )){
-        matrice[2,i]=matrice[2,i]+1
+        matrice[2,i]=matrice[2,i]+ df[j,"poids"]
       }
     }
   }
@@ -559,7 +583,7 @@ for(i in 1:ncol(matrice)){
 
 #print(matrice)
 
-df <- data.frame(Dysfonctionnement=label_RIDENTIFICATION_PROBLEME[top_indices], 'Nb_personnes'=top_mat[2,],'Nb_personnes_résolu'=matrice[2,],'Pourcentage_Nb_personnes_résolu'=round(matrice[2,]*100/top_mat[2,]))
+df <- data.frame(Dysfonctionnement=label_RIDENTIFICATION_PROBLEME[top_indices], 'Nb_personnes'=round(top_mat[2,]),'Nb_personnes_résolu'=round(matrice[2,]),'Pourcentage_Nb_personnes_résolu'=round(matrice[2,]*100/top_mat[2,]))
 print(df)
 ```
 
@@ -680,7 +704,7 @@ for (i in 81:105){
       num_REP <- df[j,i]
       num_COHAB <- df[j,i+25]
       if (!is.na(num_COHAB) && !is.na(num_REP) ){
-        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+1
+        matrice[num_COHAB+1,num_REP]=matrice[num_COHAB+1,num_REP]+round(df[j,"poids"])
       }
     }
 }
@@ -694,14 +718,14 @@ COHABITATION <- c(1:6)
 matrice=matrix(0,nrow=2,ncol=length(COHABITATION))
 matrice[1,]=COHABITATION
 
-df <- data[, 106:130]
+df <- data[, c(106:130,which(names(data) == "poids"))]
 
 for (k in 1:ncol(matrice)){
-  for (i in 1 :ncol(df)){
+  for (i in 1 :(ncol(df)-1)){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val) && val==k){
-        matrice[2,k]=matrice[2,k]+1
+        matrice[2,k]=matrice[2,k]+df[j,"poids"]
       }
     }
   }
@@ -729,6 +753,13 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+```{r}
+df <- data.frame(Cohabitation = label_COHABITATION, Nb_dys =round( matrice[2,]),Pourcent =round(matrice[2, ]*100/total) )
+
+df
+```
+
+
 39 % des problèmes résolus l'ont été dés que le propriétaire du
 smartphone l'a décelé. 32% ont été résolus en moins d'un mois et 15%
 entre 1 et 6 mois.
@@ -743,14 +774,14 @@ COHABITATION <- c(1:6)
 matrice_femmes=matrix(0,nrow=2,ncol=length(COHABITATION))
 matrice_femmes[1,]=COHABITATION
 
-df <- data[which(data$SEXE==2),c(106:130)]
+df <- data[which(data$SEXE==2),c(106:130,which(names(data) == "poids"))]
 
 for (k in 1:ncol(matrice)){
-  for (i in 1 :ncol(df)){
+  for (i in 1 :(ncol(df)-1)){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val) && val==k){
-        matrice_femmes[2,k]=matrice_femmes[2,k]+1
+        matrice_femmes[2,k]=matrice_femmes[2,k]+df [j,"poids"]
       }
     }
   }
@@ -761,14 +792,14 @@ COHABITATION <- c(1:6)
 matrice_hommes=matrix(0,nrow=2,ncol=length(COHABITATION))
 matrice_hommes[1,]=COHABITATION
 
-df <- data[which(data$SEXE==1),c(106:130)]
+df <- data[which(data$SEXE==1),c(106:130,which(names(data) == "poids"))]
 
 for (k in 1:ncol(matrice)){
-  for (i in 1 :ncol(df)){
+  for (i in 1 :(ncol(df)-1)){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val) && val==k){
-        matrice_hommes[2,k]=matrice_hommes[2,k]+1
+        matrice_hommes[2,k]=matrice_hommes[2,k]+ df [j,"poids"]
       }
     }
   }
@@ -799,6 +830,20 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
+```{r}
+df_T1 <- data.frame(Categorie = Categorie, Nb_dys = round(matrice_femmes[2, ]) , Pourcent =round(matrice_femmes[2, ]*100/total), Genre = "Femmes")
+df_T2 <- data.frame(Categorie = Categorie, Nb_dys = round(matrice_hommes[2, ]) ,Pourcent = round(matrice_hommes[2, ]*100/total), Genre = "Hommes")
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2)
+
+df <- df_combined %>% 
+  arrange( Categorie,Genre)
+
+df
+```
+
 
 Les hommes semblent régler le problème en moins d'un mois (20%) alors
 que les femmes semblent le régler dès le dysfonctionnement est décelé
@@ -881,14 +926,15 @@ colonne_deb <- which(names(data) == "GENE_PROBLEMES_A1")
 colonne_fin <- which(names(data) == "GENE_PROBLEMES_A25")
 #print(colonne_fin) # 55
 
-df <- data[,c(colonne_deb:colonne_fin)]
+df <- data[,c(colonne_deb:colonne_fin,which(names(data) == "poids"))]
+total_pbs = sum(df$poids)
 
 for (k in 1:ncol(matrice)){
   for (i in 1 :ncol(df)){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val) && val==k){
-        matrice[2,k]=matrice[2,k]+1
+        matrice[2,k]=matrice[2,k]+df[i,"poids"]
       }
     }
   }
@@ -916,7 +962,16 @@ p_interactif <- ggplotly(p)
 
 # Afficher le graphique interactif
 p_interactif 
+
 ```
+
+```{r echo=FALSE}
+
+df <- data.frame(Gêne = Categorie, Nb_dys =round(matrice[2,]) , Pourcent =round(matrice[2, ]*100/total_pbs))
+df
+
+```
+
 
 47% des problèmes rencontrés ont été ressentis comme étant plutôt
 gênant, 32% comme étant trés gênant, 18% comme étant plutôt pas gênant
@@ -996,7 +1051,7 @@ for (i in 106:130){
       num_COHAB <- df[j,i]
       num_GENE <- df[j,i-75]
       if (!is.na(num_COHAB) && !is.na(num_GENE) ){
-        matrice[num_GENE+1,num_COHAB]=matrice[num_GENE+1,num_COHAB]+1
+        matrice[num_GENE+1,num_COHAB]=matrice[num_GENE+1,num_COHAB]+ round(df[j,"poids"])
       }
     }
 }
@@ -1014,7 +1069,7 @@ for (i in 106:130){
       num_COHAB <- df[j,i]
       num_GENE <- df[j,i-75]
       if (!is.na(num_COHAB) && !is.na(num_GENE) ){
-        matrice[num_GENE+1,num_COHAB]=matrice[num_GENE+1,num_COHAB]+1
+        matrice[num_GENE+1,num_COHAB]=matrice[num_GENE+1,num_COHAB]+ df[j,"poids"]
       }
     }
 }
@@ -1048,6 +1103,23 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
+```{r}
+df_T1 <- data.frame(Categorie = Categorie,Nb_dys = round(matrice[2,]), Pourcent = round(matrice[2,]*100/total), GÊNE = "Trés gênant")
+df_T2 <- data.frame(Categorie = Categorie,Nb_dys = round(matrice[3,]), Pourcent = round(matrice[3,]*100/total), GÊNE = "Plutôt gênant")
+df_T3 <- data.frame(Categorie = Categorie,Nb_dys = round(matrice[4,]), Pourcent = round(matrice[4,]*100/total), GÊNE = "Plutôt pas gênant")
+df_T4 <- data.frame(Categorie = Categorie,Nb_dys = round(matrice[5,]), Pourcent = round(matrice[5,]*100/total), GÊNE = "Pas gênant du tout")
+
+
+# Combiner les deux data frames
+df_combined <- rbind(df_T1, df_T2, df_T3, df_T4)
+
+df <- df_combined %>% 
+  arrange( Categorie,GÊNE)
+
+df
+```
+
 
 On voit que lorsque le dysfonctionnement a été décelé dés son
 apparition, le problème a été ressentis comme étant trés gênant. Lorsque
@@ -1218,5 +1290,13 @@ p_interactif
 # Afficher le graphique interactif
 ```
 
+```{r}
+df_combined
+
+df <- df_combined %>% 
+  arrange(Categorie,CSP)
+
+df
+```
 
 

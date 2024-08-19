@@ -199,7 +199,7 @@ for (i in 1 :ncol(df)){
 
 ### **I ) Pourcentage de personnes ne renconcontrant qu'un dysfonctionnement**
 
-Au total, c'est 400 personnes qui rencontrent un dysfonctionnement, ce qui représente 48% des dysfonctionnements au total.
+Au total, c'est 400 personnes qui ne rencontrent qu'un dysfonctionnement, ce qui représente une part de 48% des dysfonctionnements.
 
 ```{r include=FALSE}
 
