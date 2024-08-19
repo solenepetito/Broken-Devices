@@ -199,7 +199,7 @@ for (i in 1 :ncol(df)){
 
 ### **I ) Pourcentage de personnes ne renconcontrant qu'un dysfonctionnement**
 
-Au total, c'est 400 personnes qui ne rencontrent qu'un dysfonctionnement, ce qui représente une part de 48% des dysfonctionnements.
+Au total, c'est 9354 personnes qui ne rencontrent qu'un dysfonctionnement, ce qui représente une part de 22% des dysfonctionnements.
 
 ```{r include=FALSE}
 
@@ -207,15 +207,18 @@ variable = data[data$RIDENTIFICATION_PROBLEMES!="27","RIDENTIFICATION_PROBLEMES"
 res = Count_VCM(variable,26)
 total = sum(res[2,])
 
+var = data[data$RIDENTIFICATION_PROBLEMES!="27",c("RIDENTIFICATION_PROBLEMES","poids")]
 nb= 0 
-for (i in variable){
-  ligne = str_extract_all(variable[i],".{2}")[[1]]
+for (i in 1:nrow(var)){
+  ligne = str_extract_all(var[i,"RIDENTIFICATION_PROBLEMES"],".{2}")[[1]]
   if (length(ligne)==1){
-    nb = nb+1
+    nb = nb+round(var[i,"poids"])
   }
 }
 nb
 round(nb*100/total)
+
+total
 
 
 ```

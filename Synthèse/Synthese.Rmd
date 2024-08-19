@@ -343,23 +343,54 @@ ggplot(df) +
 ```
 
 ```{r}
-df <- data.frame(Cohabitation = factor(label_COHABITATION[2:5],levels=label_COHABITATION),valeurs=round(vec2[1:4]),
+df <- data.frame(
+  Cohabitation = factor(label_COHABITATION[2:5], levels = label_COHABITATION),
+  valeurs = round(vec2[1:4]),
   start = c(0, 1, 6, 24),  # Début de l'intervalle en mois
   end = c(1, 6, 24, 48)    # Fin de l'intervalle en mois (Inf pour plus de 2 ans)
 )
 
-ggplot(df) +
-  geom_rect(aes(xmin = start, xmax = end, ymin = 0, ymax = valeurs, fill = Cohabitation)) +
-  scale_x_continuous(breaks = seq(0, 48, by = 6), limits = c(0, 48)) +  # Ajuster les limites et les breaks de l'axe des x
-  scale_y_continuous(expand = c(0, 0)) +  # Ajuster les limites et les breaks de l'axe des y
-  labs(title = "Répartition des temps de cohabitation",
-       x = "Durée (mois)",
-       y = "Valeurs") +
+# Ajouter un point supplémentaire pour prolonger la ligne jusqu'à 48 mois
+df <- rbind(df, data.frame(
+  Cohabitation = tail(df$Cohabitation, 1),  # Garder la dernière catégorie de cohabitation
+  valeurs = tail(df$valeurs, 1),            # Garder la dernière valeur
+  start = 48,                               # Mois 24
+  end = 48                                  # Mois 48
+))
+
+
+
+ p <- ggplot(df) +
+  geom_line(aes(x = start, y = valeurs), size = 1.5, color = "palegreen3") +  # Tracer une ligne continue sans changer de couleur
+  scale_x_continuous(breaks = seq(0, 48, by = 6), limits = c(0, 48)) +  # Ajuster les limites et les intervalles de l'axe des x
+  scale_y_continuous(
+    limits = c(0, 13000),           # Définir les limites de l'axe des ordonnées (par exemple, de 0 à 100)
+    breaks = seq(0, 13000, by = 2000), # Définir les intervalles des étiquettes (par exemple, tous les 20)
+    expand = c(0, 0)               # Enlever l'espacement autour des données
+  ) +
+  geom_point(aes(x = start, y = valeurs), size = 1.5, color = "darkgreen") +
+  # Ajuster les limites et les intervalles de l'axe des y
+  labs(
+    title = "Répartition des temps de cohabitation",
+    x = "Durée (mois)",
+    y = "Nombre de dysfonctionnements"
+  ) +
   theme_minimal() +
-  scale_fill_brewer(palette = "Greens", name = "Temps de cohabitation")+
-  theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="palegreen3"),
-        axis.title.x = element_text( face = "bold",colour="palegreen3"),
-        axis.title.y = element_text(face = "bold",colour="palegreen3")) 
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold", colour = "palegreen3"),
+    axis.title.x = element_text(face = "bold", colour = "palegreen3"),
+    axis.title.y = element_text(face = "bold", colour = "palegreen3")
+  )
+ 
+p_interactif <- ggplotly(p)
+
+# Afficher le graphique interactif
+p_interactif 
+
+```
+
+```{r}
+df
 ```
 
 

@@ -2,8 +2,8 @@
 title: 'Project : Broken devices S9'
 author: "Solène PETITO"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
   word_document: default
 date: "2024-07-29"
 editor_options: 
@@ -185,13 +185,13 @@ colonne_deb <- which(names(data) == "REPARATION_A1")
 colonne_fin <- which(names(data) == "REPARATION_A25")
 #print(colonne_fin) # 105
 
-df <- data[,colonne_deb:colonne_fin]
+df <- data[,c(colonne_deb:colonne_fin,which(names(data) == "poids"))]
 
-for (i in 1 :ncol(df)){
+for (i in 1 :(ncol(df)-1)){
     for (j in 1:nrow(df)){
       val=df[j,i]
       if(!is.na(val)&& !is.null(val)){
-        matrice_REP[2,val]=matrice_REP[2,val]+1
+        matrice_REP[2,val]=matrice_REP[2,val]+ df[j,"poids"]
       }
     }
   }
@@ -239,7 +239,7 @@ labels= c("Mon téléphone fonctionnait bien","Il manquait une ou plusieurs fonc
 
 
 
-df_T <- data.frame(Etat=labels,Valeurs = matrice[2,])
+df_T <- data.frame(Etat=labels,Valeurs = round(matrice[2,]))
 
 df_T <- df_T %>% 
   arrange( desc(Valeurs))%>%
@@ -251,7 +251,7 @@ p <- ggplot(df_T, aes(x = Etat, y = Valeurs)) +
   geom_bar(stat = "identity",fill="#DC143C") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "État de l'ancien téléphone",
        x = "État de l'ancien téléphone",
-       y = "Valeurs") +
+       y = "Nombre de dysfonctionnements") +
   theme_minimal() +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",color="#DC143C"),
@@ -275,16 +275,18 @@ combinaisons qui reviennent le plus pour chacunes d'entres-elles :
 
 ```{r echo=FALSE}
 combinaisons_etats <- function(num){
-  variable = data[which(data$RETAT_ANCIEN_TEL!=""),"RETAT_ANCIEN_TEL"]
+  variable = data[which(data$RETAT_ANCIEN_TEL!=""),c("RETAT_ANCIEN_TEL","poids")]
   vec = c()
-  for (i in 1:length(variable)){
-    ligne=variable[i]
-    ligne_char <- str_extract_all(variable[i], ".{2}")[[1]]
+  poids = c()
+  for (i in 1:nrow(variable)){
+    ligne=variable[i,"RETAT_ANCIEN_TEL"]
+    ligne_char <- str_extract_all(variable[i,"RETAT_ANCIEN_TEL"], ".{2}")[[1]]
     ligne_num <- as.numeric(ligne_char)
     if (num %in% ligne_num){
       vec = c(vec,ligne)
-      res <- table(vec)
-      df = data.frame(Combinaisons = names(res), Nb = as.vector(res))
+      poids = c(poids,variable[i,"poids"])
+      res <- tapply(poids, vec, sum)
+      df = data.frame(Combinaisons = names(res), Nb = as.vector(round(res)))
       df <- df %>% arrange( desc(Nb))
       df$Standardized <- sapply(df$Combinaisons, function(x) paste(sort(unlist(strsplit(x, NULL))), collapse = ""))
 
@@ -1042,18 +1044,21 @@ df_combined$GÊNE <- factor(df_combined$GÊNE, levels = c("Très gênant", "Plut
 
 # Créer un diagramme en barres empilées
 p <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
-  geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
-  labs(title = "  ",
+  geom_bar(stat = "identity", position = "stack", width = 1, color = "white") +
+  labs(title = " ",
        x = "Cohabitation : Moins d'un mois ",
-       y = "Frequency ") +
+       y = "Frequency (Malfunctions) ") +
   theme_minimal() +
-  scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
-  coord_flip() + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) +
+  scale_fill_manual(values = c("Très gênant" = "red3", "Plutôt gênant" = "darkorange2", "Plutôt pas gênant" = "palegreen3")) +
+  coord_flip() +
+  scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25), limits = c(-50, 100)) +  # Fixer les limites ici
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
-        axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold",colour="red3"),legend.position="none") 
+        axis.title.x = element_text(face = "bold"),
+        axis.title.y = element_text(face = "bold", colour = "red3"),
+        legend.position = "none") 
 
 p_interactif <- ggplotly(p)
+
 
 df_T1 <- data.frame(Categorie = Categorie, valeurs = (matrice[1,]), GÊNE = "Très gênant")
 df_T2 <- data.frame(Categorie = Categorie, valeurs = matrice[2,], GÊNE = "Plutôt gênant")
@@ -1069,13 +1074,13 @@ p1 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = " ",
-       y = "Count ") +
+       y = "Count (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold"),legend.position="none") + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000))
+        axis.title.y = element_text(face = "bold"),legend.position="none") + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000),limits = c(-2000, 5000))
 
 p1_interactif <- ggplotly(p1)
 
@@ -1142,10 +1147,11 @@ p2 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = "Cohabitation : Entre 1 mois et 6 mois",
-       y = "Frequency ") +
+       y = "Frequency (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
-  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  coord_flip() +
+  scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25), limits = c(-50, 100))+ # 
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
         axis.title.y = element_text(face = "bold",colour="red3")) 
@@ -1166,13 +1172,13 @@ p3 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = " ",
-       y = "Count ") +
+       y = "Count (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold"),legend.position="none")+ scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000))
+        axis.title.y = element_text(face = "bold"),legend.position="none")+ scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000), limits = c(-2000, 5000))
 
 p3_interactif <- ggplotly(p3)
 ```
@@ -1237,10 +1243,11 @@ p4 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = "Cohabitation : Entre 6 mois et 2 ans",
-       y = "Frequency ") +
+       y = "Frequency (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
-  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  coord_flip() +
+  scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25), limits = c(-50, 100)) + # 
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
         axis.title.y = element_text(face = "bold",colour="red3")) 
@@ -1261,13 +1268,13 @@ p5 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = " ",
-       y = "Count ") +
+       y = "Count (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold"),legend.position="none") + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000))
+        axis.title.y = element_text(face = "bold"),legend.position="none") + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000),limits = c(-2000, 5000))
 
 p5_interactif <- ggplotly(p5)
 ```
@@ -1332,10 +1339,10 @@ p6 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = "  ",
        x = " Cohabitation : Plus de 2 ans ",
-       y = "Frequency ") +
+       y = "Frequency (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
-  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25), limits = c(-50, 100)) + # 
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
         axis.title.y = element_text(face = "bold",colour="red3")) 
@@ -1356,13 +1363,13 @@ p7 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = " ",
-       y = "Count ") +
+       y = "Count (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold"),legend.position="none")+ scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000))
+        axis.title.y = element_text(face = "bold"),legend.position="none")+ scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000),limits = c(-2000, 5000))
 
 p7_interactif <- ggplotly(p7)
 ```
@@ -1427,10 +1434,10 @@ p8 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = "Cohabitation : Je ne sais pas",
-       y = "Frequency ") +
+       y = "Frequency (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
-  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25)) + # 
+  coord_flip() +scale_y_continuous(labels = function(x) abs(x), breaks = seq(-50, 100, by = 25), limits = c(-50, 100)) + # 
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
         axis.title.y = element_text(face = "bold",colour="red3")) 
@@ -1451,13 +1458,13 @@ p9 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
   geom_bar(stat = "identity", position = "stack",width = 1,color = "white") +
   labs(title = " ",
        x = " ",
-       y = "Count ") +
+       y = "Count (Malfunctions) ") +
   theme_minimal() +
   scale_fill_manual(values =  c("Très gênant"="red3","Plutôt gênant"="darkorange2","Plutôt pas gênant"="palegreen3")) +
   coord_flip() +
   theme(plot.title = element_text(hjust = 0.5, face = "bold"),
         axis.title.x = element_text( face = "bold"),
-        axis.title.y = element_text(face = "bold"),legend.position="none") + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-60, 200, by = 60))
+        axis.title.y = element_text(face = "bold"),legend.position="none") + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-2000, 5000, by = 1000) ,limits = c(-2000, 5000))
 
 p9_interactif <- ggplotly(p9)
 ```
