@@ -781,6 +781,303 @@ répondant</strong></h2>
 ## 110 Total          968   100.00</code></pre>
 </div>
 </div>
+<div id="v-uda9-région-uda-en-9" class="section level2">
+<h2><strong>V ) UDA9 – Région UDA en 9</strong></h2>
+<ul>
+<li><p>1 : Region Parisienne</p></li>
+<li><p>2 : Nord</p></li>
+<li><p>3 : Est</p></li>
+<li><p>4 : Bassin Parisien Est</p></li>
+<li><p>5 : Bassin Parisien Ouest</p></li>
+<li><p>6 : Ouest</p></li>
+<li><p>7 : Sud Ouest</p></li>
+<li><p>8 : Sud Est</p></li>
+<li><p>9 : Mediterrannee</p></li>
+</ul>
+<p><strong>REMARQUE</strong> : grâce à DEPARTMT, UDA9 a ensuite été
+déterminé</p>
+<div id="avec-pondération-4" class="section level4">
+<h4><strong>1 ) Avec pondération</strong></h4>
+<pre><code>##                     UDA9 Nb_personnes Pourcent
+## 1      Region Parisienne       9178.4       19
+## 2                   Nord       3545.5        7
+## 3                    Est       3635.4        8
+## 4    Bassin Parisien Est       3218.8        7
+## 5  Bassin Parisien Ouest       4435.6        9
+## 6                  Ouest       6321.7       13
+## 7              Sud Ouest       5454.3       11
+## 8                Sud Est       6031.4       13
+## 9          Mediterrannee       6010.8       13
+## 10                 Total      47831.9      100</code></pre>
+</div>
+<div id="sans-pondération-4" class="section level4">
+<h4><strong>2 ) Sans pondération</strong></h4>
+<pre><code>##                     UDA9 Nb_personnes Pourcent
+## 1      Region Parisienne          173    17.87
+## 2                   Nord           91     9.40
+## 3                    Est           93     9.61
+## 4    Bassin Parisien Est           81     8.37
+## 5  Bassin Parisien Ouest           77     7.95
+## 6                  Ouest          109    11.26
+## 7              Sud Ouest          108    11.16
+## 8                Sud Est          118    12.19
+## 9          Mediterrannee          118    12.19
+## 10                 Total          968   100.00</code></pre>
+</div>
+</div>
+<div id="vi-activpro-activité-du-répondant" class="section level2">
+<h2>VI ) <strong>ACTIVPRO – Activité du répondant</strong></h2>
+<p>Actuellement, exercez-vous une activité professionnelle ?</p>
+<ul>
+<li><p>1 : Oui</p></li>
+<li><p>2 : Non</p></li>
+</ul>
+<p><strong>1 ) Si ACTIVPRO = 1 (Oui)</strong></p>
+<p>ACTIF – Profession du répondant actif</p>
+<p>Quelle activité professionnelle exercez-vous actuellement ?</p>
+<ul>
+<li><p>1 : Agriculteur (agriculteur, éleveur, maraîcher, viticulteur,
+patron pêcheur, exploitant forestier, exploitant agricole …)</p></li>
+<li><p>2 : Artisan (maçon, menuisier, boulanger, boucher, charcutier,
+coiffeur, taxi… de moins de 10 salariés)</p></li>
+<li><p>3 : Commerçant (alimentation, hôtel, restaurant, fleuriste,
+poissonnier, meubles, habits, voyage …de moins de 10 salariés)</p></li>
+<li><p>4 : Chef d’entreprise de 10 salariés et plus (quel que soit le
+secteur)</p></li>
+<li><p>5 : Cadre de la fonction publique (Etat, collectivités locales,
+hôpitaux) catégorie A, officier des armées et de la gendarmerie</p></li>
+<li><p>6 : Profession de l’information, arts et spectacles (journaliste,
+écrivain, acteur…)</p></li>
+<li><p>7 : Cadre d’entreprise : administratif, commercial, ingénieur,
+cadre technique</p></li>
+<li><p>8 : Profession libérale (médecin, avocat, notaire,
+expert-comptable, architecte, dentiste…)</p></li>
+<li><p>9 : Professeur en lycée d’enseignement général, professeur dans
+l’enseignement supérieur, profession scientifique</p></li>
+<li><p>10 : Professeur des écoles, instituteur, professeur en collège ou
+lycée technique</p></li>
+<li><p>11 : Profession intermédiaire de la santé et du social
+(infirmier, sage-femme, masseur-kinésithérapeute, opticien,
+éducateur)</p></li>
+<li><p>12 : Clergé, religieux</p></li>
+<li><p>13 : Profession intermédiaire de la fonction publique de
+catégorie B (inspecteur de police, contrôleur des impôts,
+adjudant-chef…)</p></li>
+<li><p>14 : Profession intermédiaire d’entreprise (administratif,
+commercial …) (secrétaire de direction, technicien d’études, de
+fabrication…)</p></li>
+<li><p>15 : Contremaître, agent de maîtrise (conducteur, chef de
+chantiers, responsable d’entrepôt…)</p></li>
+<li><p>16 : Employé civil, agent de services de la fonction publique,
+policier, militaire non officier, pompier, aide-soignant, assistante
+maternelle, ambulancier, facteur, cantinier</p></li>
+<li><p>17 : Employé d’entreprise (administratif, secrétaire), vendeur,
+personnel des services directs aux particuliers (coiffeur, concierge,
+femme de ménage, aide-ménagère…)</p></li>
+<li><p>18 : Ouvrier qualifié, non qualifié, ouvrier agricole, chauffeur,
+conducteur, plombier, jardinier, cuisinier, éboueur, agencier,
+chaudronnier, électricien, soudeur…)</p></li>
+</ul>
+<p><strong>Avec pondération</strong></p>
+<pre><code>##                                                                                                               Actifs
+## 1  Professeurs en lycée d&#39;enseignement général, professeurs dans l&#39;enseignement supérieur, professions scientifiques
+## 2                                                        Employés civils, agents de services de la fonction publique
+## 3                                    Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique
+## 4                                                                   Professions de l&#39;information, arts et spectacles
+## 5                                                                                              Professions libérales
+## 6                                                                           Professions intermédiaires d&#39;entreprise 
+## 7                                                                 Professions intermédiaires de la fonction publique
+## 8                                                                                                  Clergé, religieux
+## 9                                                                                                        Commerçants
+## 10                                   Cadres d&#39;entreprise: administratifs, commerciaux, ingénieurs, cadres techniques
+## 11                                          Cadres de la fonction publique, officier des armées et de la gendarmerie
+## 12                                                                                                          Artisans
+## 13                                                               Professions intermédiaires de la santé et du social
+## 14                                                                                                          Ouvriers
+## 15    Employés d&#39;entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers
+## 16                                                                                                      Agriculteurs
+## 17                                                                                 Contremaîtres, agents de maîtrise
+## 18                                                                          Chef d&#39;entreprise de 10 salariés et plus
+## 19                                                                                                             Total
+##    Nb_personnes Pourcent
+## 1        6414.9     23.7
+## 2        4505.6     16.7
+## 3        3729.2     13.8
+## 4        2421.0      9.0
+## 5        2175.9      8.1
+## 6         982.8      3.6
+## 7         963.5      3.6
+## 8         920.5      3.4
+## 9         891.4      3.3
+## 10        733.4      2.7
+## 11        732.2      2.7
+## 12        721.9      2.7
+## 13        639.2      2.4
+## 14        408.3      1.5
+## 15        400.7      1.5
+## 16        220.2      0.8
+## 17        107.1      0.4
+## 18         53.8      0.2
+## 19      27021.6    100.1</code></pre>
+<p><strong>Sans pondération</strong></p>
+<pre><code>##                                                                                                               Actifs
+## 1  Professeurs en lycée d&#39;enseignement général, professeurs dans l&#39;enseignement supérieur, professions scientifiques
+## 2                                                        Employés civils, agents de services de la fonction publique
+## 3                                    Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique
+## 4                                                                   Professions de l&#39;information, arts et spectacles
+## 5                                                                                              Professions libérales
+## 6                                                                           Professions intermédiaires d&#39;entreprise 
+## 7                                                                                                        Commerçants
+## 8                                                                                                  Clergé, religieux
+## 9                                                                 Professions intermédiaires de la fonction publique
+## 10                                                                                                          Artisans
+## 11                                          Cadres de la fonction publique, officier des armées et de la gendarmerie
+## 12                                   Cadres d&#39;entreprise: administratifs, commerciaux, ingénieurs, cadres techniques
+## 13                                                               Professions intermédiaires de la santé et du social
+## 14                                                                                                          Ouvriers
+## 15    Employés d&#39;entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers
+## 16                                                                                                      Agriculteurs
+## 17                                                                                 Contremaîtres, agents de maîtrise
+## 18                                                                          Chef d&#39;entreprise de 10 salariés et plus
+## 19                                                                                                             Total
+##    Nb_personnes Pourcent
+## 1           133     24.1
+## 2            87     15.8
+## 3            76     13.8
+## 4            49      8.9
+## 5            44      8.0
+## 6            20      3.6
+## 7            20      3.6
+## 8            19      3.4
+## 9            19      3.4
+## 10           16      2.9
+## 11           15      2.7
+## 12           15      2.7
+## 13           14      2.5
+## 14            9      1.6
+## 15            8      1.4
+## 16            5      0.9
+## 17            2      0.4
+## 18            1      0.2
+## 19          552     99.9</code></pre>
+<p><strong>2 ) Si ACTIVPRO = 2 (Non)</strong></p>
+<p>INACTIF – Type d’inactivité du répondant</p>
+<p>Êtes-vous :</p>
+<ul>
+<li><p>1 : Chômeur(se) ayant déjà travaillé</p></li>
+<li><p>2 : Chômeur(se) n’ayant jamais travaillé</p></li>
+<li><p>3 :Retraité(e)</p></li>
+<li><p>4 : Lycéen(ne), collégien(ne)</p></li>
+<li><p>5 : Étudiant(e)</p></li>
+<li><p>6 : Femme ou homme au foyer</p></li>
+<li><p>7 : Autre</p></li>
+</ul>
+<p><strong>Avec pondération :</strong></p>
+<pre><code>##                           Inactifs Nb_personnes Pourcent
+## 1     Chômeur ayant déjà travaillé       1665.3      8.0
+## 2 Chômeur n&#39;ayant jamais travaillé        738.1      3.5
+## 3                         Retraité      10934.4     52.5
+## 4                lycéen, collégien       1380.6      6.6
+## 5                         Etudiant       2468.6     11.9
+## 6          Femme ou Homme au foyer       2495.3     12.0
+## 7                            Autre       1127.7      5.4
+## 8                            Total      20810.0     99.9</code></pre>
+<p><strong>Sans pondération :</strong></p>
+<pre><code>##                           Inactifs Nb_personnes Pourcent
+## 1     Chômeur ayant déjà travaillé           36     8.65
+## 2 Chômeur n&#39;ayant jamais travaillé           13     3.12
+## 3                         Retraité          227    54.57
+## 4                lycéen, collégien           27     6.49
+## 5                         Etudiant           49    11.78
+## 6          Femme ou Homme au foyer           45    10.82
+## 7                            Autre           19     4.57
+## 8                            Total          416   100.00</code></pre>
+<p><strong>Filtre : Si INACTIF =1 (Chômeur(se) ayant déjà
+travaillé)</strong></p>
+<p>EXACTIF - Ancienne profession du répondant au chômage</p>
+<p>Quelle est la dernière profession que vous ayez exercée ?</p>
+<ul>
+<li><p>1 : Agriculteur (agriculteur, éleveur, maraîcher, viticulteur,
+patron pêcheur, exploitant forestier, exploitant agricole …)</p></li>
+<li><p>2 : Artisan (maçon, menuisier, boulanger, boucher, charcutier,
+coiffeur, taxi… de moins de 10 salariés)</p></li>
+<li><p>3 : Commerçant (alimentation, hôtel, restaurant, fleuriste,
+poissonnier, meubles, habits, voyage …de moins de 10 salariés)</p></li>
+<li><p>4 : Chef d’entreprise de 10 salariés et plus (quel que soit le
+secteur)</p></li>
+<li><p>5 : Cadre de la fonction publique (Etat, collectivités locales,
+hôpitaux) catégorie A, officier des armées et de la gendarmerie</p></li>
+<li><p>6 : Profession de l’information, arts et spectacles (journaliste,
+écrivain, acteur…)</p></li>
+<li><p>7 : Cadre d’entreprise : administratif, commercial, ingénieur,
+cadre technique</p></li>
+<li><p>8 : Profession libérale (médecin, avocat, notaire,
+expert-comptable, architecte, dentiste…)</p></li>
+<li><p>9 : Professeur en lycée d’enseignement général, professeur dans
+l’enseignement supérieur, profession scientifique</p></li>
+<li><p>10 : Professeur des écoles, instituteur, professeur en collège ou
+lycée technique</p></li>
+<li><p>11 : Profession intermédiaire de la santé et du social
+(infirmier, sage-femme, masseur-kinésithérapeute, opticien,
+éducateur)</p></li>
+<li><p>12 : Clergé, religieux</p></li>
+<li><p>13 : Profession intermédiaire de la fonction publique de
+catégorie B (inspecteur de police, contrôleur des impôts,
+adjudant-chef…)</p></li>
+<li><p>14 : Profession intermédiaire d’entreprise (administratif,
+commercial …) (secrétaire de direction, technicien d’études, de
+fabrication…)</p></li>
+<li><p>15 : Contremaître, agent de maîtrise (conducteur, chef de
+chantiers, responsable d’entrepôt…)</p></li>
+<li><p>16 : Employé civil, agent de services de la fonction publique,
+policier, militaire non officier, pompier, aide-soignant, assistante
+maternelle, ambulancier, facteur, cantinier</p></li>
+<li><p>17 : Employé d’entreprise (administratif, secrétaire), vendeur,
+personnel des services directs aux particuliers (coiffeur, concierge,
+femme de ménage, aide-ménagère…)</p></li>
+<li><p>18 : Ouvrier qualifié, non qualifié, ouvrier agricole, chauffeur,
+conducteur, plombier, jardinier, cuisinier, éboueur, agencier,
+chaudronnier, électricien, soudeur…)</p></li>
+</ul>
+<p><strong>Avec pondération</strong></p>
+<pre><code>##                                                                                                      Inactifs_Actifs
+## 3                                                                                                  Clergé, religieux
+## 7                                                        Employés civils, agents de services de la fonction publique
+## 11                                                                                                       Commerçants
+## 14                                                                  Professions de l&#39;information, arts et spectacles
+## 16                                                                                             Professions libérales
+## 17 Professeurs en lycée d&#39;enseignement général, professeurs dans l&#39;enseignement supérieur, professions scientifiques
+## 18                                   Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique
+## 1                                                                                                              Total
+##    Nb_personnes Pourcent
+## 3          48.1     2.89
+## 7         106.1     6.37
+## 11         51.5     3.09
+## 14         90.2     5.42
+## 16        257.7    15.48
+## 17        607.0    36.45
+## 18        504.6    30.30
+## 1        1665.2   100.00</code></pre>
+<p><strong>Sans pondération</strong></p>
+<pre><code>##                                                                                                      Inactifs_Actifs
+## 3                                                                                                  Clergé, religieux
+## 7                                                        Employés civils, agents de services de la fonction publique
+## 11                                                                                                       Commerçants
+## 14                                                                  Professions de l&#39;information, arts et spectacles
+## 16                                                                                             Professions libérales
+## 17 Professeurs en lycée d&#39;enseignement général, professeurs dans l&#39;enseignement supérieur, professions scientifiques
+## 18                                   Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique
+## 19                                                                                                             Total
+##    Nb_personnes Pourcent
+## 3             1     2.78
+## 7             2     5.56
+## 11            1     2.78
+## 14            2     5.56
+## 16            5    13.89
+## 17           14    38.89
+## 18           11    30.56
+## 19           36   100.02</code></pre>
+</div>
 </div>
 
 

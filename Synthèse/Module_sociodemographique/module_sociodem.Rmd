@@ -531,12 +531,348 @@ df <- rbind(df, total_row)
 print(df)
 ```
 
+## **VI ) ACTIVPRO -- Activité du répondant**
+
+Actuellement, exercez-vous une activité professionnelle ?
+
+-   1 : Oui
+
+-   2 : Non
+
+**1 ) Si ACTIVPRO = 1 (Oui)**
+
+ACTIF -- Profession du répondant actif
+
+Quelle activité professionnelle exercez-vous actuellement ?
+
+-   1 : Agriculteur (agriculteur, éleveur, maraîcher, viticulteur,
+    patron pêcheur, exploitant forestier, exploitant agricole ...)
+
+-   2 : Artisan (maçon, menuisier, boulanger, boucher, charcutier,
+    coiffeur, taxi... de moins de 10 salariés)
+
+-   3 : Commerçant (alimentation, hôtel, restaurant, fleuriste,
+    poissonnier, meubles, habits, voyage ...de moins de 10 salariés)
+
+-   4 : Chef d'entreprise de 10 salariés et plus (quel que soit le
+    secteur)
+
+-   5 : Cadre de la fonction publique (Etat, collectivités locales,
+    hôpitaux) catégorie A, officier des armées et de la gendarmerie
+
+-   6 : Profession de l'information, arts et spectacles (journaliste,
+    écrivain, acteur...)
+
+-   7 : Cadre d'entreprise : administratif, commercial, ingénieur, cadre
+    technique
+
+-   8 : Profession libérale (médecin, avocat, notaire, expert-comptable,
+    architecte, dentiste...)
+
+-   9 : Professeur en lycée d'enseignement général, professeur dans
+    l'enseignement supérieur, profession scientifique
+
+-   10 : Professeur des écoles, instituteur, professeur en collège ou
+    lycée technique
+
+-   11 : Profession intermédiaire de la santé et du social (infirmier,
+    sage-femme, masseur-kinésithérapeute, opticien, éducateur)
+
+-   12 : Clergé, religieux
+
+-   13 : Profession intermédiaire de la fonction publique de catégorie B
+    (inspecteur de police, contrôleur des impôts, adjudant-chef...)
+
+-   14 : Profession intermédiaire d'entreprise (administratif,
+    commercial ...) (secrétaire de direction, technicien d'études, de
+    fabrication...)
+
+-   15 : Contremaître, agent de maîtrise (conducteur, chef de chantiers,
+    responsable d'entrepôt...)
+
+-   16 : Employé civil, agent de services de la fonction publique,
+    policier, militaire non officier, pompier, aide-soignant, assistante
+    maternelle, ambulancier, facteur, cantinier
+
+-   17 : Employé d'entreprise (administratif, secrétaire), vendeur,
+    personnel des services directs aux particuliers (coiffeur,
+    concierge, femme de ménage, aide-ménagère...)
+
+-   18 : Ouvrier qualifié, non qualifié, ouvrier agricole, chauffeur,
+    conducteur, plombier, jardinier, cuisinier, éboueur, agencier,
+    chaudronnier, électricien, soudeur...)
+
+**Avec pondération**
+
+```{r echo=FALSE}
+# En utilisant la pondération
+
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[-c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$QACTIF, sum)
+
+df <- data.frame(Actifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$Actifs = factor(df$Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+total_row <- data.frame(
+  Actifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
 
 
 
+print(df)
+```
+
+**Sans pondération**
+
+```{r echo=FALSE}
+# En n'utilisant pas la pondération
+
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[-c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- table(df$QACTIF)
+
+df <- data.frame(Actifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$Actifs = factor(df$Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+total_row <- data.frame(
+  Actifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
 
 
 
+print(df)
+```
+
+**2 ) Si ACTIVPRO = 2 (Non)**
+
+INACTIF -- Type d'inactivité du répondant
+
+Êtes-vous :
+
+-   1 : Chômeur(se) ayant déjà travaillé
+
+-   2 : Chômeur(se) n'ayant jamais travaillé
+
+-   3 :Retraité(e)
+
+-   4 : Lycéen(ne), collégien(ne)
+
+-   5 : Étudiant(e)
+
+-   6 : Femme ou homme au foyer
+
+-   7 : Autre
+
+**Avec pondération :**
+
+```{r echo=FALSE}
+# En utilisant la pondération
+
+df = data[,c("INACTIFS","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$INACTIFS, sum)
+
+df <- data.frame(Inactifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$Inactifs = factor(df$Inactifs,labels=c("Chômeur ayant déjà travaillé","Chômeur n'ayant jamais travaillé","Retraité","lycéen, collégien","Etudiant","Femme ou Homme au foyer","Autre"))
+
+total_row <- data.frame(
+  Inactifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
 
 
 
+print(df)
+```
+
+**Sans pondération :**
+
+```{r echo=FALSE}
+# En n'utilisant PAS la pondération
+
+df = data[,c("INACTIFS","poids")]
+df=na.omit(df)
+don <- table(df$INACTIFS)
+
+df <- data.frame(Inactifs =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$Inactifs = factor(df$Inactifs,labels=c("Chômeur ayant déjà travaillé","Chômeur n'ayant jamais travaillé","Retraité","lycéen, collégien","Etudiant","Femme ou Homme au foyer","Autre"))
+
+total_row <- data.frame(
+  Inactifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+**Filtre : Si INACTIF = 1 (Chômeur(se) ayant déjà travaillé)**
+
+EXACTIF - Ancienne profession du répondant au chômage
+
+Quelle est la dernière profession que vous ayez exercée ?
+
+-   1 : Agriculteur (agriculteur, éleveur, maraîcher, viticulteur,
+    patron pêcheur, exploitant forestier, exploitant agricole ...)
+
+-   2 : Artisan (maçon, menuisier, boulanger, boucher, charcutier,
+    coiffeur, taxi... de moins de 10 salariés)
+
+-   3 : Commerçant (alimentation, hôtel, restaurant, fleuriste,
+    poissonnier, meubles, habits, voyage ...de moins de 10 salariés)
+
+-   4 : Chef d'entreprise de 10 salariés et plus (quel que soit le
+    secteur)
+
+-   5 : Cadre de la fonction publique (Etat, collectivités locales,
+    hôpitaux) catégorie A, officier des armées et de la gendarmerie
+
+-   6 : Profession de l'information, arts et spectacles (journaliste,
+    écrivain, acteur...)
+
+-   7 : Cadre d'entreprise : administratif, commercial, ingénieur, cadre
+    technique
+
+-   8 : Profession libérale (médecin, avocat, notaire, expert-comptable,
+    architecte, dentiste...)
+
+-   9 : Professeur en lycée d'enseignement général, professeur dans
+    l'enseignement supérieur, profession scientifique
+
+-   10 : Professeur des écoles, instituteur, professeur en collège ou
+    lycée technique
+
+-   11 : Profession intermédiaire de la santé et du social (infirmier,
+    sage-femme, masseur-kinésithérapeute, opticien, éducateur)
+
+-   12 : Clergé, religieux
+
+-   13 : Profession intermédiaire de la fonction publique de catégorie B
+    (inspecteur de police, contrôleur des impôts, adjudant-chef...)
+
+-   14 : Profession intermédiaire d'entreprise (administratif,
+    commercial ...) (secrétaire de direction, technicien d'études, de
+    fabrication...)
+
+-   15 : Contremaître, agent de maîtrise (conducteur, chef de chantiers,
+    responsable d'entrepôt...)
+
+-   16 : Employé civil, agent de services de la fonction publique,
+    policier, militaire non officier, pompier, aide-soignant, assistante
+    maternelle, ambulancier, facteur, cantinier
+
+-   17 : Employé d'entreprise (administratif, secrétaire), vendeur,
+    personnel des services directs aux particuliers (coiffeur,
+    concierge, femme de ménage, aide-ménagère...)
+
+-   18 : Ouvrier qualifié, non qualifié, ouvrier agricole, chauffeur,
+    conducteur, plombier, jardinier, cuisinier, éboueur, agencier,
+    chaudronnier, électricien, soudeur...)
+    
+**Avec pondération**
+    
+```{r echo=FALSE}
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- tapply(df$poids, df$QACTIF, sum)
+
+df <- data.frame(Inactifs_Actifs =names(don), Nb_personnes = round(as.numeric(don),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$Inactifs_Actifs = factor(df$Inactifs_Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+df=df[rowSums(is.na(df)) != ncol(df)-1, ]
+df$Pourcent = round(df$Nb_personnes*100/sum(df$Nb_personnes),2)
+
+total_row <- data.frame(
+  Inactifs_Actifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+    
+**Sans pondération**   
+
+```{r echo=FALSE}
+df = data[,c("INACTIFS","QACTIF","poids")]
+indices <- which(df$INACTIFS == 1 )
+df=df[c(indices),]
+
+df = df[,c("QACTIF","poids")]
+df=na.omit(df)
+don <- table(df$QACTIF)
+
+df <- data.frame(Inactifs_Actifs =names(don), Nb_personnes = round(as.numeric(don),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$Inactifs_Actifs = factor(df$Inactifs_Actifs,labels=c("Agriculteurs","Artisans","Commerçants","Chef d'entreprise de 10 salariés et plus","Cadres de la fonction publique, officier des armées et de la gendarmerie","Professions de l'information, arts et spectacles","Cadres d'entreprise: administratifs, commerciaux, ingénieurs, cadres techniques","Professions libérales","Professeurs en lycée d'enseignement général, professeurs dans l'enseignement supérieur, professions scientifiques","Professeurs des écoles, instituteurs, professeurs en collège ou lycée technique","Professions intermédiaires de la santé et du social","Clergé, religieux","Professions intermédiaires de la fonction publique","Professions intermédiaires d'entreprise ","Contremaîtres, agents de maîtrise","Employés civils, agents de services de la fonction publique","Employés d'entreprise (administratifs, secrétaires), vendeurs, personnel des services directs aux particuliers","Ouvriers"))
+
+df=df[rowSums(is.na(df)) != ncol(df)-1, ]
+df$Pourcent = round(df$Nb_personnes*100/sum(df$Nb_personnes),2)
+
+total_row <- data.frame(
+  Inactifs_Actifs = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+df <- df[df$Nb_personnes!=0,]
+
+
+
+print(df)
+```
+
+
+
+    
