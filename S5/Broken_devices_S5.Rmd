@@ -155,6 +155,7 @@ recence <- c()
 annee <- c()
 mois <- c()
 gene <- c()
+poids = c()
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
@@ -173,6 +174,7 @@ for (i in 81:105) {
         annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
         mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
         gene <- c(gene,df[j, i - 50])
+        poids = c(poids,df[j,"poids"])
       }
     }
   }
@@ -182,6 +184,7 @@ for (i in 81:105) {
 
 indices_rec_7= which(recence==7)
 gene=gene[-c(indices_rec_7)]
+poids = poids[-c(indices_rec_7)]
 
 # Afficher les résultats pour vérifier
 print(head(recence))
@@ -198,7 +201,7 @@ nb_non_resolus <- length(COHAB_non_resolus) # 316
 
 ```{r include=FALSE}
 val=sort(unique(COHAB_non_resolus))
-total=as.matrix(table(COHAB_non_resolus))
+total=as.matrix(tapply(poids, COHAB_non_resolus, sum)) 
 
 mat=matrix(0,nrow=5,ncol=length(val))
 mat[1,]=val # temps de cohabitation sur la ligne 1 de la matrice 
@@ -206,10 +209,11 @@ mat[1,]=val # temps de cohabitation sur la ligne 1 de la matrice
 for (i in val){
   indices=which(COHAB_non_resolus==i)
   g = gene[c(indices)]
-  freq=as.matrix(table(g))
+  p = poids[c(indices)]
+  freq=as.matrix(tapply(p, g, sum))
   mat[2:(length(freq)+1),i]=freq
 }
-mat
+mat = round(mat)
 # Définir une fonction de normalisation
 normalize <- function(x) {
   return(round(x*100/total))
@@ -220,6 +224,11 @@ normalized_mat <- t(apply(mat[2:5,], 1, normalize))
 print(normalized_mat)
 
 ```
+
+```{r}
+mat
+```
+
 
 ```{r include=FALSE}
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
@@ -256,13 +265,22 @@ p1_interactif
 
 ```
 
+```{r}
+df <- df_combined %>% 
+  arrange( Categorie,Gêne)
+
+df
+
+```
+
+
 ```{r include=FALSE}
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
 gene_levels <- c("Plutôt pas gênant", "Plutôt gênant", "Très gênant")
 
-df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,]*100/nb_non_resolus, Gêne = factor("Très gênant",levels=gene_levels))
-df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[3,]*100/nb_non_resolus, Gêne = factor("Plutôt gênant",levels=gene_levels))
-df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[4,]*100/nb_non_resolus, Gêne =factor("Plutôt pas gênant",levels=gene_levels))
+df_T1 <- data.frame(Categorie = Categorie, valeurs = mat[2,], Gêne = factor("Très gênant",levels=gene_levels))
+df_T2 <- data.frame(Categorie = Categorie, valeurs = mat[3,], Gêne = factor("Plutôt gênant",levels=gene_levels))
+df_T3 <- data.frame(Categorie = Categorie, valeurs = mat[4,], Gêne =factor("Plutôt pas gênant",levels=gene_levels))
 
 
 # Combiner les deux data frames
@@ -288,6 +306,15 @@ p2_interactif <- ggplotly(p2)
 # Afficher le graphique interactif
 p2_interactif 
 ```
+
+```{r}
+df <- df_combined %>% 
+  arrange( Categorie,Gêne)
+
+df
+```
+
+
 
 ```{r echo=FALSE}
 p1_interactif <- ggplotly(p1)
@@ -328,6 +355,8 @@ Le premier graphe présente les degrés de gêne pour chaque temps de
 cohabitation pour 316 dysfonctionnements, et le deuxième graphe met tous
 ces temps de cohabitation au même niveau et représente la part de
 chaque degré de gêne.
+
+
 
 ### **II ) Graphes qui rassemble les temps cohabitations pour tous les types de résolutions**
 

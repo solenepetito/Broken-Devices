@@ -2,9 +2,9 @@
 title: 'Project : Broken devices S9'
 author: "Solène PETITO"
 output:
-  pdf_document: default
   html_document: default
   word_document: default
+  pdf_document: default
 date: "2024-07-29"
 editor_options: 
   markdown: 
@@ -403,12 +403,14 @@ df = data[data$DUREE_USAGE_ANCIEN_TEL!=7,]
 # usage de moins de 2 ans 
 df1 = df[df$DUREE_USAGE_ANCIEN_TEL==1 | df$DUREE_USAGE_ANCIEN_TEL==2 | df$DUREE_USAGE_ANCIEN_TEL==3,]
 etat1 = df1[df1$RETAT_ANCIEN_TEL!="","RETAT_ANCIEN_TEL"]
+poids1 = df1[df1$RETAT_ANCIEN_TEL!="","poids"]
 etat1 = na.omit(etat1) 
 # length(etat1) # 319
 
 # usage de plus de 2 ans
 df2 = df[df$DUREE_USAGE_ANCIEN_TEL==4 | df$DUREE_USAGE_ANCIEN_TEL==5 | df$DUREE_USAGE_ANCIEN_TEL==6,]
 etat2 = df2[df2$RETAT_ANCIEN_TEL!="","RETAT_ANCIEN_TEL"]
+poids2 = df2[df2$RETAT_ANCIEN_TEL!="","poids"]
 etat2 = na.omit(etat2)
 # length(etat2) # 619
 
@@ -425,7 +427,7 @@ labels= c("Mon téléphone fonctionnait bien","Il manquait une ou plusieurs fonc
 
 
 
-df_T <- data.frame(Etat=labels,Valeurs = matrice[2,],Pourcent=round(matrice[2,]*100/length(etat1),1))
+df_T <- data.frame(Etat=labels,Valeurs = round(matrice[2,]),Pourcent=round(matrice[2,]*100/sum(poids1,na.rm=TRUE),1))
 
 df_T <- df_T %>% 
   arrange( desc(Valeurs))%>%
@@ -444,7 +446,7 @@ labels= c("Mon téléphone fonctionnait bien","Il manquait une ou plusieurs fonc
 
 
 
-df_T <- data.frame(Etat=labels,Valeurs = matrice[2,],Pourcent=round(matrice[2,]*100/length(etat2),1))
+df_T <- data.frame(Etat=labels,Valeurs = round(matrice[2,]),Pourcent=round(matrice[2,]*100/sum(poids2,na.rm=TRUE),1))
 
 df_T <- df_T %>% 
   arrange( desc(Valeurs))%>%
@@ -515,22 +517,22 @@ normalized_mat_raison_gene <- t(apply(mat_raison_gene,1, normalize2))
 ```{r echo=FALSE}
 # STOCKAGE
 
-df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Valeurs = mat_raison_cat[,1], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Nb_dys = mat_raison_cat[,1], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
 
 
 
 df_T <- df_T %>% 
-  arrange( desc(Valeurs))%>%
+  arrange( desc(Nb_dys))%>%
   mutate(Raisons = factor(Raisons, levels = rev(Raisons)))
 
-df_T = df_T[df_T$Valeurs!=0,]
+df_T = df_T[df_T$Nb_dys!=0,]
 
 # Créer un diagramme en barres empilées
-p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+p <- ggplot(df_T, aes(x = Raisons, y = Nb_dys, fill = Légende)) +
   geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "Stockage ",
        x = " ",
-       y = "Valeurs") +
+       y = "Nombre de dysfonctionnements") +
   scale_fill_manual(values =c("#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B","#00868B")) +
   theme_minimal() +
   coord_flip()+
@@ -544,23 +546,28 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+```{r}
+df_T
+```
+
+
 -   **Matériel :**
 
 ```{r echo=FALSE}
 # MATERIEL
 
-df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Valeurs = mat_raison_cat[,2], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Nb_dys = mat_raison_cat[,2], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
 
 
 
 df_T <- df_T %>% 
-  arrange( desc(Valeurs))%>%
+  arrange( desc(Nb_dys))%>%
   mutate(Raisons = factor(Raisons, levels = rev(Raisons)))
 
-df_T = df_T[df_T$Valeurs!=0,]
+df_T = df_T[df_T$Nb_dys!=0,]
 
 # Créer un diagramme en barres empilées
-p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+p <- ggplot(df_T, aes(x = Raisons, y = Nb_dys, fill = Légende)) +
   geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "Matériel ",
        x = " ",
@@ -578,23 +585,28 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+```{r}
+df_T
+```
+
+
 -   **Mise à jour :**
 
 ```{r echo=FALSE}
 # MATERIEL
 
-df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Valeurs = mat_raison_cat[,3], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Nb_dys = mat_raison_cat[,3], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
 
 
 
 df_T <- df_T %>% 
-  arrange( desc(Valeurs))%>%
+  arrange( desc(Nb_dys))%>%
   mutate(Raisons = factor(Raisons, levels = rev(Raisons)))
 
-df_T = df_T[df_T$Valeurs!=0,]
+df_T = df_T[df_T$Nb_dys!=0,]
 
 # Créer un diagramme en barres empilées
-p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+p <- ggplot(df_T, aes(x = Raisons, y = Nb_dys, fill = Légende)) +
   geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "Mise à jour ",
        x = " ",
@@ -612,24 +624,28 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
+```{r}
+df_T
+```
+
 -   **Dysfonctionnements divers :**
 
 ```{r echo=FALSE}
 # DYS DIVERS
 
 
-df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Valeurs = mat_raison_cat[,4], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
+df_T <- data.frame(Raisons=factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB),Nb_dys = mat_raison_cat[,4], Légende = factor(label_RAISON_UTIL_PB,levels=label_RAISON_UTIL_PB))
 
 
 
 df_T <- df_T %>% 
-  arrange( desc(Valeurs))%>%
+  arrange( desc(Nb_dys))%>%
   mutate(Raisons = factor(Raisons, levels = rev(Raisons)))
 
-df_T = df_T[df_T$Valeurs!=0,]
+df_T = df_T[df_T$Nb_dys!=0,]
 
 # Créer un diagramme en barres empilées
-p <- ggplot(df_T, aes(x = Raisons, y = Valeurs, fill = Légende)) +
+p <- ggplot(df_T, aes(x = Raisons, y = Nb_dys, fill = Légende)) +
   geom_bar(stat = "identity") + # mettre position = "dodge" si on veut des barres côtes à côtes
   labs(title = "Dys Divers ",
        x = " ",
@@ -646,6 +662,11 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
+```{r}
+df_T
+```
+
 
 ### **III ) Intention de remplacement en fonction de la durée d'utilisation du téléphone**
 
@@ -1484,6 +1505,26 @@ subplot(
     xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
     yaxis2 = list(showticklabels = FALSE))
 ```
+
+```{r}
+subplot(
+  p_interactif, p1_interactif, p2_interactif, p3_interactif, p4_interactif,
+  p5_interactif, p6_interactif, p7_interactif, p8_interactif, p9_interactif,
+  nrows = 5, 
+  shareX = TRUE,   # Partager l'axe X entre les sous-graphes
+  shareY = TRUE,   # Partager l'axe Y entre les sous-graphes
+  titleX = TRUE,
+  titleY = TRUE,
+  widths = c(0.45, 0.45)  # Largeurs des colonnes ; doit être égal au nombre de colonnes
+) %>%
+  layout(
+    margin = list(l = 50, r = 50, t = 100, b = 50),  # Ajuster les marges autour des graphiques
+    xaxis = list(domain = c(0, 1)),  # Couvrir l'ensemble de la largeur disponible
+    xaxis2 = list(domain = c(0, 1)),  # Ajuster pour chaque sous-graphe (si nécessaire)
+    yaxis = list(domain = c(0, 1))    # Couvrir l'ensemble de la hauteur disponible
+  )
+```
+
 
 #### **2 ) Degrès de gêne en fonction de la catégorie 1**
 

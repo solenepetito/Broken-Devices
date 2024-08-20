@@ -727,6 +727,7 @@ print(nb_total_pbs) #832
 recence <- c()
 annee <- c()
 mois <- c()
+poids = c()
 
 # Filtrer les données pour exclure les problèmes identifiés avec le code "27"
 df <- data[which(data$RIDENTIFICATION_PROBLEMES != "27"),]
@@ -744,6 +745,7 @@ for (i in 81:105) {
         recence <- c(recence, RECENCE)
         annee <- c(annee, df[j, "DATEOBTENTIONSMART_1"])
         mois <- c(mois, df[j, "DATEOBTENTIONSMART_2"])
+        poids = c(poids,df[j,"poids"])
       }
     }
   }
@@ -755,6 +757,7 @@ indices_rec_7= which(recence==7)
 recence=recence[-c(indices_rec_7)]
 annee=annee[-c(indices_rec_7)]
 mois=mois[-c(indices_rec_7)]
+poids = poids[-c(indices_rec_7)]
 
 # Afficher les résultats pour vérifier
 print(head(recence))
@@ -869,7 +872,7 @@ label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans"
 Pour déterminer le temps de cohabitation avec les dysfonctionnements des individus n'ayant pas résolu pas le problème, il a fallu prendre le mois et l'année d'obtention de leur téléphone, puis pour chaque dysfonctionnement rencontré, le temps approximatif durant lequel il se rendu compte du problème, et déterminer le temps qui séparait ce temps approximatif du mois de novembre 2023 (date du questionnaire). Voici les temps de cohabitation pour les personnes n'ayant pas résolu les problèmes : 
 
 ```{r echo=FALSE}
-don2 <- as.matrix(table(vec))
+don2 <- as.matrix(tapply(poids, vec, sum))
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
 
 don <- data.frame(Categorie=Categorie, valeurs=round(don2[,1]*100/sum(don2[,1])))
@@ -890,6 +893,12 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
+```{r}
+df <- data.frame(Cohabitation = Categorie, Nb_dys =round(don2[,1]), Pourcent=round(don2[,1]*100/sum(don2[,1])))
+df
+```
+
 
 Voici la même représentation mais avec la part de chaque catégorie de dysfonctionnements :
 
@@ -942,6 +951,60 @@ p_interactif <- ggplotly(p)
 # Afficher le graphique interactif
 p_interactif 
 ```
+
+```{r include=FALSE}
+# AVEC POIDS 
+
+COHAB <- factor(vec, levels = 1:length(label_COHAB_2),labels=label_COHAB_2)
+DYS <- factor(cat, levels = 1:length(label_dys),labels=label_dys)
+
+don<- data.frame(Dysfonctionnement = DYS, Cohabitation = COHAB, Poids = round(poids))
+nb = c()
+
+for (i in 1:nrow(don)){
+   C = don[i,"Cohabitation"]
+   D = don[i,"Dysfonctionnement"]
+   d = don[don$Cohabitation==C & don$Dysfonctionnement==D,"Poids"]
+   nb = c(nb,sum(d))
+  }
+
+don$nb_dys = nb 
+don = don[,c("Dysfonctionnement", "Cohabitation","nb_dys")]
+don=unique(don)
+
+don <- don %>% 
+  arrange( Dysfonctionnement,Cohabitation)
+
+don
+
+
+# SANS POIDS 
+
+df<- data.frame(Dysfonctionnement = DYS, Cohabitation = COHAB)
+nb = c()
+for (i in 1:nrow(df)){
+   C = df[i,"Cohabitation"]
+   D = df[i,"Dysfonctionnement"]
+   d = df[df$Cohabitation==C & df$Dysfonctionnement==D,]
+   nb = c(nb,nrow(d))
+  }
+
+df$nb_dys = nb 
+df = df[,c("Dysfonctionnement", "Cohabitation","nb_dys")]
+df=unique(df)
+
+df <- df %>% 
+  arrange( Dysfonctionnement,Cohabitation)
+df 
+
+
+
+```
+
+
+
+
+
 
 La grande part de problèmes avec lesquels les personnes cohabitent sont les problèmes matériels.
 
