@@ -1,0 +1,744 @@
+---
+title: 'Broken devices : Module qualification smartphone actuel '
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-08-20"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **MODULE QUALIFICATION SMARTPHONE ACTUEL :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(openxlsx)
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+library(viridis) # palette de couleurs > 25 nuances
+library(Polychrome)
+library(gridExtra) # afficher les graphes côte à côte
+library(grid)
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
+
+label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
+label_RAISON_UTIL_PB <- c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité", "Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas","Je ne sais pas comment résoudre le(s) problème(s)","Je veux faire durer mon téléphone le plus longtemps possible","Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien","Je n’ai pas pris le temps de m’en occuper, de chercher une solution","Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace","La résolution du (ou des) problème(s) est trop difficile ou incertaine","Ça me donne un prétexte pour moins l’utiliser","Cela ne vaut pas la peine de résoudre le(s) problème(s)","Mon smartphone a une particularité difficile à retrouver si je devais le remplacer","Autre")
+
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+```
+
+```{r include=FALSE}
+# Catégorisation des dysfonctionnements
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+materiel <- c(1,2,3,4,6,7,8,9,10,12,16,17)
+dys_divers <- c(5,11,13,14,15,21,22,23,24,25)
+stockage <- c(18)
+maj <- c(19,20)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(dys_divers), length(stockage), length(maj))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 4, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(stockage)] <- stockage
+matrice_cat[2, 1:length(materiel)] <- materiel
+matrice_cat[3, 1:length(maj)] <- maj
+matrice_cat[4, 1:length(dys_divers)] <- dys_divers
+
+# Afficher la matrice
+print(matrice_cat)
+```
+
+**OBJECTIF :** *Synthétiser les grahes du module qualification
+smartphone actuel*
+
+```{r include=FALSE}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+# Exporter la base de données en format Excel
+write.xlsx(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/database.xlsx")
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+REPARATION <- c(1:5)
+matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
+matrice_REP[1,]=REPARATION
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+#print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+#print(colonne_fin) # 105
+
+df <- data[,colonne_deb:colonne_fin]
+
+for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val)&& !is.null(val)){
+        matrice_REP[2,val]=matrice_REP[2,val]+1
+      }
+    }
+  }
+```
+
+## *"Parlons à présent de votre usage de votre téléphone actuel"*
+
+## **Filtre du Module :** Si equipement = 2 (smartphone)
+
+## **I ) NB SMARTPHONE**
+
+Combien de smartphones utilisez-vous en ce moment ? :
+
+-   1 : 1
+
+-   2 : 2
+
+-   3 : 3 ou plus
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$NB_SMARTPHONE, sum)
+
+df <- data.frame(NB_SMARTPHONE =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>%arrange( desc(Nb_people))
+
+df$NB_SMARTPHONE = factor(df$NB_SMARTPHONE,labels=c("1","2","3 ou plus"))
+
+total_row <- data.frame(
+  NB_SMARTPHONE = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+don <- table(data$NB_SMARTPHONE)
+
+df <- data.frame(NB_SMARTPHONE =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>%arrange( desc(Nb_people))
+
+df$NB_SMARTPHONE = factor(df$NB_SMARTPHONE,labels=c("1","2","3 ou plus"))
+
+total_row <- data.frame(
+  NB_SMARTPHONE = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **II ) CONTEXTE USAGE SMARTPHONE**
+
+Nous allons nous intéresser au smartphone que vous utilisez le plus
+souvent. Est-ce un smartphone à usage principalement :
+
+-   1 : Personnel
+
+-   2 : Professionnel
+
+-   3 : Personnel et professionnel
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$CONTEXTE_USAGE_SMARTPHONE, sum)
+
+df <- data.frame(CONTEXTE_USAGE_SMARTPHONE =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personne))
+
+df$CONTEXTE_USAGE_SMARTPHONE =
+  factor(df$CONTEXTE_USAGE_SMARTPHONE,labels=c("Personnel","Professionnel","Personnel et professionnel"))
+
+total_row <- data.frame(
+  CONTEXTE_USAGE_SMARTPHONE = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+don <- table(data$CONTEXTE_USAGE_SMARTPHONE)
+
+df <- data.frame(CONTEXTE_USAGE_SMARTPHONE =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personne))
+
+df$CONTEXTE_USAGE_SMARTPHONE =
+  factor(df$CONTEXTE_USAGE_SMARTPHONE,labels=c("Personnel","Professionnel","Personnel et professionnel"))
+
+total_row <- data.frame(
+  CONTEXTE_USAGE_SMARTPHONE = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **III ) MARQMOB1 - Marque mobile principal**
+
+Quelle est la marque de ce smartphone ?
+
+-   1 : Apple
+
+-   2 : Asus
+
+-   3 : Google Pixel
+
+-   4 : Fairphone
+
+-   5 : Honor
+
+-   6 : Huawei
+
+-   7 : Nokia
+
+-   8 : OPPO
+
+-   9 : Samsung
+
+-   10 : Sony
+
+-   11 : Wiko
+
+-   12 : Xiaomi
+
+-   13 : Un autre constructeur
+
+### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$MARQMOB1, sum)
+
+df <- data.frame(MARQMOB =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df$MARQMOB = c("Apple","Asus","Google Pixel","Honor", "Huawei", "Nokia", "OPPO", "Samsung", "Sony", "Wiko", "Xiaomi", "Un autre constructeur")
+
+# df <- df %>% arrange( desc(Nb_people))
+
+
+total_row <- data.frame(
+  MARQMOB = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+don <- table(data$MARQMOB1)
+
+df <- data.frame(MARQMOB =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df$MARQMOB = c("Apple","Asus","Google Pixel","Honor", "Huawei", "Nokia", "OPPO", "Samsung", "Sony", "Wiko", "Xiaomi", "Un autre constructeur")
+
+# df <- df %>% arrange( desc(Nb_people))
+
+
+total_row <- data.frame(
+  MARQMOB = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **IV ) OS -- Système d'exploitation**
+
+**Filtre :** Si MARQMOB1 \<\> 1 (Apple)
+
+Quel est le système d'exploitation de ce smartphone ?
+
+-   1 : iOS (Apple)
+
+-   2 : Android
+
+-   3 : Autre (Windows Phone, ...)
+
+-   4 : Je ne sais pas
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$OS, sum)
+
+df <- data.frame(OS =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_people))
+
+df$OS =
+  factor(df$OS,labels=c("iOS","Android","Autre","Je ne sais pas"))
+
+total_row <- data.frame(
+  OS = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+don <- table(data$OS)
+
+df <- data.frame(OS =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_people))
+
+df$OS =
+  factor(df$OS,labels=c("iOS","Android","Autre","Je ne sais pas"))
+
+total_row <- data.frame(
+  OS = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **V ) ACQUISITIONTEL**
+
+Comment avez-vous obtenu votre smartphone actuel ?
+
+-   1 : Quelqu'un me l'a offert ou donné
+
+-   2 : Quelqu'un me l'a prêté 3Je l'ai acheté
+
+-   3 : Je l'ai obtenu dans le cadre de mon contrat avec mon opérateur
+
+-   4 : Mon employeur me l'a fourni
+
+-   5 : Je l'ai loué
+
+-   6 : Je ne me souviens pas
+
+-   7 : Je l'ai obtenu par un autre moyen que ceux ci-dessus
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$ACQUISITIONTEL, sum)
+
+df <- data.frame(ACQUISITIONTEL =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+## Mettre les valeurs dans l'ordre décroissant
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$ACQUISITIONTEL = factor(df$ACQUISITIONTEL,labels=c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Je l’ai obtenu par un autre moyen que ceux ci-dessus"))
+
+total_row <- data.frame(
+  ACQUISITIONTEL = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utilisant PAS la pondération
+
+don <- table(data$ACQUISITIONTEL)
+
+df <- data.frame(ACQUISITIONTEL =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+## Mettre les valeurs dans l'ordre décroissant
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$ACQUISITIONTEL = factor(df$ACQUISITIONTEL,labels=c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Je l’ai obtenu par un autre moyen que ceux ci-dessus"))
+
+total_row <- data.frame(
+  ACQUISITIONTEL = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+## **VI ) DATEOBTENTIONSMART**
+
+Quand l'avez-vous obtenu ?
+
+**Année :**
+
+-   2023 : 2023
+
+-   2022 : 2022
+
+-   ... : ...
+
+-   2000 : 2000
+
+
+#### ** 1 ) Avec pondération :**
+
+```{r echo=FALSE}
+# En utilisant la pondération
+
+don <- tapply(data$poids, data$DATEOBTENTIONSMART_1, sum)
+
+df <- data.frame(DATEOBTENTIONSMART =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+total_row <- data.frame(
+  DATEOBTENTIONSMART = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### ** 2 ) Sans pondération :**
+
+```{r echo=FALSE}
+# En n'utilisant PAS la pondération
+
+don <- table(data$DATEOBTENTIONSMART_1)
+
+df <- data.frame(DATEOBTENTIONSMART =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+total_row <- data.frame(
+  DATEOBTENTIONSMART = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+
+
+## **VII ) ETATSMARTPHONE**
+
+Dans quel état avez-vous obtenu votre smartphone ?
+
+-   1 : Neuf
+
+-   2 : D'occasion
+
+-   3 : Reconditionné
+
+-   4 : Je ne sais pas
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$ETATSMARTPHONE, sum)
+
+df <- data.frame(ETATSMARTPHONE =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$ETATSMARTPHONE = factor(df$ETATSMARTPHONE,labels=c("Neuf","D'occasion","Reconditionné","Je ne sais pas"))
+
+total_row <- data.frame(
+  ETATSMARTPHONE = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+don <- table(data$ETATSMARTPHONE)
+
+df <- data.frame(ETATSMARTPHONE =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$ETATSMARTPHONE = factor(df$ETATSMARTPHONE,labels=c("Neuf","D'occasion","Reconditionné","Je ne sais pas"))
+
+total_row <- data.frame(
+  ETATSMARTPHONE = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+
+```
+
+## **VIII ) UTILISATIONSMARTOCCAS**
+
+**Filtre :** Si ETATSMARTPHONE = 2 (d'occasion)
+
+Vous nous avez déclaré que votre smartphone était d'occasion, combien de
+temps a-t-il été utilisé avant que vous ne l'obteniez ?
+
+-   1 : Moins de 6 mois
+
+-   2 : Entre 6 mois et 1 an
+
+-   3 : Entre 1 et 2 ans
+
+-   4 : Entre 2 et 3 ans
+
+-   5 : Entre 3 et 5 ans
+
+-   6 : Plus de 5 ans
+
+-   7 : Je ne sais pas
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$UTILISATIONSMARTOCCAS, sum)
+
+df <- data.frame(UTILISATIONSMARTOCCAS =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$UTILISATIONSMARTOCCAS = factor(df$UTILISATIONSMARTOCCAS,labels=c("Moins de 6 mois",
+"Entre 6 mois et 1 an",
+"Entre 1 et 2 ans",
+"Entre 2 et 3 ans",
+"Entre 3 et 5 ans",
+"Plus de 5 ans",
+"Je ne sais pas"))
+
+total_row <- data.frame(
+  UTILISATIONSMARTOCCAS = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+don <- table(data$UTILISATIONSMARTOCCAS)
+
+df <- data.frame(UTILISATIONSMARTOCCAS =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$UTILISATIONSMARTOCCAS = factor(df$UTILISATIONSMARTOCCAS,labels=c("Moins de 6 mois",
+"Entre 6 mois et 1 an",
+"Entre 1 et 2 ans",
+"Entre 2 et 3 ans",
+"Entre 3 et 5 ans",
+"Plus de 5 ans",
+"Je ne sais pas"))
+
+total_row <- data.frame(
+  UTILISATIONSMARTOCCAS = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+

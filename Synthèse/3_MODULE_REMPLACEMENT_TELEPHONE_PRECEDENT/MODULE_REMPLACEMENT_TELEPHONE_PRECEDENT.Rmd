@@ -1,5 +1,5 @@
 ---
-title: 'Broken devices : Module équipement et qualification smartphone '
+title: 'Broken devices : Module remplacement du téléphone précédent '
 author: "Solène PETITO"
 output:
   html_document: default
@@ -11,7 +11,7 @@ editor_options:
     wrap: 72
 ---
 
-# **MODULE EQUIPEMENT ET QUALIFICATION SMARTPHONE :**
+# **MODULE REMPLACEMENT TELEPHONE PRECEDENT :**
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -148,8 +148,8 @@ matrice_cat[4, 1:length(dys_divers)] <- dys_divers
 print(matrice_cat)
 ```
 
-**OBJECTIF :** *Synthétiser les grahes du module équipement et
-qualification smartphone*
+**OBJECTIF :** *Synthétiser les grahes du module remplacement du
+téléphone précédent*
 
 ```{r include=FALSE}
 # Import des données
@@ -191,21 +191,15 @@ for (i in 1 :ncol(df)){
   }
 ```
 
-## **I ) EQUIPEMENT (Variable à choix multiples)**
+## **I ) QUALIFANCIENTEL**
 
-Possédez-vous les équipements suivants ?
+Aviez-vous un téléphone avant votre téléphone actuel ? :
 
--   1 : Une téléphone mobile (non smartphone)
+-   1 : Oui, c'était un smartphone
 
--   2 : Un smartphone
+-   2 : Oui, mais ce n'était pas un smartphone
 
--   3 : Un ordinateur fixe
-
--   4 : Un ordinateur portable
-
--   5 : Une tablette tactile
-
--   6 : Aucun de ces équipements
+-   3 : Non, c'est mon premier téléphone
 
 #### **1 ) Avec pondération**
 
@@ -213,25 +207,24 @@ Possédez-vous les équipements suivants ?
 
 # En utlisant la pondération
 
-mat <- Count_VCM(data$REQUIPEMENT_NUM,6)
+don <- tapply(data$poids, data$QUALIFANCIENTEL, sum)
 
+df <- data.frame(QUALIFANCIENTEL =names(don), Nb_personne = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
 
-df <- data.frame(Équipement =mat[1,], Nb_personnes = floor(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
-df <- df %>% 
-  arrange( desc(Nb_personnes))
+# df <- df %>% arrange( desc(Nb_people))
 
-df$Équipement = factor(df$Équipement,labels=c("Un téléphone mobile (non smartphone)","Un smartphone","Aucun de ces équipements","Un ordinateur fixe","Un ordinateur portable","Une tablette tactile"))
+df$QUALIFANCIENTEL = factor(df$QUALIFANCIENTEL,labels=c("Oui, c’était un smartphone","Oui, mais ce n’était pas un smartphone","Non, c’est mon premier téléphone"))
 
 total_row <- data.frame(
-  Équipement = "Total",
-  Nb_personnes = sum(df$Nb_personnes),
+  QUALIFANCIENTEL = "Total",
+  Nb_personne = sum(df$Nb_personne),
   Pourcent = sum(df$Pourcent)
 )
 
 df <- rbind(df, total_row)
 
-print(df)
 
+print(df)
 
 ```
 
@@ -240,6 +233,150 @@ print(df)
 ```{r echo=FALSE}
 # En n'utlisant PAS la pondération
 
+don <- table(data$QUALIFANCIENTEL)
+
+df <- data.frame(QUALIFANCIENTEL =names(don), Nb_personne = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+# df <- df %>% arrange( desc(Nb_people))
+
+df$QUALIFANCIENTEL = factor(df$QUALIFANCIENTEL,labels=c("Oui, c’était un smartphone","Oui, mais ce n’était pas un smartphone","Non, c’est mon premier téléphone"))
+
+total_row <- data.frame(
+  QUALIFANCIENTEL = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+print(df)
+```
+
+## **II ) DUREE USAGE ANCIEN TEL**
+
+**Filtre :** Si QUALIFANCIENTEL= 1 (Oui, c'était un smartphone) ou 2
+(Oui, mais ce n'était pas un smartphone)
+
+Combien de temps pensez-vous avoir gardé votre ancien téléphone ? :
+
+-   1 : Moins de 6 mois
+
+-   2 : Entre 6 mois et 1 an
+
+-   3 : Entre 1 et 2 ans
+
+-   4 : Entre 2 et 3 ans
+
+-   5 : Entre 3 et 5 ans
+
+-   6 : Plus de 5 ans
+
+-   7 : Je ne sais pas
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+
+don <- tapply(data$poids, data$DUREE_USAGE_ANCIEN_TEL, sum)
+
+df <- data.frame(DUREE_USAGE_ANCIEN_TEL =names(don), Nb_personne = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+# df <- df %>% arrange( desc(Nb_people))
+
+df$DUREE_USAGE_ANCIEN_TEL = factor(df$DUREE_USAGE_ANCIEN_TEL,labels=c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas"))
+
+total_row <- data.frame(
+  DUREE_USAGE_ANCIEN_TEL = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+don <- table(data$DUREE_USAGE_ANCIEN_TEL)
+
+df <- data.frame(DUREE_USAGE_ANCIEN_TEL =names(don), Nb_personne = floor(as.numeric(don)), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+# df <- df %>% arrange( desc(Nb_people))
+
+df$DUREE_USAGE_ANCIEN_TEL = factor(df$DUREE_USAGE_ANCIEN_TEL,labels=c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas"))
+
+total_row <- data.frame(
+  DUREE_USAGE_ANCIEN_TEL = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **III ) MOTIV SMART (Variable à choix multiples)**
+
+**Filtre :** Si equipement = 2 (smartphone )
+
+Qu'est-ce qui vous a motivé à obtenir votre smartphone actuel ?
+
+-   1 : J'en voulais un nouveau (par ex : pour de nouvelles
+    fonctionnalités, plus de puissance, plus de stockage, des photos de
+    meilleure qualité, ...)
+
+-   2 : J'en avais besoin d'un nouveau car je n'avais plus accès à
+    l'ancien (par ex : perdu, volé, rendu...)
+
+-   3 : J'en avais besoin d'un nouveau car le précédent était trop
+    limitant ou plus utilisable
+
+-   4 : J'ai donné l'ancien à quelqu'un
+
+-   5 : J'ai eu l'opportunité d'en avoir un nouveau (par ex : offre
+    promotionnelle, employeur, cadeau...)
+
+-   6 : Fixe / Champ ouvert Autre
+
+### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+variable = data$RMOTIV_SMART_FORM
+nb_de_modalites = 6
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+df <- data.frame(MOTIV_SMART =mat[1,], Nb_personne = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),2))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$MOTIV_SMART = factor(df$MOTIV_SMART,labels=c("J’en voulais un nouveau","J'en avais besoin d'un nouveau car je n’avais plus accès à l’ancien","J’en avais besoin d’un nouveau car le précédent était trop limitant ou plus utilisable","J’ai donné l’ancien à quelqu’un","J’ai eu l’opportunité d’en avoir un nouveau","Autre"))
+
+total_row <- data.frame(
+  MOTIV_SMART = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
 Count_VCM_2 <- function(variable,nb_de_modalites){
   mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
   mat[1,]=c(1:nb_de_modalites)
@@ -249,7 +386,7 @@ Count_VCM_2 <- function(variable,nb_de_modalites){
     for (j in 1:length(vec)){
       for (k in 1:ncol(mat)){
         if (vec[j]==mat[1,k]){
-          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+          mat[2,k]=mat[2,k]+ 1# mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
         }
       }
     }
@@ -257,67 +394,20 @@ Count_VCM_2 <- function(variable,nb_de_modalites){
   return(mat)
 }
 
-mat <- Count_VCM_2(data$REQUIPEMENT_NUM,6)
 
+variable = data$RMOTIV_SMART_FORM
+nb_de_modalites = 6
 
-df <- data.frame(Équipement =mat[1,], Nb_personnes = floor(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
-df <- df %>% 
-  arrange( desc(Nb_personnes))
+mat = Count_VCM_2(variable,nb_de_modalites)
 
-df$Équipement = factor(df$Équipement,labels=c("Un téléphone mobile (non smartphone)","Un smartphone","Aucun de ces équipements","Un ordinateur fixe","Un ordinateur portable","Une tablette tactile"))
+df <- data.frame(MOTIV_SMART =mat[1,], Nb_personne = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),2))
 
-total_row <- data.frame(
-  Équipement = "Total",
-  Nb_personnes = sum(df$Nb_personnes),
-  Pourcent = sum(df$Pourcent)
-)
+# df <- df %>%  arrange( desc(Nb_personne))
 
-df <- rbind(df, total_row)
-
-print(df)
-
-```
-
-## **II ) APPETENCEDIGIT**
-
-À quel niveau situez-vous votre maîtrise d'Internet et de vos
-équipements multimédia (ordinateur, téléphone mobile, tablette tactile,
-etc.) ? :
-
--   1 : Maîtrise limitée : j'ai besoin d'accompagnement pour utiliser
-    internet et mes équipements
-
--   2 : Maîtrise basique : j'utilise les fonctions principales des
-    outils numériques (par ex : utilisation du Pack Office, traitement
-    de texte, navigation occasionnelle sur les moteurs de recherche,
-    consultation des e-mails, etc.)
-
--   3 : Maîtrise intermédiaire : je suis à l'aise avec les outils
-    numériques (par ex : installation de logiciels, navigation
-    régulière, inscription sur les réseaux sociaux, sur des forums,
-    etc.)
-
--   4 : Maîtrise expert : j'ai une maîtrise très avancée (par ex :
-    paramétrage personnalisé des équipements et services, etc.)
-
-#### **1 ) Avec pondération**
-
-```{r echo=FALSE}
-# En utlisant la pondération
-
-
-don <- tapply(data$poids, data$APPETENCEDIGIT, sum)
-
-label = c("Maîtrise limitée","Maîtrise basique","Maîtrise intermédiaire","Maîtrise expert")
-
-df <- data.frame(Maîtrise =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
-
-# df <- df %>% arrange( desc(Nb_people))
-
-df$Maîtrise = factor(df$Maîtrise,labels=c("Maîtrise limitée","Maîtrise basique","Maîtrise intermédiaire","Maîtrise expert"))
+df$MOTIV_SMART = factor(df$MOTIV_SMART,labels=c("J’en voulais un nouveau","J'en avais besoin d'un nouveau car je n’avais plus accès à l’ancien","J’en avais besoin d’un nouveau car le précédent était trop limitant ou plus utilisable","J’ai donné l’ancien à quelqu’un","J’ai eu l’opportunité d’en avoir un nouveau","Autre"))
 
 total_row <- data.frame(
-  Maîtrise = "Total",
+  MOTIV_SMART = "Total",
   Nb_personne = sum(df$Nb_personne),
   Pourcent = sum(df$Pourcent)
 )
@@ -325,6 +415,68 @@ total_row <- data.frame(
 df <- rbind(df, total_row)
 
 print(df)
+```
+
+## **IV ) ETAT ANCIEN TEL (Variable à choix multiples)**
+
+**Filtre :** Si QUALIFANCIENTEL= 1 ou 2
+
+Dans quel état était votre ancien téléphone au moment où il a été
+remplacé ?
+
+-   1 : Mon téléphone fonctionnait bien
+
+-   2 : Mon téléphone fonctionnait mais il lui manquait une ou plusieurs
+    fonctionnalités (par ex : paiement sans contact, 5G...)
+
+-   3 : Mon téléphone était complètement inutilisable
+
+-   4 : La durée de vie de la batterie était faible
+
+-   5 : Le stockage de mon téléphone était insuffisant
+
+-   6 : Mon téléphone était lent
+
+-   7 : Mon téléphone était physiquement endommagé (par ex : écran
+    fissuré, coque cassée...)
+
+-   8 : Mon téléphone avait des dysfonctionnements (par ex : bugs,
+    problèmes de mises à jour, applications ou fonctionnalités
+    inutilisables...)
+
+-   9 : Autre raison
+
+-   10 : Je ne me souviens pas
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+variable = data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"RETAT_ANCIEN_TEL"]
+
+
+nb_de_modalites = 10
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+
+df <- data.frame(ETAT_ANCIEN_TEL =mat[1,], Nb_personne = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>% arrange( desc(Nb_people))
+
+df$ETAT_ANCIEN_TEL = factor(df$ETAT_ANCIEN_TEL,labels=c("Mon téléphone fonctionnait bien","Mon téléphone fonctionnait mais il lui manquait une ou plusieurs fonctionnalités","Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent" ,"Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas"))
+
+total_row <- data.frame(
+  ETAT_ANCIEN_TEL = "Total",
+  Nb_personne = sum(df$Nb_personne),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+
 ```
 
 #### **2 ) Sans pondération**
@@ -332,18 +484,23 @@ print(df)
 ```{r echo=FALSE}
 # En n'utlisant PAS la pondération
 
-don <- table(data$APPETENCEDIGIT)
 
-label = c("Maîtrise limitée","Maîtrise basique","Maîtrise intermédiaire","Maîtrise expert")
+variable = data[which(data$QUALIFANCIENTEL==1 | data$QUALIFANCIENTEL==2 ),"RETAT_ANCIEN_TEL"]
 
-df <- data.frame(Maîtrise =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
+
+nb_de_modalites = 10
+
+mat = Count_VCM_2(variable,nb_de_modalites)
+
+
+df <- data.frame(ETAT_ANCIEN_TEL =mat[1,], Nb_personne = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
 
 # df <- df %>% arrange( desc(Nb_people))
 
-df$Maîtrise = factor(df$Maîtrise,labels=c("Maîtrise limitée","Maîtrise basique","Maîtrise intermédiaire","Maîtrise expert"))
+df$ETAT_ANCIEN_TEL = factor(df$ETAT_ANCIEN_TEL,labels=c("Mon téléphone fonctionnait bien","Mon téléphone fonctionnait mais il lui manquait une ou plusieurs fonctionnalités","Mon téléphone était complètement inutilisable","La durée de vie de la batterie était faible","Le stockage de mon téléphone était insuffisant","Mon téléphone était lent" ,"Mon téléphone était physiquement endommagé","Mon téléphone avait des dysfonctionnements","Autre raison","Je ne me souviens pas"))
 
 total_row <- data.frame(
-  Maîtrise = "Total",
+  ETAT_ANCIEN_TEL = "Total",
   Nb_personne = sum(df$Nb_personne),
   Pourcent = sum(df$Pourcent)
 )
@@ -351,5 +508,6 @@ total_row <- data.frame(
 df <- rbind(df, total_row)
 
 print(df)
+
 ```
 
