@@ -539,7 +539,7 @@ Actuellement, exercez-vous une activité professionnelle ?
 
 -   2 : Non
 
-**1 ) Si ACTIVPRO = 1 (Oui)**
+\####**1 ) Si ACTIVPRO = 1 (Oui)**
 
 ACTIF -- Profession du répondant actif
 
@@ -666,7 +666,7 @@ df <- rbind(df, total_row)
 print(df)
 ```
 
-**2 ) Si ACTIVPRO = 2 (Non)**
+\####**2 ) Si ACTIVPRO = 2 (Non)**
 
 INACTIF -- Type d'inactivité du répondant
 
@@ -804,9 +804,9 @@ Quelle est la dernière profession que vous ayez exercée ?
 -   18 : Ouvrier qualifié, non qualifié, ouvrier agricole, chauffeur,
     conducteur, plombier, jardinier, cuisinier, éboueur, agencier,
     chaudronnier, électricien, soudeur...)
-    
+
 **Avec pondération**
-    
+
 ```{r echo=FALSE}
 df = data[,c("INACTIFS","QACTIF","poids")]
 indices <- which(df$INACTIFS == 1 )
@@ -837,8 +837,8 @@ df <- rbind(df, total_row)
 
 print(df)
 ```
-    
-**Sans pondération**   
+
+**Sans pondération**
 
 ```{r echo=FALSE}
 df = data[,c("INACTIFS","QACTIF","poids")]
@@ -873,6 +873,271 @@ df <- df[df$Nb_personnes!=0,]
 print(df)
 ```
 
+## **VII ) CSP9 -- CSP en 9 du répondant**
+
+-   1 Agriculteurs
+
+-   2 Artisans/ Commerçant
+
+-   3 Cadres
+
+-   4 Professions Intermédiaires
+
+-   5 Employés
+
+-   6 Ouvriers
+
+-   7 Retraités
+
+-   8 Etudiants
+
+-   9 Autres Inactifs
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$CSP9, sum)
+
+df <- data.frame(CSP9 =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$CSP9 = factor(df$CSP9,labels=c("Agriculteurs","Artisans","Cadres","Professions Intermédiaires","Employés","Ouvriers","Retraités","Etudiants","Autres Inactifs"))
+
+total_row <- data.frame(
+  CSP9 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
 
 
-    
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+# En utlisant la pondération
+
+don <- table(data$CSP9)
+
+df <- data.frame(CSP9 =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),2))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$CSP9 = factor(df$CSP9,labels=c("Agriculteurs","Artisans","Cadres","Professions Intermédiaires","Employés","Ouvriers","Retraités","Etudiants","Autres Inactifs"))
+
+total_row <- data.frame(
+  CSP9 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+
+```
+
+## **VIII ) CSP en 5 du répondant**
+
+-   1 : CSP+
+
+-   2 : CSP-
+
+-   3 : Retraités
+
+-   4 : Étudiants
+
+-   5 : Autres inactifs
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$CSP5, sum)
+
+df <- data.frame(CSP5 =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$CSP5 = factor(df$CSP5,labels=c("CSP+","CSP-","Retraités","Etudiants","Autres Inactifs"))
+
+total_row <- data.frame(
+  CSP5 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+don <- table(data$CSP5)
+
+df <- data.frame(CSP5 =names(don), Nb_personnes = round(as.numeric(don),1),Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$CSP5 = factor(df$CSP5,labels=c("CSP+","CSP-","Retraités","Etudiants","Autres Inactifs"))
+
+total_row <- data.frame(
+  CSP5 = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+## **IX ) CNIVETUDES -- Niveau d'études du répondant**
+
+Quel niveau d'études avez-vous atteint ?
+
+-   1 CAP/BEP
+
+-   2 Baccalauréat
+
+-   3 Baccalauréat +2/BTS
+
+-   4 Baccalauréat +3/Licence
+
+-   5 Baccalauréat +4, +5/ Master
+
+-   6 Doctorat 7
+
+-   Pas de diplôme
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+don <- tapply(data$poids, data$NIVETUDES, sum)
+
+df <- data.frame(NIVETUDES =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+#df <- df %>%  arrange( desc(Nb_personnes))
+
+df$NIVETUDES = factor(df$NIVETUDES,labels=c("CAP/BEP","Baccalauréat","Baccalauréat +2/BTS","Baccalauréat +3/Licence","Baccalauréat +4, +5/ Master","Doctorat","Pas de diplôme"))
+
+total_row <- data.frame(
+  NIVETUDES = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+don <- table(data$NIVETUDES)
+
+df <- data.frame(NIVETUDES =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+df <- df %>% 
+  arrange( desc(Nb_personnes))
+
+df$NIVETUDES = factor(df$NIVETUDES,labels=c("CAP/BEP","Baccalauréat","Baccalauréat +2/BTS","Baccalauréat +3/Licence","Baccalauréat +4, +5/ Master","Doctorat","Pas de diplôme"))
+
+total_row <- data.frame(
+  NIVETUDES = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+## **X ) NOMBREFOYER -- Nombre de personnes au foyer**
+
+Combien de personnes AU TOTAL vivent dans votre foyer y compris
+vous-même ?
+
+-   1 : 1 personne 2
+
+-   2 : personnes 3
+
+-   3 : personnes 4
+
+-   4 : personnes ou plus
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+
+don <- tapply(data$poids, data$NPF5, sum)
+
+df <- data.frame(NPF =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$NPF = factor(df$NPF,labels=c("1 personne","2 personnes","3 personnes","4 personnes","5 personnes ou plus"))
+
+total_row <- data.frame(
+  NPF = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+
+don <- table(data$NPF5)
+
+df <- data.frame(NPF =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personnes))
+
+df$NPF = factor(df$NPF,labels=c("1 personne","2 personnes","3 personnes","4 personnes","5 personnes ou plus"))
+
+total_row <- data.frame(
+  NPF = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+
+
+print(df)
+```
+
+
+
+
+
