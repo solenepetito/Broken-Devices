@@ -1,0 +1,664 @@
+---
+title: 'Broken devices : Module comportement face aux dysfonctionnements '
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-08-20"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **MODULE COMPORTEMENT FACE AUX DYSFONCTIONNEMENTS :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(openxlsx)
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+library(viridis) # palette de couleurs > 25 nuances
+library(Polychrome)
+library(gridExtra) # afficher les graphes côte à côte
+library(grid)
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "val_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ data[i,"poids"] # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+Count_VCM_2 <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
+
+label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
+label_RAISON_UTIL_PB <- c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité", "Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas","Je ne sais pas comment résoudre le(s) problème(s)","Je veux faire durer mon téléphone le plus longtemps possible","Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien","Je n’ai pas pris le temps de m’en occuper, de chercher une solution","Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace","La résolution du (ou des) problème(s) est trop difficile ou incertaine","Ça me donne un prétexte pour moins l’utiliser","Cela ne vaut pas la peine de résoudre le(s) problème(s)","Mon smartphone a une particularité difficile à retrouver si je devais le remplacer","Autre")
+
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+```
+
+```{r include=FALSE}
+# Catégorisation des dysfonctionnements
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+materiel <- c(1,2,3,4,6,7,8,9,10,12,16,17)
+dys_divers <- c(5,11,13,14,15,21,22,23,24,25)
+stockage <- c(18)
+maj <- c(19,20)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(dys_divers), length(stockage), length(maj))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 4, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(stockage)] <- stockage
+matrice_cat[2, 1:length(materiel)] <- materiel
+matrice_cat[3, 1:length(maj)] <- maj
+matrice_cat[4, 1:length(dys_divers)] <- dys_divers
+
+# Afficher la matrice
+print(matrice_cat)
+```
+
+**OBJECTIF :** *Synthétiser les grahes du module comportement face aux
+dysfonctionnements*
+
+```{r include=FALSE}
+# Import des données
+
+data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+# Exporter la base de données en format Excel
+write.xlsx(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/database.xlsx")
+
+Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+REPARATION <- c(1:5)
+matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
+matrice_REP[1,]=REPARATION
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+#print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+#print(colonne_fin) # 105
+
+df <- data[,colonne_deb:colonne_fin]
+
+for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val)&& !is.null(val)){
+        matrice_REP[2,val]=matrice_REP[2,val]+1
+      }
+    }
+  }
+```
+
+## **I ) RAISON_UTIL_PB (Variable à choix multiples)**
+
+**Filtre :** si Tous les items de REPARATION_1 à REPARATION_26 = 4 ou 5
+(n'a pas réparé)
+
+Pour quelles raisons continuez-vous à utiliser votre smartphone malgré
+les problèmes rencontrés ou qui subsistent ?
+
+1.  Cela serait trop coûteux de résoudre le(s) problème(s) ou de
+    remplacer mon smartphone
+
+2.  J'attends une opportunité (par ex : sortie d'un nouveau modèle, don
+    ou prêt d'un téléphone de seconde main, contrat/opérateur, contexte
+    professionnel...)
+
+3.  Je ne peux pas résoudre le problème car le smartphone ne
+    m'appartient pas
+
+4.  Je ne sais pas comment résoudre le(s) problème(s)
+
+5.  Je veux faire durer mon téléphone le plus longtemps possible
+
+6.  Ce(s) problème(s) ne m'impacte(nt) pas tant que ça au quotidien
+
+7.  Je n'ai pas pris le temps de m'en occuper, de chercher une solution
+
+8.  Mon téléphone est trop récent pour que je le fasse réparer ou que je
+    le remplace
+
+9.  La résolution du (ou des) problème(s) est trop difficile ou
+    incertaine
+
+10. Ça me donne un prétexte pour moins l'utiliser
+
+11. Cela ne vaut pas la peine de résoudre le(s) problème(s)
+
+12. Mon smartphone a une particularité difficile à retrouver si je
+    devais le remplacer
+
+13. Autre
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+
+# En utlisant la pondération
+
+variable = data$RRAISON_UTIL_PB_FORM
+nb_de_modalites = 13
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+df <- data.frame(RAISON =mat[1,], Nb_personnes = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$RAISON = factor(df$RAISON,labels= c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité",
+"Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas",
+"Je ne sais pas comment résoudre le(s) problème(s)",
+"Je veux faire durer mon téléphone le plus longtemps possible",
+"Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien",
+"Je n’ai pas pris le temps de m’en occuper, de chercher une solution",
+"Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace",
+"La résolution du (ou des) problème(s) est trop difficile ou incertaine",
+"Ça me donne un prétexte pour moins l’utiliser",
+"Cela ne vaut pas la peine de résoudre le(s) problème(s)",
+"Mon smartphone a une particularité difficile à retrouver si je devais le remplacer",
+"Autre "))
+
+total_row <- data.frame(
+  RAISON = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+
+variable = data$RRAISON_UTIL_PB_FORM
+nb_de_modalites = 13
+
+mat = Count_VCM_2(variable,nb_de_modalites)
+
+df <- data.frame(RAISON =mat[1,], Nb_personnes = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$RAISON = factor(df$RAISON,labels= c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité",
+"Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas",
+"Je ne sais pas comment résoudre le(s) problème(s)",
+"Je veux faire durer mon téléphone le plus longtemps possible",
+"Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien",
+"Je n’ai pas pris le temps de m’en occuper, de chercher une solution",
+"Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace",
+"La résolution du (ou des) problème(s) est trop difficile ou incertaine",
+"Ça me donne un prétexte pour moins l’utiliser",
+"Cela ne vaut pas la peine de résoudre le(s) problème(s)",
+"Mon smartphone a une particularité difficile à retrouver si je devais le remplacer",
+"Autre "))
+
+total_row <- data.frame(
+  RAISON = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **II ) SOLUTION ALTERNATIVE PB (Variable à choix multiples)**
+
+**Filtre :** Si REPARATION_1 à 26 = 4 ou 5 (n'a pas réparé)
+
+Quelle(s) solution(s) avez-vous mise(s) en place pour pallier ces
+problèmes identifiés ?
+
+1.  J'utilise un autre appareil (par ex : une tablette, un ordinateur,
+    le smartphone de quelqu'un d'autre...)
+
+2.  J'utilise une alternative non-numérique (par ex : agenda papier,
+    post-its, paiement directement au guichet au lieu d'achat en
+    ligne...)
+
+3.  Je me débrouille avec mon smartphone (par ex : j'ai bricolé une
+    solution, j'ai contourné le problème, j'utilise une alternative...)
+
+4.  Je l'entretiens, je le nettoie (matériel ou logiciel)
+
+5.  J'utilise moins, ou plus du tout, les fonctions impactées
+
+6.  J'ignore le(s) problème(s)
+
+7.  Autre
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+
+variable = data$RSOLUTION_ALTERNATIVE_PB_FORM
+nb_de_modalites = 7
+
+mat = Count_VCM(variable,nb_de_modalites)
+
+df <- data.frame(SOLUTION =mat[1,], Nb_personnes = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$SOLUTION = factor(df$SOLUTION,labels= c("J’utilise un autre appareil", "J’utilise une alternative non-numérique",
+"Je me débrouille avec mon smartphone",
+"Je l'entretiens, je le nettoie",
+"J’utilise moins, ou plus du tout, les fonctions impactées",
+"J’ignore le(s) problème(s)",
+"Autre"))
+
+total_row <- data.frame(
+  SOLUTION = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+variable = data$RSOLUTION_ALTERNATIVE_PB_FORM
+nb_de_modalites = 7
+
+mat = Count_VCM_2(variable,nb_de_modalites)
+
+df <- data.frame(SOLUTION =mat[1,], Nb_personnes = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$SOLUTION = factor(df$SOLUTION,labels= c("J’utilise un autre appareil", "J’utilise une alternative non-numérique",
+"Je me débrouille avec mon smartphone",
+"Je l'entretiens, je le nettoie",
+"J’utilise moins, ou plus du tout, les fonctions impactées",
+"J’ignore le(s) problème(s)",
+"Autre"))
+
+total_row <- data.frame(
+  SOLUTION = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **III ) IMPACT_PB (Variable à choix multiples)**
+
+**Filtre :** si IDENTIFICATION_PROBLEME = 1 à 26 (au moins un problème
+identifié en SAUF autre exclusif OU aucun)
+
+Quels usages ont été affectés par les problèmes rencontrés ?
+
+1.  Usage global du smartphone
+
+2.  Communication (par ex : messages, emails, appels, WhatsApp,
+    Messenger...)
+
+3.  Réseaux sociaux (par ex : Instagram, Facebook, TikTok, Twitter...)
+
+4.  Cartes et guidage GPS
+
+5.  Jeux
+
+6.  Navigation web
+
+7.  Streaming musique et vidéo
+
+8.  Outils de productivité (par ex : notes, calendrier, contacts, to do
+    list...)
+
+9.  Logiciels et applications professionnelles dédiées
+
+10. Photo, vidéo et autres activités de création
+
+11. Identification bancaire, paiement sans contact
+
+12. Tickets dématérialisés (par ex : train, concert, bus, métro, vélo,
+    covoiturage...)
+
+13. Courses et achats en ligne
+
+14. Autre : CHAMP OUVERT
+
+15. Aucun
+
+### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+Count_VCM_3 <- function(variable,nb_de_modalites,don){
+  don=data[variable!="",]
+  variable=variable[variable!=""]
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ don[i,"poids"] # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+
+variable = data[data$RIMPACT_PB!="","RIMPACT_PB"]
+nb_de_modalites = 15
+
+mat = Count_VCM_3(variable,nb_de_modalites)
+
+df <- data.frame(IMPACT =mat[1,], Nb_personnes = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$IMPACT = factor(df$IMPACT,labels= c("Usage global du smartphone",
+"Communication",
+"Réseaux sociaux",
+"Cartes et guidage GPS",
+"Jeux",
+"Navigation web",
+"Streaming musique et vidéo",
+"Outils de productivité",
+"Logiciels et applications professionnelles dédiées",
+"Photo, vidéo et autres activités de création",
+"Identification bancaire, paiement sans contact",
+"Tickets dématérialisés",
+"Courses et achats en ligne",
+"Autre",
+"Aucun"))
+
+total_row <- data.frame(
+  IMPACT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+Count_VCM_4 <- function(variable,nb_de_modalites,don){
+  don=data[variable!="",]
+  variable=variable[variable!=""]
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+variable = data$RIMPACT_PB
+nb_de_modalites = 15
+
+mat = Count_VCM_4(variable,nb_de_modalites)
+
+df <- data.frame(IMPACT =mat[1,], Nb_personnes = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+
+# df <- df %>%  arrange( desc(Nb_personne))
+
+df$IMPACT = factor(df$IMPACT,labels= c("Usage global du smartphone",
+"Communication",
+"Réseaux sociaux",
+"Cartes et guidage GPS",
+"Jeux",
+"Navigation web",
+"Streaming musique et vidéo",
+"Outils de productivité",
+"Logiciels et applications professionnelles dédiées",
+"Photo, vidéo et autres activités de création",
+"Identification bancaire, paiement sans contact",
+"Tickets dématérialisés",
+"Courses et achats en ligne",
+"Autre",
+"Aucun"))
+
+total_row <- data.frame(
+  IMPACT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+## **IV ) INTENTION REMPLACEMENT**
+
+**Filtre :** À tous
+
+Avez-vous l'intention de remplacer votre téléphone ?
+
+1.  Oui, dans moins d'un mois
+
+2.  Oui, dans 1 à 6 mois
+
+3.  Oui, dans 6 à 12 mois
+
+4.  Oui, dans 1 an à 2 ans
+
+5.  Oui, dans 2 ans ou plus
+
+6.  Non, je n'ai pas envisagé de le remplacer
+
+7.  Je ne sais pas
+
+#### **1 ) Avec pondération**
+
+```{r echo=FALSE}
+# En utlisant la pondération
+
+don <- tapply(data$poids, data$INTENTION_REMPLACEMENT, sum)
+
+df <- data.frame(INTENTION_REMPLACEMENT =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personne))
+
+df$INTENTION_REMPLACEMENT =
+  factor(df$INTENTION_REMPLACEMENT,labels=c("Oui, dans moins d’un mois",
+"Oui, dans 1 à 6 mois",
+"Oui, dans 6 à 12 mois",
+"Oui, dans 1 an à 2 ans",
+"Oui, dans 2 ans ou plus",
+"Non, je n’ai pas envisagé de le remplacer",
+"Je ne sais pas"))
+
+total_row <- data.frame(
+  INTENTION_REMPLACEMENT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
+#### **2 ) Sans pondération**
+
+```{r echo=FALSE}
+# En n'utlisant PAS la pondération
+
+
+don <- table(data$INTENTION_REMPLACEMENT)
+
+df <- data.frame(INTENTION_REMPLACEMENT =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
+
+# df <- df %>% arrange( desc(Nb_personne))
+
+df$INTENTION_REMPLACEMENT =
+  factor(df$INTENTION_REMPLACEMENT,labels=c("Oui, dans moins d’un mois",
+"Oui, dans 1 à 6 mois",
+"Oui, dans 6 à 12 mois",
+"Oui, dans 1 an à 2 ans",
+"Oui, dans 2 ans ou plus",
+"Non, je n’ai pas envisagé de le remplacer",
+"Je ne sais pas"))
+
+total_row <- data.frame(
+  INTENTION_REMPLACEMENT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
+)
+
+df <- rbind(df, total_row)
+
+print(df)
+```
+
