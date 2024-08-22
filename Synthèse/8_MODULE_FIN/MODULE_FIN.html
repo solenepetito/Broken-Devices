@@ -13,7 +13,7 @@
 
 <meta name="date" content="2024-08-20" />
 
-<title>Broken devices : Module qualification smartphone actuel</title>
+<title>Broken devices : Module fin</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,338 +350,46 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Broken devices : Module qualification
-smartphone actuel</h1>
+<h1 class="title toc-ignore">Broken devices : Module fin</h1>
 <h4 class="author">Solène PETITO</h4>
 <h4 class="date">2024-08-20</h4>
 
 </div>
 
 
-<div id="module-qualification-smartphone-actuel" class="section level1">
-<h1><strong>MODULE QUALIFICATION SMARTPHONE ACTUEL :</strong></h1>
+<div id="module-fin" class="section level1">
+<h1><strong>MODULE FIN :</strong></h1>
 <p><strong>OBJECTIF :</strong> <em>Synthétiser les grahes du module
-qualification smartphone actuel</em></p>
-<div id="parlons-à-présent-de-votre-usage-de-votre-téléphone-actuel" class="section level2">
-<h2><em>“Parlons à présent de votre usage de votre téléphone
-actuel”</em></h2>
-</div>
-<div id="filtre-du-module-si-equipement-2-smartphone" class="section level2">
-<h2><strong>Filtre du Module :</strong> Si equipement = 2
-(smartphone)</h2>
-</div>
-<div id="i-nb-smartphone" class="section level2">
-<h2><strong>I ) NB SMARTPHONE</strong></h2>
-<p>Combien de smartphones utilisez-vous en ce moment ? :</p>
-<ul>
-<li><p>1 : 1</p></li>
-<li><p>2 : 2</p></li>
-<li><p>3 : 3 ou plus</p></li>
-</ul>
+fin</em></p>
+<div id="i-recontact" class="section level2">
+<h2><strong>I ) RECONTACT</strong></h2>
+<p>Acceptez-vous d’être recontacté.e ?</p>
+<ol style="list-style-type: decimal">
+<li><p>Oui</p></li>
+<li><p>Non</p></li>
+</ol>
 <div id="avec-pondération" class="section level4">
 <h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##   NB_SMARTPHONE Nb_personne Pourcent
-## 1             1     44173.9     92.4
-## 2             2      3509.4      7.3
-## 3     3 ou plus       148.5      0.3
-## 4         Total     47831.8    100.0</code></pre>
+<pre><code>##   RECONTACT Nb_personnes Pourcent
+## 1       Oui      34935.6       73
+## 2       Non      12896.2       27
+## 3     Total      47831.8      100</code></pre>
 </div>
 <div id="sans-pondération" class="section level4">
 <h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##   NB_SMARTPHONE Nb_personne Pourcent
-## 1             1         893     92.3
-## 2             2          72      7.4
-## 3     3 ou plus           3      0.3
-## 4         Total         968    100.0</code></pre>
+<pre><code>##   RECONTACT Nb_personnes Pourcent
+## 1       Oui          706       73
+## 2       Non          262       27
+## 3     Total          968      100</code></pre>
 </div>
 </div>
-<div id="ii-contexte-usage-smartphone" class="section level2">
-<h2><strong>II ) CONTEXTE USAGE SMARTPHONE</strong></h2>
-<p>Nous allons nous intéresser au smartphone que vous utilisez le plus
-souvent. Est-ce un smartphone à usage principalement :</p>
-<ul>
-<li><p>1 : Personnel</p></li>
-<li><p>2 : Professionnel</p></li>
-<li><p>3 : Personnel et professionnel</p></li>
-</ul>
-<div id="avec-pondération-1" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##    CONTEXTE_USAGE_SMARTPHONE Nb_personne Pourcent
-## 1                  Personnel     39997.3     83.6
-## 2              Professionnel       523.9      1.1
-## 3 Personnel et professionnel      7310.6     15.3
-## 4                      Total     47831.8    100.0</code></pre>
-</div>
-<div id="sans-pondération-1" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##    CONTEXTE_USAGE_SMARTPHONE Nb_personne Pourcent
-## 1                  Personnel         810     83.7
-## 2              Professionnel          10      1.0
-## 3 Personnel et professionnel         148     15.3
-## 4                      Total         968    100.0</code></pre>
-</div>
-</div>
-<div id="iii-marqmob1---marque-mobile-principal" class="section level2">
-<h2><strong>III ) MARQMOB1 - Marque mobile principal</strong></h2>
-<p>Quelle est la marque de ce smartphone ?</p>
-<ul>
-<li><p>1 : Apple</p></li>
-<li><p>2 : Asus</p></li>
-<li><p>3 : Google Pixel</p></li>
-<li><p>4 : Fairphone</p></li>
-<li><p>5 : Honor</p></li>
-<li><p>6 : Huawei</p></li>
-<li><p>7 : Nokia</p></li>
-<li><p>8 : OPPO</p></li>
-<li><p>9 : Samsung</p></li>
-<li><p>10 : Sony</p></li>
-<li><p>11 : Wiko</p></li>
-<li><p>12 : Xiaomi</p></li>
-<li><p>13 : Un autre constructeur</p></li>
-</ul>
-<div id="avec-pondération-2" class="section level3">
-<h3><strong>1 ) Avec pondération</strong></h3>
-<pre><code>##                  MARQMOB Nb_personne Pourcent
-## 1                  Apple     14126.1     29.5
-## 2                   Asus       207.7      0.4
-## 3           Google Pixel       676.1      1.4
-## 4                  Honor       517.7      1.1
-## 5                 Huawei      2830.7      5.9
-## 6                  Nokia       222.0      0.5
-## 7                   OPPO      1544.3      3.2
-## 8                Samsung     17399.0     36.4
-## 9                   Sony       348.5      0.7
-## 10                  Wiko       611.7      1.3
-## 11                Xiaomi      7085.6     14.8
-## 12 Un autre constructeur      2262.4      4.7
-## 13                 Total     47831.8     99.9</code></pre>
-</div>
-<div id="sans-pondération-2" class="section level3">
-<h3><strong>2 ) Sans pondération</strong></h3>
-<pre><code>##                  MARQMOB Nb_personne Pourcent
-## 1                  Apple         291     30.1
-## 2                   Asus           4      0.4
-## 3           Google Pixel          14      1.4
-## 4                  Honor          10      1.0
-## 5                 Huawei          57      5.9
-## 6                  Nokia           5      0.5
-## 7                   OPPO          30      3.1
-## 8                Samsung         352     36.4
-## 9                   Sony           7      0.7
-## 10                  Wiko          12      1.2
-## 11                Xiaomi         141     14.6
-## 12 Un autre constructeur          45      4.6
-## 13                 Total         968     99.9</code></pre>
-</div>
-</div>
-<div id="iv-os-système-dexploitation" class="section level2">
-<h2><strong>IV ) OS – Système d’exploitation</strong></h2>
-<p><strong>Filtre :</strong> Si MARQMOB1 &lt;&gt; 1 (Apple)</p>
-<p>Quel est le système d’exploitation de ce smartphone ?</p>
-<ul>
-<li><p>1 : iOS (Apple)</p></li>
-<li><p>2 : Android</p></li>
-<li><p>3 : Autre (Windows Phone, …)</p></li>
-<li><p>4 : Je ne sais pas</p></li>
-</ul>
-<div id="avec-pondération-3" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##               OS Nb_personne Pourcent
-## 1            iOS     14126.1    29.53
-## 2        Android     32472.3    67.89
-## 3          Autre       596.8     1.25
-## 4 Je ne sais pas       636.5     1.33
-## 5          Total     47831.7   100.00</code></pre>
-</div>
-<div id="sans-pondération-3" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##               OS Nb_personne Pourcent
-## 1            iOS         291    30.06
-## 2        Android         652    67.36
-## 3          Autre          12     1.24
-## 4 Je ne sais pas          13     1.34
-## 5          Total         968   100.00</code></pre>
-</div>
-</div>
-<div id="v-acquisitiontel" class="section level2">
-<h2><strong>V ) ACQUISITIONTEL</strong></h2>
-<p>Comment avez-vous obtenu votre smartphone actuel ?</p>
-<ul>
-<li><p>1 : Quelqu’un me l’a offert ou donné</p></li>
-<li><p>2 : Quelqu’un me l’a prêté 3Je l’ai acheté</p></li>
-<li><p>3 : Je l’ai obtenu dans le cadre de mon contrat avec mon
-opérateur</p></li>
-<li><p>4 : Mon employeur me l’a fourni</p></li>
-<li><p>5 : Je l’ai loué</p></li>
-<li><p>6 : Je ne me souviens pas</p></li>
-<li><p>7 : Je l’ai obtenu par un autre moyen que ceux ci-dessus</p></li>
-</ul>
-<div id="avec-pondération-4" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##                                                   ACQUISITIONTEL Nb_personnes
-## 1                               Quelqu’un me l’a offert ou donné       8252.0
-## 2                                         Quelqu’un me l’a prêté        228.5
-## 3                                                 Je l’ai acheté      35683.2
-## 4 Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur       2910.2
-## 5                                    Mon employeur me l’a fourni        418.6
-## 6                                                   Je l’ai loué        254.0
-## 7                                          Je ne me souviens pas         37.8
-## 8           Je l’ai obtenu par un autre moyen que ceux ci-dessus         47.5
-## 9                                                          Total      47831.8
-##   Pourcent
-## 1       17
-## 2        0
-## 3       75
-## 4        6
-## 5        1
-## 6        1
-## 7        0
-## 8        0
-## 9      100</code></pre>
-</div>
-<div id="sans-pondération-4" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##                                                   ACQUISITIONTEL Nb_personnes
-## 1                               Quelqu’un me l’a offert ou donné          170
-## 2                                         Quelqu’un me l’a prêté            4
-## 3                                                 Je l’ai acheté          719
-## 4 Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur           60
-## 5                                    Mon employeur me l’a fourni            8
-## 6                                                   Je l’ai loué            5
-## 7                                          Je ne me souviens pas            1
-## 8           Je l’ai obtenu par un autre moyen que ceux ci-dessus            1
-## 9                                                          Total          968
-##   Pourcent
-## 1     17.6
-## 2      0.4
-## 3     74.3
-## 4      6.2
-## 5      0.8
-## 6      0.5
-## 7      0.1
-## 8      0.1
-## 9    100.0</code></pre>
-</div>
-</div>
-<div id="vi-dateobtentionsmart" class="section level2">
-<h2><strong>VI ) DATEOBTENTIONSMART</strong></h2>
-<p>Quand l’avez-vous obtenu ?</p>
-<p><strong>Année :</strong></p>
-<ul>
-<li><p>2023 : 2023</p></li>
-<li><p>2022 : 2022</p></li>
-<li><p>… : …</p></li>
-<li><p>2000 : 2000</p></li>
-</ul>
-<div id="avec-pondération-5" class="section level4">
-<h4>** 1 ) Avec pondération :**</h4>
-<pre><code>##    DATEOBTENTIONSMART Nb_personnes Pourcent
-## 1                2000         37.8     0.08
-## 2                2001        150.3     0.31
-## 3                2002         31.1     0.07
-## 4                2004         31.6     0.07
-## 5                2005         64.1     0.13
-## 6                2006        109.9     0.23
-## 7                2008         55.9     0.12
-## 8                2015        158.2     0.33
-## 9                2016        183.6     0.38
-## 10               2017        703.8     1.47
-## 11               2018       1715.0     3.59
-## 12               2019       2796.9     5.85
-## 13               2020       6371.1    13.32
-## 14               2021      10908.7    22.81
-## 15               2022      12835.0    26.83
-## 16               2023      11678.8    24.42
-## 17              Total      47831.8   100.01</code></pre>
-</div>
-<div id="sans-pondération-5" class="section level4">
-<h4>** 2 ) Sans pondération :**</h4>
-<pre><code>##    DATEOBTENTIONSMART Nb_personnes Pourcent
-## 1                2000            1     0.10
-## 2                2001            3     0.31
-## 3                2002            1     0.10
-## 4                2004            1     0.10
-## 5                2005            2     0.21
-## 6                2006            2     0.21
-## 7                2008            1     0.10
-## 8                2015            3     0.31
-## 9                2016            3     0.31
-## 10               2017           14     1.45
-## 11               2018           34     3.51
-## 12               2019           58     5.99
-## 13               2020          132    13.64
-## 14               2021          220    22.73
-## 15               2022          259    26.76
-## 16               2023          234    24.17
-## 17              Total          968   100.00</code></pre>
-</div>
-</div>
-<div id="vii-etatsmartphone" class="section level2">
-<h2><strong>VII ) ETATSMARTPHONE</strong></h2>
-<p>Dans quel état avez-vous obtenu votre smartphone ?</p>
-<ul>
-<li><p>1 : Neuf</p></li>
-<li><p>2 : D’occasion</p></li>
-<li><p>3 : Reconditionné</p></li>
-<li><p>4 : Je ne sais pas</p></li>
-</ul>
-<div id="avec-pondération-6" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##   ETATSMARTPHONE Nb_personnes Pourcent
-## 1           Neuf      39257.5     82.1
-## 2     D&#39;occasion       4347.7      9.1
-## 3  Reconditionné       3999.8      8.4
-## 4 Je ne sais pas        226.8      0.5
-## 5          Total      47831.8    100.1</code></pre>
-</div>
-<div id="sans-pondération-6" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##   ETATSMARTPHONE Nb_personnes Pourcent
-## 1           Neuf          792     81.8
-## 2     D&#39;occasion           88      9.1
-## 3  Reconditionné           83      8.6
-## 4 Je ne sais pas            5      0.5
-## 5          Total          968    100.0</code></pre>
-</div>
-</div>
-<div id="viii-utilisationsmartoccas" class="section level2">
-<h2><strong>VIII ) UTILISATIONSMARTOCCAS</strong></h2>
-<p><strong>Filtre :</strong> Si ETATSMARTPHONE = 2 (d’occasion)</p>
-<p>Vous nous avez déclaré que votre smartphone était d’occasion, combien
-de temps a-t-il été utilisé avant que vous ne l’obteniez ?</p>
-<ul>
-<li><p>1 : Moins de 6 mois</p></li>
-<li><p>2 : Entre 6 mois et 1 an</p></li>
-<li><p>3 : Entre 1 et 2 ans</p></li>
-<li><p>4 : Entre 2 et 3 ans</p></li>
-<li><p>5 : Entre 3 et 5 ans</p></li>
-<li><p>6 : Plus de 5 ans</p></li>
-<li><p>7 : Je ne sais pas</p></li>
-</ul>
-<div id="avec-pondération-7" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##   UTILISATIONSMARTOCCAS Nb_personnes Pourcent
-## 1       Moins de 6 mois        523.2     12.0
-## 2  Entre 6 mois et 1 an        904.5     20.8
-## 3      Entre 1 et 2 ans        912.4     21.0
-## 4      Entre 2 et 3 ans        445.0     10.2
-## 5      Entre 3 et 5 ans        376.5      8.7
-## 6         Plus de 5 ans        174.5      4.0
-## 7        Je ne sais pas       1011.7     23.3
-## 8                 Total       4347.8    100.0</code></pre>
-</div>
-<div id="sans-pondération-7" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##   UTILISATIONSMARTOCCAS Nb_personnes Pourcent
-## 1       Moins de 6 mois           12     13.6
-## 2  Entre 6 mois et 1 an           18     20.5
-## 3      Entre 1 et 2 ans           17     19.3
-## 4      Entre 2 et 3 ans            9     10.2
-## 5      Entre 3 et 5 ans            8      9.1
-## 6         Plus de 5 ans            3      3.4
-## 7        Je ne sais pas           21     23.9
-## 8                 Total           88    100.0</code></pre>
-</div>
+<div id="email" class="section level2">
+<h2><strong>EMAIL</strong></h2>
+<p><strong>Filtre</strong> : Si RECONTACT = 1</p>
+<p>Merci de nous partager votre e-mail :</p>
+<p>/_________________/ @ /____________________/ . /____/</p>
+<p><strong>REMARQUE :</strong> Pour les e-mails, se référer au tableau
+excel des données brutes et aller à la dernière colonne</p>
 </div>
 </div>
 

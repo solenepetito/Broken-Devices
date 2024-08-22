@@ -13,7 +13,7 @@
 
 <meta name="date" content="2024-08-20" />
 
-<title>Broken devices : Module qualification smartphone actuel</title>
+<title>Broken devices : Module réparation</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -350,337 +350,619 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Broken devices : Module qualification
-smartphone actuel</h1>
+<h1 class="title toc-ignore">Broken devices : Module réparation</h1>
 <h4 class="author">Solène PETITO</h4>
 <h4 class="date">2024-08-20</h4>
 
 </div>
 
 
-<div id="module-qualification-smartphone-actuel" class="section level1">
-<h1><strong>MODULE QUALIFICATION SMARTPHONE ACTUEL :</strong></h1>
+<div id="module-sociodémographique" class="section level1">
+<h1><strong>MODULE SOCIODÉMOGRAPHIQUE :</strong></h1>
 <p><strong>OBJECTIF :</strong> <em>Synthétiser les grahes du module
-qualification smartphone actuel</em></p>
-<div id="parlons-à-présent-de-votre-usage-de-votre-téléphone-actuel" class="section level2">
-<h2><em>“Parlons à présent de votre usage de votre téléphone
-actuel”</em></h2>
-</div>
-<div id="filtre-du-module-si-equipement-2-smartphone" class="section level2">
-<h2><strong>Filtre du Module :</strong> Si equipement = 2
-(smartphone)</h2>
-</div>
-<div id="i-nb-smartphone" class="section level2">
-<h2><strong>I ) NB SMARTPHONE</strong></h2>
-<p>Combien de smartphones utilisez-vous en ce moment ? :</p>
-<ul>
-<li><p>1 : 1</p></li>
-<li><p>2 : 2</p></li>
-<li><p>3 : 3 ou plus</p></li>
-</ul>
+réparation</em></p>
+<p><strong>Filtre du module :</strong> si IDENTIFICATION_PROBLEME = 1 à
+26 (au moins un problème identifié en SAUF autre exclusif OU aucun)</p>
+<div id="i-reparation" class="section level2">
+<h2><strong>I ) REPARATION</strong></h2>
+<p>Avez-vous tenté de résoudre ou de faire résoudre le(s)
+dysfonctionnement(s) rencontré(s) ?</p>
+<ol style="list-style-type: decimal">
+<li><p>Oui et le problème s’est résolu</p></li>
+<li><p>Oui mais le problème ne s’est pas résolu</p></li>
+<li><p>Non, le problème s’est résolu tout seul au bout d’un
+moment</p></li>
+<li><p>Non, peut être plus tard</p></li>
+<li><p>Non, je ne pense pas tenter de résoudre le problème</p></li>
+</ol>
 <div id="avec-pondération" class="section level4">
 <h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##   NB_SMARTPHONE Nb_personne Pourcent
-## 1             1     44173.9     92.4
-## 2             2      3509.4      7.3
-## 3     3 ou plus       148.5      0.3
-## 4         Total     47831.8    100.0</code></pre>
+<pre><code>##                                                        Problemes
+## 1                                          Problème avec l’écran
+## 2                             Problème de sensibilité du tactile
+## 3                                 Problème avec l’appareil photo
+## 4                      Problème avec la lampe torche ou le flash
+## 5                                           Problème avec le GPS
+## 6                                         Problème avec le micro
+## 7                                                Problème de son
+## 8                                         Problème de prise jack
+## 9                                         Problème de chargement
+## 10                                          Problème de batterie
+## 11                                             Problème de Wi-Fi
+## 12                                          Problème de capteurs
+## 13   Problème de Bluetooth ou de transferts de fichiers sans fil
+## 14                                        Problème de téléphonie
+## 15                                   Problème d’accès à Internet
+## 16                                     Problème avec les boutons
+## 17                                           Problème de vibreur
+## 18                                               Stockage saturé
+## 19                         Système d’exploitation non mis à jour
+## 20 Applications ne pouvant pas être téléchargées ou mises à jour
+## 21                   Problème lié à une fonctionnalité manquante
+## 22                             Fonctionnalité qui ne marche plus
+## 23                                    Dysfonctionnement logiciel
+## 24                               Problèmes avec des applications
+## 25                                           Problème de lenteur
+## 26                                                         Total
+##    Oui.et.le.problème.s.est.résolu Oui.mais.le.problème.ne.s.est.pas.résolu
+## 1                              278                                      451
+## 2                              234                                      384
+## 3                               64                                      297
+## 4                              100                                      183
+## 5                              123                                       93
+## 6                              300                                      253
+## 7                              294                                      453
+## 8                              270                                        0
+## 9                              546                                      370
+## 10                             669                                     1232
+## 11                             607                                      646
+## 12                               0                                      159
+## 13                             110                                      170
+## 14                             223                                      339
+## 15                             249                                      263
+## 16                             156                                      237
+## 17                               0                                        0
+## 18                            1160                                     1407
+## 19                             190                                      213
+## 20                             168                                      346
+## 21                             260                                      150
+## 22                             121                                      375
+## 23                             217                                      250
+## 24                             560                                      566
+## 25                             447                                     1123
+## 26                            7346                                     9960
+##    Non..le.problème.s.est.résolu.tout.seul.au.bout.d.un.moment
+## 1                                                           96
+## 2                                                          241
+## 3                                                          166
+## 4                                                           88
+## 5                                                          106
+## 6                                                          244
+## 7                                                          179
+## 8                                                           43
+## 9                                                          131
+## 10                                                         586
+## 11                                                         294
+## 12                                                           0
+## 13                                                          42
+## 14                                                         187
+## 15                                                         322
+## 16                                                         104
+## 17                                                          84
+## 18                                                         364
+## 19                                                           0
+## 20                                                         299
+## 21                                                         198
+## 22                                                         147
+## 23                                                         589
+## 24                                                         634
+## 25                                                         619
+## 26                                                        5763
+##    Non..peut.être.plus.tard Non..je.ne.pense.pas.tenter.de.résoudre.le.problème
+## 1                       566                                                 536
+## 2                       309                                                 467
+## 3                       274                                                 208
+## 4                        37                                                   0
+## 5                        51                                                 166
+## 6                        93                                                 308
+## 7                       117                                                 288
+## 8                       117                                                 187
+## 9                       241                                                 387
+## 10                     1597                                                1424
+## 11                      255                                                 251
+## 12                       57                                                 108
+## 13                      113                                                 229
+## 14                      162                                                 313
+## 15                      234                                                 158
+## 16                      313                                                  69
+## 17                      100                                                   0
+## 18                      926                                                 669
+## 19                      188                                                 181
+## 20                      213                                                 432
+## 21                      118                                                 409
+## 22                       40                                                 171
+## 23                      243                                                 485
+## 24                      326                                                 552
+## 25                      710                                                1238
+## 26                     7400                                                9236</code></pre>
 </div>
 <div id="sans-pondération" class="section level4">
 <h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##   NB_SMARTPHONE Nb_personne Pourcent
-## 1             1         893     92.3
-## 2             2          72      7.4
-## 3     3 ou plus           3      0.3
-## 4         Total         968    100.0</code></pre>
+<pre><code>##                                                        Problemes
+## 1                                          Problème avec l’écran
+## 2                             Problème de sensibilité du tactile
+## 3                                 Problème avec l’appareil photo
+## 4                      Problème avec la lampe torche ou le flash
+## 5                                           Problème avec le GPS
+## 6                                         Problème avec le micro
+## 7                                                Problème de son
+## 8                                         Problème de prise jack
+## 9                                         Problème de chargement
+## 10                                          Problème de batterie
+## 11                                             Problème de Wi-Fi
+## 12                                          Problème de capteurs
+## 13   Problème de Bluetooth ou de transferts de fichiers sans fil
+## 14                                        Problème de téléphonie
+## 15                                   Problème d’accès à Internet
+## 16                                     Problème avec les boutons
+## 17                                           Problème de vibreur
+## 18                                               Stockage saturé
+## 19                         Système d’exploitation non mis à jour
+## 20 Applications ne pouvant pas être téléchargées ou mises à jour
+## 21                   Problème lié à une fonctionnalité manquante
+## 22                             Fonctionnalité qui ne marche plus
+## 23                                    Dysfonctionnement logiciel
+## 24                               Problèmes avec des applications
+## 25                                           Problème de lenteur
+## 26                                                         Total
+##    Oui.et.le.problème.s.est.résolu Oui.mais.le.problème.ne.s.est.pas.résolu
+## 1                                6                                        9
+## 2                                5                                        8
+## 3                                1                                        6
+## 4                                2                                        4
+## 5                                3                                        2
+## 6                                6                                        5
+## 7                                6                                        9
+## 8                                6                                        0
+## 9                               10                                        8
+## 10                              12                                       26
+## 11                              12                                       12
+## 12                               0                                        3
+## 13                               2                                        3
+## 14                               4                                        7
+## 15                               5                                        5
+## 16                               3                                        5
+## 17                               0                                        0
+## 18                              22                                       30
+## 19                               4                                        5
+## 20                               4                                        7
+## 21                               6                                        3
+## 22                               3                                        8
+## 23                               4                                        5
+## 24                              11                                       12
+## 25                               9                                       23
+## 26                             146                                      205
+##    Non..le.problème.s.est.résolu.tout.seul.au.bout.d.un.moment
+## 1                                                            2
+## 2                                                            5
+## 3                                                            3
+## 4                                                            2
+## 5                                                            2
+## 6                                                            5
+## 7                                                            4
+## 8                                                            1
+## 9                                                            3
+## 10                                                          12
+## 11                                                           7
+## 12                                                           0
+## 13                                                           1
+## 14                                                           4
+## 15                                                           6
+## 16                                                           2
+## 17                                                           2
+## 18                                                           8
+## 19                                                           0
+## 20                                                           6
+## 21                                                           4
+## 22                                                           3
+## 23                                                          13
+## 24                                                          13
+## 25                                                          12
+## 26                                                         120
+##    Non..peut.être.plus.tard Non..je.ne.pense.pas.tenter.de.résoudre.le.problème
+## 1                        11                                                  10
+## 2                         6                                                   9
+## 3                         6                                                   4
+## 4                         1                                                   0
+## 5                         1                                                   3
+## 6                         2                                                   6
+## 7                         2                                                   5
+## 8                         2                                                   3
+## 9                         5                                                   7
+## 10                       34                                                  29
+## 11                        5                                                   5
+## 12                        1                                                   2
+## 13                        2                                                   4
+## 14                        3                                                   6
+## 15                        5                                                   3
+## 16                        6                                                   1
+## 17                        2                                                   0
+## 18                       19                                                  13
+## 19                        4                                                   4
+## 20                        5                                                   9
+## 21                        3                                                   8
+## 22                        1                                                   3
+## 23                        5                                                   9
+## 24                        7                                                  11
+## 25                       14                                                  25
+## 26                      152                                                 179</code></pre>
 </div>
 </div>
-<div id="ii-contexte-usage-smartphone" class="section level2">
-<h2><strong>II ) CONTEXTE USAGE SMARTPHONE</strong></h2>
-<p>Nous allons nous intéresser au smartphone que vous utilisez le plus
-souvent. Est-ce un smartphone à usage principalement :</p>
-<ul>
-<li><p>1 : Personnel</p></li>
-<li><p>2 : Professionnel</p></li>
-<li><p>3 : Personnel et professionnel</p></li>
-</ul>
+<div id="ii-cohabitation_dysfonctionnement" class="section level2">
+<h2><strong>II ) COHABITATION_DYSFONCTIONNEMENT</strong></h2>
+<p><strong>Filtre :</strong> si REPARATION_1 à REPARATION_26 = 1 à 2
+(Oui…)</p>
+<p>Combien de temps s’est écoulé approximativement entre le moment où
+vous avez décelé le(s) dysfonctionnement(s) et le moment où vous avez
+tenté de le(s) résoudre ou de le(s) faire résoudre ?</p>
+<ol style="list-style-type: decimal">
+<li><p>Dès que j’ai décelé le dysfonctionnement</p></li>
+<li><p>Moins d’un mois</p></li>
+<li><p>Entre 1 et 6 mois</p></li>
+<li><p>Entre 6 mois et 2 ans</p></li>
+<li><p>Plus de deux ans</p></li>
+<li><p>Je ne sais pas</p></li>
+</ol>
 <div id="avec-pondération-1" class="section level4">
 <h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##    CONTEXTE_USAGE_SMARTPHONE Nb_personne Pourcent
-## 1                  Personnel     39997.3     83.6
-## 2              Professionnel       523.9      1.1
-## 3 Personnel et professionnel      7310.6     15.3
-## 4                      Total     47831.8    100.0</code></pre>
+<pre><code>##                                                        Problemes
+## 1                                          Problème avec l’écran
+## 2                             Problème de sensibilité du tactile
+## 3                                 Problème avec l’appareil photo
+## 4                      Problème avec la lampe torche ou le flash
+## 5                                           Problème avec le GPS
+## 6                                         Problème avec le micro
+## 7                                                Problème de son
+## 8                                         Problème de prise jack
+## 9                                         Problème de chargement
+## 10                                          Problème de batterie
+## 11                                             Problème de Wi-Fi
+## 12                                          Problème de capteurs
+## 13   Problème de Bluetooth ou de transferts de fichiers sans fil
+## 14                                        Problème de téléphonie
+## 15                                   Problème d’accès à Internet
+## 16                                     Problème avec les boutons
+## 17                                           Problème de vibreur
+## 18                                               Stockage saturé
+## 19                         Système d’exploitation non mis à jour
+## 20 Applications ne pouvant pas être téléchargées ou mises à jour
+## 21                   Problème lié à une fonctionnalité manquante
+## 22                             Fonctionnalité qui ne marche plus
+## 23                                    Dysfonctionnement logiciel
+## 24                               Problèmes avec des applications
+## 25                                           Problème de lenteur
+## 26                                                         Total
+##    Dès.que.j.ai.décelé.le.dysfonctionnement Moins.d.un.mois Entre.1.et.6.mois
+## 1                                       142             297                37
+## 2                                       294              93                43
+## 3                                        37             152               108
+## 4                                        49             105                 0
+## 5                                       123              93                 0
+## 6                                       159             258                42
+## 7                                       440             193               114
+## 8                                       207               0                31
+## 9                                       363             277               107
+## 10                                      565             432               531
+## 11                                      491             482               280
+## 12                                       62               0                 0
+## 13                                        0             165               115
+## 14                                      272             257                 0
+## 15                                      263             208                41
+## 16                                      142             169                82
+## 17                                        0               0                 0
+## 18                                      897             948               395
+## 19                                      185             175                 0
+## 20                                      231             142               102
+## 21                                       79             219                 0
+## 22                                      144             106               109
+## 23                                      297             111                59
+## 24                                      640             159               219
+## 25                                      564             623               190
+## 26                                     6646            5664              2605
+##    Entre.6.mois.et.2.ans Plus.de.deux.ans Je.ne.sais.pas
+## 1                    134               64             55
+## 2                     90               98              0
+## 3                      0               64              0
+## 4                     97               32              0
+## 5                      0                0              0
+## 6                     39                0             55
+## 7                      0                0              0
+## 8                     32                0              0
+## 9                     94               37             38
+## 10                   103              169            101
+## 11                     0                0              0
+## 12                    97                0              0
+## 13                     0                0              0
+## 14                    33                0              0
+## 15                     0                0              0
+## 16                     0                0              0
+## 17                     0                0              0
+## 18                   185               56             86
+## 19                     0                0             43
+## 20                    39                0              0
+## 21                     0              112              0
+## 22                    94                0             43
+## 23                     0                0              0
+## 24                    54                0             54
+## 25                   193                0              0
+## 26                  1284              632            475</code></pre>
 </div>
 <div id="sans-pondération-1" class="section level4">
 <h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##    CONTEXTE_USAGE_SMARTPHONE Nb_personne Pourcent
-## 1                  Personnel         810     83.7
-## 2              Professionnel          10      1.0
-## 3 Personnel et professionnel         148     15.3
-## 4                      Total         968    100.0</code></pre>
+<pre><code>##                                                        Problemes
+## 1                                          Problème avec l’écran
+## 2                             Problème de sensibilité du tactile
+## 3                                 Problème avec l’appareil photo
+## 4                      Problème avec la lampe torche ou le flash
+## 5                                           Problème avec le GPS
+## 6                                         Problème avec le micro
+## 7                                                Problème de son
+## 8                                         Problème de prise jack
+## 9                                         Problème de chargement
+## 10                                          Problème de batterie
+## 11                                             Problème de Wi-Fi
+## 12                                          Problème de capteurs
+## 13   Problème de Bluetooth ou de transferts de fichiers sans fil
+## 14                                        Problème de téléphonie
+## 15                                   Problème d’accès à Internet
+## 16                                     Problème avec les boutons
+## 17                                           Problème de vibreur
+## 18                                               Stockage saturé
+## 19                         Système d’exploitation non mis à jour
+## 20 Applications ne pouvant pas être téléchargées ou mises à jour
+## 21                   Problème lié à une fonctionnalité manquante
+## 22                             Fonctionnalité qui ne marche plus
+## 23                                    Dysfonctionnement logiciel
+## 24                               Problèmes avec des applications
+## 25                                           Problème de lenteur
+## 26                                                         Total
+##    Dès.que.j.ai.décelé.le.dysfonctionnement Moins.d.un.mois Entre.1.et.6.mois
+## 1                                         3               6                 1
+## 2                                         6               2                 1
+## 3                                         1               3                 2
+## 4                                         1               2                 0
+## 5                                         3               2                 0
+## 6                                         3               5                 1
+## 7                                         9               4                 2
+## 8                                         4               0                 1
+## 9                                         7               5                 2
+## 10                                       12               9                10
+## 11                                       10               9                 5
+## 12                                        1               0                 0
+## 13                                        0               3                 2
+## 14                                        5               5                 0
+## 15                                        5               4                 1
+## 16                                        3               3                 2
+## 17                                        0               0                 0
+## 18                                       19              18                 8
+## 19                                        4               4                 0
+## 20                                        5               3                 2
+## 21                                        2               5                 0
+## 22                                        3               2                 3
+## 23                                        6               2                 1
+## 24                                       13               3                 5
+## 25                                       12              12                 4
+## 26                                      137             111                53
+##    Entre.6.mois.et.2.ans Plus.de.deux.ans Je.ne.sais.pas
+## 1                      3                1              1
+## 2                      2                2              0
+## 3                      0                1              0
+## 4                      2                1              0
+## 5                      0                0              0
+## 6                      1                0              1
+## 7                      0                0              0
+## 8                      1                0              0
+## 9                      2                1              1
+## 10                     2                3              2
+## 11                     0                0              0
+## 12                     2                0              0
+## 13                     0                0              0
+## 14                     1                0              0
+## 15                     0                0              0
+## 16                     0                0              0
+## 17                     0                0              0
+## 18                     4                1              2
+## 19                     0                0              1
+## 20                     1                0              0
+## 21                     0                2              0
+## 22                     2                0              1
+## 23                     0                0              0
+## 24                     1                0              1
+## 25                     4                0              0
+## 26                    28               12             10</code></pre>
 </div>
 </div>
-<div id="iii-marqmob1---marque-mobile-principal" class="section level2">
-<h2><strong>III ) MARQMOB1 - Marque mobile principal</strong></h2>
-<p>Quelle est la marque de ce smartphone ?</p>
-<ul>
-<li><p>1 : Apple</p></li>
-<li><p>2 : Asus</p></li>
-<li><p>3 : Google Pixel</p></li>
-<li><p>4 : Fairphone</p></li>
-<li><p>5 : Honor</p></li>
-<li><p>6 : Huawei</p></li>
-<li><p>7 : Nokia</p></li>
-<li><p>8 : OPPO</p></li>
-<li><p>9 : Samsung</p></li>
-<li><p>10 : Sony</p></li>
-<li><p>11 : Wiko</p></li>
-<li><p>12 : Xiaomi</p></li>
-<li><p>13 : Un autre constructeur</p></li>
-</ul>
+<div id="iii-int_reparation" class="section level2">
+<h2><strong>III ) INT_REPARATION</strong></h2>
+<p><strong>Filtre :</strong> si REPARATION_1 à REPARATION_26 = 4 ou 5
+(n’a pas réparé)</p>
+<p>Vous nous avez déclaré ne pas avoir tenté de résoudre les
+dysfonctionnements suivants de votre smartphone. Envisagez-vous de
+tenter de le(s) résoudre ?</p>
+<ol style="list-style-type: decimal">
+<li><p>Oui, par moi-même</p></li>
+<li><p>Oui, par le SAV ou un réparateur</p></li>
+<li><p>Oui, par une connaissance</p></li>
+<li><p>Pas pour l’instant</p></li>
+<li><p>Non</p></li>
+</ol>
 <div id="avec-pondération-2" class="section level3">
 <h3><strong>1 ) Avec pondération</strong></h3>
-<pre><code>##                  MARQMOB Nb_personne Pourcent
-## 1                  Apple     14126.1     29.5
-## 2                   Asus       207.7      0.4
-## 3           Google Pixel       676.1      1.4
-## 4                  Honor       517.7      1.1
-## 5                 Huawei      2830.7      5.9
-## 6                  Nokia       222.0      0.5
-## 7                   OPPO      1544.3      3.2
-## 8                Samsung     17399.0     36.4
-## 9                   Sony       348.5      0.7
-## 10                  Wiko       611.7      1.3
-## 11                Xiaomi      7085.6     14.8
-## 12 Un autre constructeur      2262.4      4.7
-## 13                 Total     47831.8     99.9</code></pre>
+<pre><code>##                                                        Problemes
+## 1                                          Problème avec l’écran
+## 2                             Problème de sensibilité du tactile
+## 3                                 Problème avec l’appareil photo
+## 4                      Problème avec la lampe torche ou le flash
+## 5                                           Problème avec le GPS
+## 6                                         Problème avec le micro
+## 7                                                Problème de son
+## 8                                         Problème de prise jack
+## 9                                         Problème de chargement
+## 10                                          Problème de batterie
+## 11                                             Problème de Wi-Fi
+## 12                                          Problème de capteurs
+## 13   Problème de Bluetooth ou de transferts de fichiers sans fil
+## 14                                        Problème de téléphonie
+## 15                                   Problème d’accès à Internet
+## 16                                     Problème avec les boutons
+## 17                                           Problème de vibreur
+## 18                                               Stockage saturé
+## 19                         Système d’exploitation non mis à jour
+## 20 Applications ne pouvant pas être téléchargées ou mises à jour
+## 21                   Problème lié à une fonctionnalité manquante
+## 22                             Fonctionnalité qui ne marche plus
+## 23                                    Dysfonctionnement logiciel
+## 24                               Problèmes avec des applications
+## 25                                           Problème de lenteur
+## 26                                                         Total
+##    Oui..par.moi.même Oui..par.le.SAV.ou.un.réparateur Oui..par.une.connaissance
+## 1                 63                               96                         0
+## 2                167                              196                         0
+## 3                140                              100                        47
+## 4                  0                                0                         0
+## 5                  0                               51                         0
+## 6                102                               39                       101
+## 7                 60                              117                        63
+## 8                  0                                0                         0
+## 9                138                              108                        45
+## 10               180                              683                       205
+## 11                54                               44                       107
+## 12                 0                                0                         0
+## 13                 0                               58                        55
+## 14                61                               57                         0
+## 15                37                               57                        54
+## 16                57                              164                        55
+## 17                 0                                0                        56
+## 18               356                               51                       184
+## 19                 0                                0                        55
+## 20               133                               57                         0
+## 21                 0                                0                        33
+## 22                 0                                0                         0
+## 23               163                              129                         0
+## 24               197                              172                         0
+## 25               155                              341                       144
+## 26              2063                             2520                      1204
+##    Pas.pour.l.instant  Non
+## 1                 491  452
+## 2                 122  291
+## 3                  85  110
+## 4                  37    0
+## 5                  62  104
+## 6                   0  159
+## 7                  64  101
+## 8                 117  187
+## 9                  56  281
+## 10               1168  785
+## 11                196  105
+## 12                111   54
+## 13                 49  180
+## 14                 91  266
+## 15                142  102
+## 16                 37   69
+## 17                 44    0
+## 18                524  480
+## 19                223   91
+## 20                121  334
+## 21                172  322
+## 22                 56  155
+## 23                219  217
+## 24                361  148
+## 25                633  675
+## 26               5181 5668</code></pre>
 </div>
 <div id="sans-pondération-2" class="section level3">
 <h3><strong>2 ) Sans pondération</strong></h3>
-<pre><code>##                  MARQMOB Nb_personne Pourcent
-## 1                  Apple         291     30.1
-## 2                   Asus           4      0.4
-## 3           Google Pixel          14      1.4
-## 4                  Honor          10      1.0
-## 5                 Huawei          57      5.9
-## 6                  Nokia           5      0.5
-## 7                   OPPO          30      3.1
-## 8                Samsung         352     36.4
-## 9                   Sony           7      0.7
-## 10                  Wiko          12      1.2
-## 11                Xiaomi         141     14.6
-## 12 Un autre constructeur          45      4.6
-## 13                 Total         968     99.9</code></pre>
-</div>
-</div>
-<div id="iv-os-système-dexploitation" class="section level2">
-<h2><strong>IV ) OS – Système d’exploitation</strong></h2>
-<p><strong>Filtre :</strong> Si MARQMOB1 &lt;&gt; 1 (Apple)</p>
-<p>Quel est le système d’exploitation de ce smartphone ?</p>
-<ul>
-<li><p>1 : iOS (Apple)</p></li>
-<li><p>2 : Android</p></li>
-<li><p>3 : Autre (Windows Phone, …)</p></li>
-<li><p>4 : Je ne sais pas</p></li>
-</ul>
-<div id="avec-pondération-3" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##               OS Nb_personne Pourcent
-## 1            iOS     14126.1    29.53
-## 2        Android     32472.3    67.89
-## 3          Autre       596.8     1.25
-## 4 Je ne sais pas       636.5     1.33
-## 5          Total     47831.7   100.00</code></pre>
-</div>
-<div id="sans-pondération-3" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##               OS Nb_personne Pourcent
-## 1            iOS         291    30.06
-## 2        Android         652    67.36
-## 3          Autre          12     1.24
-## 4 Je ne sais pas          13     1.34
-## 5          Total         968   100.00</code></pre>
-</div>
-</div>
-<div id="v-acquisitiontel" class="section level2">
-<h2><strong>V ) ACQUISITIONTEL</strong></h2>
-<p>Comment avez-vous obtenu votre smartphone actuel ?</p>
-<ul>
-<li><p>1 : Quelqu’un me l’a offert ou donné</p></li>
-<li><p>2 : Quelqu’un me l’a prêté 3Je l’ai acheté</p></li>
-<li><p>3 : Je l’ai obtenu dans le cadre de mon contrat avec mon
-opérateur</p></li>
-<li><p>4 : Mon employeur me l’a fourni</p></li>
-<li><p>5 : Je l’ai loué</p></li>
-<li><p>6 : Je ne me souviens pas</p></li>
-<li><p>7 : Je l’ai obtenu par un autre moyen que ceux ci-dessus</p></li>
-</ul>
-<div id="avec-pondération-4" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##                                                   ACQUISITIONTEL Nb_personnes
-## 1                               Quelqu’un me l’a offert ou donné       8252.0
-## 2                                         Quelqu’un me l’a prêté        228.5
-## 3                                                 Je l’ai acheté      35683.2
-## 4 Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur       2910.2
-## 5                                    Mon employeur me l’a fourni        418.6
-## 6                                                   Je l’ai loué        254.0
-## 7                                          Je ne me souviens pas         37.8
-## 8           Je l’ai obtenu par un autre moyen que ceux ci-dessus         47.5
-## 9                                                          Total      47831.8
-##   Pourcent
-## 1       17
-## 2        0
-## 3       75
-## 4        6
-## 5        1
-## 6        1
-## 7        0
-## 8        0
-## 9      100</code></pre>
-</div>
-<div id="sans-pondération-4" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##                                                   ACQUISITIONTEL Nb_personnes
-## 1                               Quelqu’un me l’a offert ou donné          170
-## 2                                         Quelqu’un me l’a prêté            4
-## 3                                                 Je l’ai acheté          719
-## 4 Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur           60
-## 5                                    Mon employeur me l’a fourni            8
-## 6                                                   Je l’ai loué            5
-## 7                                          Je ne me souviens pas            1
-## 8           Je l’ai obtenu par un autre moyen que ceux ci-dessus            1
-## 9                                                          Total          968
-##   Pourcent
-## 1     17.6
-## 2      0.4
-## 3     74.3
-## 4      6.2
-## 5      0.8
-## 6      0.5
-## 7      0.1
-## 8      0.1
-## 9    100.0</code></pre>
-</div>
-</div>
-<div id="vi-dateobtentionsmart" class="section level2">
-<h2><strong>VI ) DATEOBTENTIONSMART</strong></h2>
-<p>Quand l’avez-vous obtenu ?</p>
-<p><strong>Année :</strong></p>
-<ul>
-<li><p>2023 : 2023</p></li>
-<li><p>2022 : 2022</p></li>
-<li><p>… : …</p></li>
-<li><p>2000 : 2000</p></li>
-</ul>
-<div id="avec-pondération-5" class="section level4">
-<h4>** 1 ) Avec pondération :**</h4>
-<pre><code>##    DATEOBTENTIONSMART Nb_personnes Pourcent
-## 1                2000         37.8     0.08
-## 2                2001        150.3     0.31
-## 3                2002         31.1     0.07
-## 4                2004         31.6     0.07
-## 5                2005         64.1     0.13
-## 6                2006        109.9     0.23
-## 7                2008         55.9     0.12
-## 8                2015        158.2     0.33
-## 9                2016        183.6     0.38
-## 10               2017        703.8     1.47
-## 11               2018       1715.0     3.59
-## 12               2019       2796.9     5.85
-## 13               2020       6371.1    13.32
-## 14               2021      10908.7    22.81
-## 15               2022      12835.0    26.83
-## 16               2023      11678.8    24.42
-## 17              Total      47831.8   100.01</code></pre>
-</div>
-<div id="sans-pondération-5" class="section level4">
-<h4>** 2 ) Sans pondération :**</h4>
-<pre><code>##    DATEOBTENTIONSMART Nb_personnes Pourcent
-## 1                2000            1     0.10
-## 2                2001            3     0.31
-## 3                2002            1     0.10
-## 4                2004            1     0.10
-## 5                2005            2     0.21
-## 6                2006            2     0.21
-## 7                2008            1     0.10
-## 8                2015            3     0.31
-## 9                2016            3     0.31
-## 10               2017           14     1.45
-## 11               2018           34     3.51
-## 12               2019           58     5.99
-## 13               2020          132    13.64
-## 14               2021          220    22.73
-## 15               2022          259    26.76
-## 16               2023          234    24.17
-## 17              Total          968   100.00</code></pre>
-</div>
-</div>
-<div id="vii-etatsmartphone" class="section level2">
-<h2><strong>VII ) ETATSMARTPHONE</strong></h2>
-<p>Dans quel état avez-vous obtenu votre smartphone ?</p>
-<ul>
-<li><p>1 : Neuf</p></li>
-<li><p>2 : D’occasion</p></li>
-<li><p>3 : Reconditionné</p></li>
-<li><p>4 : Je ne sais pas</p></li>
-</ul>
-<div id="avec-pondération-6" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##   ETATSMARTPHONE Nb_personnes Pourcent
-## 1           Neuf      39257.5     82.1
-## 2     D&#39;occasion       4347.7      9.1
-## 3  Reconditionné       3999.8      8.4
-## 4 Je ne sais pas        226.8      0.5
-## 5          Total      47831.8    100.1</code></pre>
-</div>
-<div id="sans-pondération-6" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##   ETATSMARTPHONE Nb_personnes Pourcent
-## 1           Neuf          792     81.8
-## 2     D&#39;occasion           88      9.1
-## 3  Reconditionné           83      8.6
-## 4 Je ne sais pas            5      0.5
-## 5          Total          968    100.0</code></pre>
-</div>
-</div>
-<div id="viii-utilisationsmartoccas" class="section level2">
-<h2><strong>VIII ) UTILISATIONSMARTOCCAS</strong></h2>
-<p><strong>Filtre :</strong> Si ETATSMARTPHONE = 2 (d’occasion)</p>
-<p>Vous nous avez déclaré que votre smartphone était d’occasion, combien
-de temps a-t-il été utilisé avant que vous ne l’obteniez ?</p>
-<ul>
-<li><p>1 : Moins de 6 mois</p></li>
-<li><p>2 : Entre 6 mois et 1 an</p></li>
-<li><p>3 : Entre 1 et 2 ans</p></li>
-<li><p>4 : Entre 2 et 3 ans</p></li>
-<li><p>5 : Entre 3 et 5 ans</p></li>
-<li><p>6 : Plus de 5 ans</p></li>
-<li><p>7 : Je ne sais pas</p></li>
-</ul>
-<div id="avec-pondération-7" class="section level4">
-<h4><strong>1 ) Avec pondération</strong></h4>
-<pre><code>##   UTILISATIONSMARTOCCAS Nb_personnes Pourcent
-## 1       Moins de 6 mois        523.2     12.0
-## 2  Entre 6 mois et 1 an        904.5     20.8
-## 3      Entre 1 et 2 ans        912.4     21.0
-## 4      Entre 2 et 3 ans        445.0     10.2
-## 5      Entre 3 et 5 ans        376.5      8.7
-## 6         Plus de 5 ans        174.5      4.0
-## 7        Je ne sais pas       1011.7     23.3
-## 8                 Total       4347.8    100.0</code></pre>
-</div>
-<div id="sans-pondération-7" class="section level4">
-<h4><strong>2 ) Sans pondération</strong></h4>
-<pre><code>##   UTILISATIONSMARTOCCAS Nb_personnes Pourcent
-## 1       Moins de 6 mois           12     13.6
-## 2  Entre 6 mois et 1 an           18     20.5
-## 3      Entre 1 et 2 ans           17     19.3
-## 4      Entre 2 et 3 ans            9     10.2
-## 5      Entre 3 et 5 ans            8      9.1
-## 6         Plus de 5 ans            3      3.4
-## 7        Je ne sais pas           21     23.9
-## 8                 Total           88    100.0</code></pre>
+<pre><code>##                                                        Problemes
+## 1                                          Problème avec l’écran
+## 2                             Problème de sensibilité du tactile
+## 3                                 Problème avec l’appareil photo
+## 4                      Problème avec la lampe torche ou le flash
+## 5                                           Problème avec le GPS
+## 6                                         Problème avec le micro
+## 7                                                Problème de son
+## 8                                         Problème de prise jack
+## 9                                         Problème de chargement
+## 10                                          Problème de batterie
+## 11                                             Problème de Wi-Fi
+## 12                                          Problème de capteurs
+## 13   Problème de Bluetooth ou de transferts de fichiers sans fil
+## 14                                        Problème de téléphonie
+## 15                                   Problème d’accès à Internet
+## 16                                     Problème avec les boutons
+## 17                                           Problème de vibreur
+## 18                                               Stockage saturé
+## 19                         Système d’exploitation non mis à jour
+## 20 Applications ne pouvant pas être téléchargées ou mises à jour
+## 21                   Problème lié à une fonctionnalité manquante
+## 22                             Fonctionnalité qui ne marche plus
+## 23                                    Dysfonctionnement logiciel
+## 24                               Problèmes avec des applications
+## 25                                           Problème de lenteur
+## 26                                                         Total
+##    Oui..par.moi.même Oui..par.le.SAV.ou.un.réparateur Oui..par.une.connaissance
+## 1                  1                                2                         0
+## 2                  3                                4                         0
+## 3                  3                                2                         1
+## 4                  0                                0                         0
+## 5                  0                                1                         0
+## 6                  2                                1                         2
+## 7                  1                                2                         1
+## 8                  0                                0                         0
+## 9                  3                                2                         1
+## 10                 4                               14                         4
+## 11                 1                                1                         2
+## 12                 0                                0                         0
+## 13                 0                                1                         1
+## 14                 1                                1                         0
+## 15                 1                                1                         1
+## 16                 1                                3                         1
+## 17                 0                                0                         1
+## 18                 7                                1                         4
+## 19                 0                                0                         1
+## 20                 3                                1                         0
+## 21                 0                                0                         1
+## 22                 0                                0                         0
+## 23                 3                                3                         0
+## 24                 4                                4                         0
+## 25                 3                                7                         3
+## 26                41                               51                        24
+##    Pas.pour.l.instant Non
+## 1                  10   8
+## 2                   2   6
+## 3                   2   2
+## 4                   1   0
+## 5                   1   2
+## 6                   0   3
+## 7                   1   2
+## 8                   2   3
+## 9                   1   5
+## 10                 25  16
+## 11                  4   2
+## 12                  2   1
+## 13                  1   3
+## 14                  2   5
+## 15                  3   2
+## 16                  1   1
+## 17                  1   0
+## 18                 11   9
+## 19                  5   2
+## 20                  3   7
+## 21                  4   6
+## 22                  1   3
+## 23                  4   4
+## 24                  7   3
+## 25                 13  13
+## 26                107 108</code></pre>
 </div>
 </div>
 </div>

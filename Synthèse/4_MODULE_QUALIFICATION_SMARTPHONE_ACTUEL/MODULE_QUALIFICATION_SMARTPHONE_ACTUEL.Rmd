@@ -274,8 +274,8 @@ souvent. Est-ce un smartphone à usage principalement :
 don <- tapply(data$poids, data$CONTEXTE_USAGE_SMARTPHONE, sum)
 
 df <- data.frame(CONTEXTE_USAGE_SMARTPHONE =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
-df <- df %>% 
-  arrange( desc(Nb_personne))
+
+# df <- df %>%  arrange( desc(Nb_personne))
 
 df$CONTEXTE_USAGE_SMARTPHONE =
   factor(df$CONTEXTE_USAGE_SMARTPHONE,labels=c("Personnel","Professionnel","Personnel et professionnel"))
@@ -299,8 +299,8 @@ print(df)
 don <- table(data$CONTEXTE_USAGE_SMARTPHONE)
 
 df <- data.frame(CONTEXTE_USAGE_SMARTPHONE =names(don), Nb_personne = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
-df <- df %>% 
-  arrange( desc(Nb_personne))
+
+# df <- df %>%  arrange( desc(Nb_personne))
 
 df$CONTEXTE_USAGE_SMARTPHONE =
   factor(df$CONTEXTE_USAGE_SMARTPHONE,labels=c("Personnel","Professionnel","Personnel et professionnel"))

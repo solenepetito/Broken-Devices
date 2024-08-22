@@ -1,5 +1,5 @@
 ---
-title: 'Broken devices : Module problèmes rencontrés '
+title: 'Broken devices : Module fin '
 author: "Solène PETITO"
 output:
   html_document: default
@@ -11,7 +11,7 @@ editor_options:
     wrap: 72
 ---
 
-# **MODULE PROBLÈMES RENCONTRÉS :**
+# **MODULE FIN :**
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -99,7 +99,7 @@ Count_VCM_2 <- function(variable,nb_de_modalites){
     for (j in 1:length(vec)){
       for (k in 1:ncol(mat)){
         if (vec[j]==mat[1,k]){
-          mat[2,k]=mat[2,k]+ 1# mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
         }
       }
     }
@@ -165,7 +165,7 @@ matrice_cat[4, 1:length(dys_divers)] <- dys_divers
 print(matrice_cat)
 ```
 
-**OBJECTIF :** *Synthétiser les grahes du module problèmes rencontrés*
+**OBJECTIF :** *Synthétiser les grahes du module fin*
 
 ```{r include=FALSE}
 # Import des données
@@ -207,75 +207,13 @@ for (i in 1 :ncol(df)){
   }
 ```
 
-## "Nous allons à présent parler de l'utilisation de votre smartphone actuel"
+## **I ) RECONTACT**
 
-## **Filtre du module :** si EQUIPEMENT = 2 (équipement smartphone)
+Acceptez-vous d'être recontacté.e ?
 
-## **I ) IDENTIFICATION_PROBLEMES (Variable à choix multiples)**
+1.  Oui
 
-Pouvez-vous nous indiquer quels sont les problèmes que vous avez
-rencontrés avec votre smartphone actuel ?
-
-1.  Problème avec l'écran (par ex : fissures, problèmes d'affichage...)
-
-2.  Problème de sensibilité du tactile (par ex : tactile peu sensible,
-    écran qui bouge tout seul...)
-
-3.  Problème avec l'appareil photo
-
-4.  Problème avec la lampe torche ou le flash
-
-5.  Problème avec le GPS
-
-6.  Problème avec le micro
-
-7.  Problème de son
-
-8.  Problème de prise jack
-
-9.  Problème de chargement (par ex : câble non détecté, prise
-    endommagée...)
-
-10. Problème de batterie
-
-11. Problème de Wi-Fi
-
-12. Problème de capteurs (par ex : d'orientation de l'appareil, de
-    luminosité...)
-
-13. Problème de Bluetooth ou de transferts de fichiers sans fil
-
-14. Problème de téléphonie (par ex : appels, sms...)
-
-15. Problème d'accès à Internet
-
-16. Problème avec les boutons
-
-17. Problème de vibreur
-
-18. Stockage saturé
-
-19. Système d'exploitation (par ex : Android, iOS...) non mis à jour
-
-20. Applications ne pouvant pas être téléchargées ou mises à jour
-
-21. Problème lié à une fonctionnalité manquante (par ex : 5G, paiement
-    avec le téléphone, NFC, mode nuit, reconnaissance faciale...)
-
-22. Fonctionnalité qui ne marche plus (par ex : partage de connexion,
-    téléchargement de pièces jointes...)
-
-23. Dysfonctionnement logiciel (par ex : écran qui se fige, s'éteint
-    tout seul, problèmes de notifications...)
-
-24. Problèmes avec des applications (applications qui buggent, qui
-    quittent, qui ne s'ouvrent pas ou plus)
-
-25. Problème de lenteur
-
-26. Autre : champ ouvert
-
-27. Aucun problème rencontré
+2.  Non
 
 #### **1 ) Avec pondération**
 
@@ -283,48 +221,19 @@ rencontrés avec votre smartphone actuel ?
 
 # En utlisant la pondération
 
-variable = data$RIDENTIFICATION_PROBLEMES
-nb_de_modalites = 27
+don <- tapply(data$poids, data$RECONTACT, sum)
 
-mat = Count_VCM(variable,nb_de_modalites)
+df <- data.frame(RECONTACT =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don)),1))
 
-df <- data.frame(PROBLEMES =mat[1,], Nb_personne = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
+# df <- df %>% arrange( desc(Nb_personne))
 
-# df <- df %>%  arrange( desc(Nb_personne))
-
-df$PROBLEMES = factor(df$PROBLEMES,labels= c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre","Aucun problème rencontré"))
-
-total_row <- data.frame(
-  PROBLEMES = "Total",
-  Nb_personne = sum(df$Nb_personne),
-  Pourcent = sum(df$Pourcent)
-)
-
-df <- rbind(df, total_row)
-
-print(df)
-
-```
-
-#### **2 ) Sans pondération**
-
-```{r echo=FALSE}
-# En n'utlisant PAS la pondération
-
-variable = data$RIDENTIFICATION_PROBLEMES
-nb_de_modalites = 27
-
-mat = Count_VCM_2(variable,nb_de_modalites)
-
-df <- data.frame(PROBLEMES =mat[1,], Nb_personne = round(mat[2,]), Pourcent= round(mat[2,]*100/sum(mat[2,]),1))
-
-# df <- df %>%  arrange( desc(Nb_personne))
-
-df$PROBLEMES = factor(df$PROBLEMES,labels= c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre","Aucun problème rencontré"))
+df$RECONTACT=
+  factor(df$RECONTACT,labels=c("Oui",
+"Non"))
 
 total_row <- data.frame(
-  PROBLEMES = "Total",
-  Nb_personne = sum(df$Nb_personne),
+  RECONTACT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
   Pourcent = sum(df$Pourcent)
 )
 
@@ -333,198 +242,39 @@ df <- rbind(df, total_row)
 print(df)
 ```
 
-## **II ) GENE_PROBLEMES**
-
-**Filtre :** si IDENTIFICATION_PROBLEME = 1 à 26 (au moins un problème
-identifié SAUF autre exclusif OU aucun)
-
-Nous allons à présent parler de l'utilisation de votre smartphone.
-
-Pour chacun des dysfonctionnements de votre téléphone que vous nous avez
-déclarés, pouvez-vous nous indiquer le degré de gêne que cela représente
-ou a représenté dans votre utilisation quotidienne ? :
-
--   1 : Très gênant
-
--   2 : Plutôt gênant
-
--   3 : Plutôt pas gênant
-
--   4 : Pas gênant du tout
-
-#### **1 ) Avec pondération**
-
-```{r echo=FALSE}
-# En utlisant la pondération
-
-# Indices des colonnes qui nous intéresse
-
-mat = matrix(0,nrow=25,ncol=4)
-
-deb <- which(names(data) == "GENE_PROBLEMES_A1")
-fin <- which(names(data) == "GENE_PROBLEMES_A25")
-
-for (i in 1:nrow(data)){
-  for (j in deb:fin){
-    val = data[i,j]
-    pb <- j%% (deb-1)
-    if (!is.na(val) && !is.null(val)){
-      mat[pb,val]=mat[pb,val] + round(data[i,"poids"])
-    }
-  }
-}
-
-df <- data.frame(Problemes = label_RIDENTIFICATION_PROBLEME[1:25],Tres_genant = mat[,1],Plutot_genant =mat[,2],Plutot_pas_genant=mat[,3],Pas_du_tout_genant=mat[,4])
-
-
-total_row <- data.frame(
-  Problemes = "Total",
-  Tres_genant = sum(df$Tres_genant),
-  Plutot_genant = sum(df$Plutot_genant),
-  Plutot_pas_genant =sum(df$Plutot_pas_genant),
-  Pas_du_tout_genant =sum(df$Pas_du_tout_genant)
-)
-
-df <- rbind(df, total_row)
-
-df
-
-```
-
 #### **2 ) Sans pondération**
 
 ```{r echo=FALSE}
 # En n'utlisant PAS la pondération
 
-mat = matrix(0,nrow=25,ncol=4)
+don <- table(data$RECONTACT)
 
-deb <- which(names(data) == "GENE_PROBLEMES_A1")
-fin <- which(names(data) == "GENE_PROBLEMES_A25")
+df <- data.frame(RECONTACT =names(don), Nb_personnes = round(as.numeric(don),1), Pourcent= round(as.numeric(don)*100/sum(as.numeric(don))))
 
-for (i in 1:nrow(data)){
-  for (j in deb:fin){
-    val = data[i,j]
-    pb <- j%% (deb-1)
-    if (!is.na(val) && !is.null(val)){
-      mat[pb,val]=mat[pb,val] + 1
-    }
-  }
-}
+# df <- df %>% arrange( desc(Nb_personne))
 
-df <- data.frame(Problemes = label_RIDENTIFICATION_PROBLEME[1:25],Tres_genant = mat[,1],Plutot_genant =mat[,2],Plutot_pas_genant=mat[,3],Pas_du_tout_genant=mat[,4])
-
+df$RECONTACT=
+  factor(df$RECONTACT,labels=c("Oui",
+"Non"))
 
 total_row <- data.frame(
-  Problemes = "Total",
-  Tres_genant = sum(df$Tres_genant),
-  Plutot_genant = sum(df$Plutot_genant),
-  Plutot_pas_genant =sum(df$Plutot_pas_genant),
-  Pas_du_tout_genant =sum(df$Pas_du_tout_genant)
+  RECONTACT = "Total",
+  Nb_personnes = sum(df$Nb_personnes),
+  Pourcent = sum(df$Pourcent)
 )
 
 df <- rbind(df, total_row)
 
-df
+print(df)
 ```
 
-## **III ) RECENCE_PROBLEMES**
+## **EMAIL**
 
-À partir de quel moment approximativement avez-vous décelé les premiers
-dysfonctionnements sur votre smartphone ?
+**Filtre** : Si RECONTACT = 1
 
-1.  Dès la première utilisation
+Merci de nous partager votre e-mail :
 
-2.  En moins de 3 mois
+/_________________/ @ /____________________/ . /____/
 
-3.  Entre 3 mois et 1 an
-
-4.  Entre 1 et 2 ans
-
-5.  Entre 2 et 3 ans
-
-6.  Plus de 3 ans
-
-7.  Je ne sais pas
-
-### **1 ) Avec pondération**
-
-```{r echo=FALSE}
-# En utlisant la pondération
-
-mat = matrix(0,nrow=25,ncol=7)
-
-
-deb <- which(names(data) == "RECENCE_PROBLEMES_A1")
-fin <- which(names(data) == "RECENCE_PROBLEMES_A25")
-
-for (i in 1:nrow(data)){
-  for (j in deb:fin){
-    val = data[i,j]
-    pb <- j%% (deb-1)
-    if (!is.na(val) && !is.null(val)){
-      mat[pb,val]=mat[pb,val] + round(data[i,"poids"])
-    }
-  }
-}
-
-df <- data.frame(Problemes = label_RIDENTIFICATION_PROBLEME[1:25],`Dès la première utilisation` = mat[,1],`En moins de 3 mois`
-=mat[,2],`Entre 3 mois et 1 an`=mat[,3],`Entre 1 et 2 ans`=mat[,4],`Entre 2 et 3 ans`=mat[,5],`Plus de 3 ans`=mat[,6],`Je ne sais pas`=mat[,7])
-
-
-total_row <- data.frame(
-  Problemes = "Total",
-  `Dès la première utilisation` = sum(df$Dès.la.première.utilisation),
-  `En moins de 3 mois` = sum(df$En.moins.de.3.mois),
-  `Entre 3 mois et 1 an` =sum(df$Entre.3.mois.et.1.an),
-  `Entre 1 et 2 ans` =sum(df$Entre.1.et.2.ans),
-  `Entre 2 et 3 ans` =sum(df$Entre.2.et.3.ans),
-  `Plus de 3 ans` =sum(df$Plus.de.3.ans),
-  `Je ne sais pas` =sum(df$Je.ne.sais.pas)
-)
-
-df <- rbind(df, total_row)
-
-df
-```
-
-### **2 ) Sans pondération**
-
-```{r echo=FALSE}
-# En n'utlisant PAS la pondération
-
-mat = matrix(0,nrow=25,ncol=7)
-
-
-deb <- which(names(data) == "RECENCE_PROBLEMES_A1")
-fin <- which(names(data) == "RECENCE_PROBLEMES_A25")
-
-for (i in 1:nrow(data)){
-  for (j in deb:fin){
-    val = data[i,j]
-    pb <- j%% (deb-1)
-    if (!is.na(val) && !is.null(val)){
-      mat[pb,val]=mat[pb,val] + 1
-    }
-  }
-}
-
-df <- data.frame(Problemes = label_RIDENTIFICATION_PROBLEME[1:25],`Dès la première utilisation` = mat[,1],`En moins de 3 mois`
-=mat[,2],`Entre 3 mois et 1 an`=mat[,3],`Entre 1 et 2 ans`=mat[,4],`Entre 2 et 3 ans`=mat[,5],`Plus de 3 ans`=mat[,6],`Je ne sais pas`=mat[,7])
-
-
-total_row <- data.frame(
-  Problemes = "Total",
-  `Dès la première utilisation` = sum(df$Dès.la.première.utilisation),
-  `En moins de 3 mois` = sum(df$En.moins.de.3.mois),
-  `Entre 3 mois et 1 an` =sum(df$Entre.3.mois.et.1.an),
-  `Entre 1 et 2 ans` =sum(df$Entre.1.et.2.ans),
-  `Entre 2 et 3 ans` =sum(df$Entre.2.et.3.ans),
-  `Plus de 3 ans` =sum(df$Plus.de.3.ans),
-  `Je ne sais pas` =sum(df$Je.ne.sais.pas)
-)
-
-df <- rbind(df, total_row)
-
-df
-```
+**REMARQUE :** Pour les e-mails, se référer au tableau excel des données brutes et aller à la dernière colonne
 
