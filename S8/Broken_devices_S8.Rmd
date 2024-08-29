@@ -15,6 +15,9 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Cette commande permet de se mettre directement dans le dossier du fichier 
+getwd()
 ```
 
 ```{r include=FALSE}
@@ -155,23 +158,18 @@ print(matrice_cat)
 ```{r include=FALSE}
 # Import des données
 
-data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
 # Exporter la base de données en format Excel
-write.xlsx(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/database.xlsx")
+write.xlsx(data, file = "data/database.xlsx")
 
-Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
 
 # nombre d'observations
 nb_obs <- nrow(data) # 968 
 
 # nombre de variables 
 nb_var <- ncol(data) # 164
-```
-
-```{r include=FALSE}
-View(data)
-View(Broken_Devices_Data)
 ```
 
 ```{r include=FALSE}
@@ -545,11 +543,7 @@ p6_interactif <- ggplotly(p6)
 p6_interactif 
 ```
 
-```{r}
-df <- df_combined %>% 
-  arrange( Catégorie,Légende)
-df
-```
+
 
 
 ```{r echo=FALSE}
@@ -1692,6 +1686,28 @@ p_interactif <- ggplotly(p)
 # Affichage du graphique interactif
 p_interactif
 ```
+
+```{r echo=FALSE}
+# Affichage du tableau de valeurs
+
+val = unique(dataframe$Categorie)
+print(val)
+liste = c()
+
+for (j in 1:length(val)){
+    cat = val[j]
+    don = dataframe[dataframe$Categorie==cat,]
+    res = round(sum(don$nb))
+    liste=c(liste,res)
+  
+}
+
+liste
+
+df = data.frame(Catégorie = val,Nb_dys = liste, Pourcent = round(liste*100/sum(liste) ))
+df
+```
+
 
 #### **2 ) Catégorie 2 : Gênes ressenties en fonction de la catégorie du dysfonctionnement :**
 

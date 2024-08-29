@@ -15,6 +15,9 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Cette commande permet de se mettre directement dans le dossier du fichier 
+getwd()
 ```
 
 ```{r include=FALSE}
@@ -115,9 +118,9 @@ label_REPARATION <- c("Yes, and the problem is resolved", "Yes, but the problem 
 ```{r}
 # Import des données
 
-data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
-Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
 
 # nombre d'observations
 nb_obs <- nrow(data) # 968 
@@ -445,7 +448,7 @@ print(total_pbs_resolus)
 ```{r include=FALSE}
 # Nombre total de problèmes rencontrés résolus par rapport au nombre total de problèmes rencontrés dans la base 
 
-res <- Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
+res <- Count_VCM(data$RIDENTIFICATION_PROBLEMES,25)
 total_pbs=sum(res[2,])
 print(total_pbs) #832
 print(round(total_pbs_resolus*100/total_pbs)) #32%
@@ -479,7 +482,7 @@ for (i in 1 :(ncol(df)-1)){
 
 Categorie <- factor(label_REPARATION, levels = label_REPARATION)
 
-df3 <- data.frame(Resolution = Categorie, Number = round(matrice_REP[2, ]*100/total_pbs))
+df3 <- data.frame(Resolution = Categorie, Number = round(matrice_REP[2, ]*100/sum(matrice_REP[2,])))
 
 # Créer un diagramme en barres empilées
 p <- ggplot(df3, aes(x = Resolution, y = Number)) +
@@ -500,7 +503,7 @@ p_interactif
 ```
 
 ```{r}
-df <- data.frame(Resolution = Categorie,Nb_dys = round(matrice_REP[2,]), Pourcent = round(matrice_REP[2, ]*100/total_pbs))
+df <- data.frame(Resolution = Categorie,Nb_dys = round(matrice_REP[2,]), Pourcent = round(matrice_REP[2, ]*100/sum(matrice_REP[2,])))
 df
 ```
 
@@ -1290,8 +1293,8 @@ p_interactif
 # Afficher le graphique interactif
 ```
 
-```{r}
-df_combined
+```{r echo=FALSE}
+# Affichage du tableau de valeurs 
 
 df <- df_combined %>% 
   arrange(Categorie,CSP)

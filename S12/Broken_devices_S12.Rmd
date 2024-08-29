@@ -1,0 +1,613 @@
+---
+title: 'Project : Broken devices S12'
+author: "Solène PETITO"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-08-26"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# **SEMAINE DU 26 AOÛT 2024 au 30 AOÛT 2024 :**
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# Cette commande permet de se mettre directement dans le dossier du fichier 
+getwd()
+```
+
+```{r include=FALSE}
+############### MODULE 1 : Chargement des librairies
+
+library(openxlsx)
+library(readxl)
+library(ggplot2)
+library(stringr)
+library(tibble)
+library(dplyr)
+library(plotly) # permet de faire des graphes intéractifs
+library(corrplot) # permet de réqliser des matrices de corrélation
+library(tidyr)
+library(RColorBrewer) # librairie pour les palettes de couleurs
+library(viridis) # palette de couleurs > 25 nuances
+library(Polychrome)
+library(gridExtra) # afficher les graphes côte à côte
+library(grid)
+
+```
+
+```{r include=FALSE}
+############### MODULE 2 : Création de fonctions
+
+# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
+
+func1 <- function (don,colonne){
+  matrice <- matrix(0,nrow=2,ncol=25)
+  matrice[1,] <- c(1:25)
+  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
+  variable=df$RIDENTIFICATION_PROBLEMES
+  for (pb in 1:25){
+    vec=c()
+    for (i in 1:length(variable)){
+      ligne=str_extract_all(variable[i], ".{2}")[[1]]
+      ligne=sub("^0+", "", ligne)
+      if (pb %in% ligne){
+        num=as.character(pb)
+        nom_colonne=paste0(colonne,num)
+        valeur=df[i,nom_colonne]
+        if(!is.null(valeur) && !is.na(valeur)){
+          vec=c(vec,valeur)
+        }
+      }
+    }
+    if (length(vec) > 0) {
+    matrice[2, pb] <- round(mean(vec))
+  } else {
+    matrice[2, pb] <- 0
+  }
+  }
+  return(matrice)
+}
+##########################################
+
+# Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
+
+Count_VCM <- function(variable,nb_de_modalites){
+  mat <- matrix(0,nrow=2,ncol=nb_de_modalites)
+  mat[1,]=c(1:nb_de_modalites)
+  for (i in 1:length(variable)){
+    ligne=str_extract_all(variable[i],".{2}")[[1]]
+    vec=sub("^0+","",ligne)
+    for (j in 1:length(vec)){
+      for (k in 1:ncol(mat)){
+        if (vec[j]==mat[1,k]){
+          mat[2,k]=mat[2,k]+ 1 # mettre "+1" à la place de "data[i,"poids"]" si on ne concidère pas les poids
+        }
+      }
+    }
+  }
+  return(mat)
+}
+
+##########################################
+
+# Pour éviter d'avoir à afficher les numéros des modalités sur chaques graphes, je stocke directement les libellés des modalités dans des vecteurs
+
+label_RIDENTIFICATION_PROBLEME = c("Problème avec l’écran","Problème de sensibilité du tactile","Problème avec l’appareil photo","Problème avec la lampe torche ou le flash","Problème avec le GPS","Problème avec le micro","Problème de son","Problème de prise jack","Problème de chargement","Problème de batterie","Problème de Wi-Fi","Problème de capteurs","Problème de Bluetooth ou de transferts de fichiers sans fil","Problème de téléphonie","Problème d’accès à Internet","Problème avec les boutons","Problème de vibreur","Stockage saturé","Système d’exploitation non mis à jour","Applications ne pouvant pas être téléchargées ou mises à jour","Problème lié à une fonctionnalité manquante","Fonctionnalité qui ne marche plus","Dysfonctionnement logiciel","Problèmes avec des applications","Problème de lenteur","Autre")
+
+label_ACQUISITION = c("Quelqu’un me l’a offert ou donné","Quelqu’un me l’a prêté","Je l’ai acheté","Je l’ai obtenu dans le cadre de mon contrat avec mon opérateur","Mon employeur me l’a fourni","Je l’ai loué","Je ne me souviens pas","Obtenu par un autre moyen")
+
+label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
+
+label_GENE=c("Très gênant","Plutôt gênant","Plutôt pas gênant","Pas gênant du tout")
+
+label_INT_REPARATION= c("Oui, par moi-même","Oui, par le SAV ou un réparateur","Oui, par une connaissance","Pas pour l’instant", "Non")
+
+label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
+
+label_REPARATION <- c("Oui et le problème est resolu","Oui mais le problème na pas pu être résolu","Non, le problème s’est résolu tout seul au bout d’un moment","Non, peut être plus tard","Non, je ne pense pas tenter de résoudre le problème")
+
+label_OS <- c("IOS (Apple)","Android","Autre","Je ne sais pas")
+
+label_ETAT= c("Neuf","D'occasion","Reconditionné","Je ne sais pas" )
+
+label_COHAB_2 <- c("Moins d'un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de 2 ans")
+
+label_RAISON_UTIL_PB <- c("Cela serait trop coûteux de résoudre le(s) problème(s) ou de remplacer mon smartphone",
+"J’attends une opportunité", "Je ne peux pas résoudre le problème car le smartphone ne m’appartient pas","Je ne sais pas comment résoudre le(s) problème(s)","Je veux faire durer mon téléphone le plus longtemps possible","Ce(s) problème(s) ne m’impacte(nt) pas tant que ça au quotidien","Je n’ai pas pris le temps de m’en occuper, de chercher une solution","Mon téléphone est trop récent pour que je le fasse réparer ou que je le remplace","La résolution du (ou des) problème(s) est trop difficile ou incertaine","Ça me donne un prétexte pour moins l’utiliser","Cela ne vaut pas la peine de résoudre le(s) problème(s)","Mon smartphone a une particularité difficile à retrouver si je devais le remplacer","Autre")
+
+label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+```
+
+```{r include=FALSE}
+# Catégorisation des dysfonctionnements
+
+label_dys <- c("Stockage","Matériel","Mise à jour","Dys divers")
+
+materiel <- c(1,2,3,4,6,7,8,9,10,12,16,17)
+dys_divers <- c(5,11,13,14,15,21,22,23,24,25)
+stockage <- c(18)
+maj <- c(19,20)
+
+# Trouver la liste qui contient le plus d'éléments pour après définir le nombre de colonnes de notre matrice
+max_length <- max(length(materiel), length(dys_divers), length(stockage), length(maj))
+
+# Initialiser la matrice avec des zéros
+matrice_cat <- matrix(0, nrow = 4, ncol = max_length)
+
+# Remplir les lignes de la matrice avec les listes
+matrice_cat[1, 1:length(stockage)] <- stockage
+matrice_cat[2, 1:length(materiel)] <- materiel
+matrice_cat[3, 1:length(maj)] <- maj
+matrice_cat[4, 1:length(dys_divers)] <- dys_divers
+
+# Afficher la matrice
+print(matrice_cat)
+```
+
+**OBJECTIF :** *Analyser la base de données*
+
+## **ANALYSE DE LA BASE DE DONNÉES**
+
+```{r include=FALSE}
+# Import des données
+
+data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+
+# Exporter la base de données en format Excel
+write.xlsx(data, file = "data/database.xlsx")
+
+Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+
+# nombre d'observations
+nb_obs <- nrow(data) # 968 
+
+# nombre de variables 
+nb_var <- ncol(data) # 164
+```
+
+```{r include=FALSE}
+View(data)
+View(Broken_Devices_Data)
+```
+
+```{r include=FALSE}
+REPARATION <- c(1:5)
+matrice_REP=matrix(0,nrow=2,ncol=length(REPARATION))
+matrice_REP[1,]=REPARATION
+
+colonne_deb <- which(names(data) == "REPARATION_A1")
+#print(colonne_deb) # 81
+
+colonne_fin <- which(names(data) == "REPARATION_A25")
+#print(colonne_fin) # 105
+
+df <- data[,colonne_deb:colonne_fin]
+
+for (i in 1 :ncol(df)){
+    for (j in 1:nrow(df)){
+      val=df[j,i]
+      if(!is.na(val)&& !is.null(val)){
+        matrice_REP[2,val]=matrice_REP[2,val]+1
+      }
+    }
+  }
+```
+
+### **I ) Pourcentage de personnes ne renconcontrant qu'un dysfonctionnement**
+
+Au total, c'est 9354 personnes qui ne rencontrent qu'un dysfonctionnement, ce qui représente une part de 22% des dysfonctionnements.
+
+```{r include=FALSE}
+
+variable = data[data$RIDENTIFICATION_PROBLEMES!="27","RIDENTIFICATION_PROBLEMES"]
+res = Count_VCM(variable,26)
+total = sum(res[2,])
+
+var = data[data$RIDENTIFICATION_PROBLEMES!="27",c("RIDENTIFICATION_PROBLEMES","poids")]
+nb= 0 
+for (i in 1:nrow(var)){
+  ligne = str_extract_all(var[i,"RIDENTIFICATION_PROBLEMES"],".{2}")[[1]]
+  if (length(ligne)==1){
+    nb = nb+round(var[i,"poids"])
+  }
+}
+nb
+round(nb*100/total)
+
+total
+
+
+```
+
+### **II ) Intention de remplacement en fonction de la durée d'usage du téléphone**
+
+#### **1 ) Intention de remplacement en fonction de la durée d'usage (téléphone occasion)**
+
+
+```{r include=FALSE}
+############# Calcul de la durée total d'utilisation des téléphones d'occassion en prenant l'ancienne durée et en calculant la durée actuelle à partir de la date d'obtention
+
+# Initialisation des vecteurs pour stocker les résultats
+usage1 <- c()
+ancienne_duree <- c()
+remplacement1 =c()
+
+# Liste des catégories
+liste <- c("Moins de 6 mois", "Entre 6 mois et 1 an", "Entre 1 et 2 ans", "Entre 2 et 3 ans", "Entre 3 et 5 ans", "Plus de 5 ans", "Je ne sais pas")
+
+# Filtrage et préparation des données
+var <- data[data$ETATSMARTPHONE == 2, c("DATEOBTENTIONSMART_1", "DATEOBTENTIONSMART_2", "UTILISATIONSMARTOCCAS","INTENTION_REMPLACEMENT")]
+
+# Remplacer les valeurs 99 par 6
+var$DATEOBTENTIONSMART_2[var$DATEOBTENTIONSMART_2 == 99] <- 6
+
+# Calcul de la durée d'usage
+for (u in 1:nrow(var)) {
+  mois <- var[u, "DATEOBTENTIONSMART_2"]
+  annee <- var[u, "DATEOBTENTIONSMART_1"]
+  date_debut <- ISOdate(annee, mois, 1)
+  date_fin <- ISOdate(2023, 11, 1) # Utilisation de l'année et du mois actuels pour la date de fin
+  diff <- as.numeric(difftime(date_fin, date_debut, units = "days")) / 30  # Convertir en mois
+  ancienne_dur <- var[u, "UTILISATIONSMARTOCCAS"]
+  
+  if (!is.na(ancienne_dur)) {
+    if (diff < 6) {
+      usage1 <- c(usage1, liste[1])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 6 && diff < 12) {
+      usage1 <- c(usage1, liste[2])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 12 && diff < 24) {
+      usage1 <- c(usage1, liste[3])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 24 && diff < 36) {
+      usage1 <- c(usage1, liste[4])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 36 && diff < 60) {
+      usage1 <- c(usage1, liste[5])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    } else if (diff >= 60) {
+      usage1 <- c(usage1, liste[6])
+      ancienne_duree <- c(ancienne_duree, ancienne_dur)
+      remplacement1=c(remplacement1,var[u, "INTENTION_REMPLACEMENT"])
+    }
+  } 
+}
+
+```
+
+
+```{r include=FALSE}
+# on enelève dans nos deux listes les individus ayant indiqué qu'ils ne savaient pas l'ancienne durée de leur smartphone d'occassion : s
+
+indices_7= which(ancienne_duree==7)
+ancienne_duree=ancienne_duree[-c(indices_7)]
+usage1 = usage1[-c(indices_7)]
+remplacement1=remplacement1[-c(indices_7)]
+
+length(ancienne_duree)
+length(usage1)
+length(remplacement1)
+
+#indices_remp_6_7= which(remplacement1==7 | remplacement1==6 )
+#ancienne_duree=ancienne_duree[-c(indices_remp_6_7)]
+#usage1 = usage1[-c(indices_remp_6_7)]
+#remplacement1=remplacement1[-c(indices_remp_6_7)]
+
+length(ancienne_duree)
+length(usage1)
+length(remplacement1)
+
+ancienne_duree
+usage1
+remplacement1
+```
+
+```{r include=FALSE}
+l = c()
+
+for (i in 1:length(ancienne_duree)){
+  val1 = ancienne_duree[i]
+  val2 = usage1[i]
+  if (val1==1){
+    diff = c(0,167)
+    l= c(l,diff)
+  }
+  if (val1==2){
+    diff = c(168,364)
+    l= c(l,diff)
+  }
+  if (val1==3){
+    diff = c(365,729)
+    l= c(l,diff)
+  }
+  if (val1==4){
+    diff = c(730,1094)
+    l= c(l,diff)
+  }
+  if (val1==5){
+    diff = c(1095,1824)
+    l= c(l,diff)
+  }
+  if (val1==6){
+    diff = c(1825,0)
+    l= c(l,diff)
+  }
+}
+```
+
+```{r include=FALSE}
+l
+usage1
+
+length(l)
+length(usage1)
+```
+
+```{r include=FALSE}
+# Initialiser liste_val
+liste_val <- c()
+
+# Liste des intervalles en jours pour chaque catégorie
+categories <- list(
+  "Moins de 6 mois" = c(0, 167),
+  "Entre 6 mois et 1 an" = c(168, 364),
+  "Entre 1 et 2 ans" = c(365, 729),
+  "Entre 2 et 3 ans" = c(730, 1094),
+  "Entre 3 et 5 ans" = c(1095, 1824),
+  "Plus de 5 ans" = c(1825, Inf)
+)
+
+# Boucle pour parcourir les éléments de `usage`
+for (i in 1:length(usage1)) {
+  u <- usage1[i]
+  # Vérifier si la catégorie existe dans la liste
+  if (u %in% names(categories)) {
+    deb <- l[(i * 2) - 1]
+    fin <- l[i * 2]
+    val <- abs(deb - fin)
+    
+    # Obtenir les bornes de la catégorie actuelle
+    borne <- categories[[u]]
+    val1 <- val + borne[1]
+    val2 <- val + borne[2]
+    
+    # Calculer la différence
+    diff <- abs(val1 - val2)
+    liste_val <- c(liste_val, diff)
+  }
+}
+
+# Afficher les valeurs calculées
+
+length(liste_val)
+liste_val
+
+
+```
+
+
+```{r include=FALSE}
+usage2 = c()
+liste = c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
+
+for ( i in 1:length(liste_val)){
+  diff = liste_val[i]
+  if (diff < 168) {
+    usage2 = c(usage2, liste[1])
+  } else if (diff >= 168 && diff < 365) {
+    usage2 = c(usage2, liste[2])
+  } else if (diff >= 365 && diff < 730) {
+    usage2 = c(usage2, liste[3])
+  } else if (diff >= 730 && diff < 1095) {
+    usage2 = c(usage2, liste[4])
+  } else if (diff >= 1095 && diff < 1825) {
+    usage2 = c(usage2, liste[5])
+  } else if (diff >= 1825) {
+    usage2 = c(usage2, liste[6])
+  }
+}
+
+df_temp1 <- data.frame(
+    Remplacement = remplacement1,
+    Duree_Usage = usage2
+  )
+
+# u = sort(unique(df_temp1$Duree_Usage))
+# r = sort(unique(df_temp1$Remplacement))
+
+nbs = c()
+for (i in 1:nrow(df_temp1)){
+   u = df_temp1[i,"Duree_Usage"]
+   r = df_temp1[i,"Remplacement"]
+   don <- df_temp1[df_temp1$Remplacement==r & df_temp1$Duree_Usage==u,]
+   nbs = c(nbs,nrow(don))
+     }
+
+df_temp1$Nb_personnes_concernees = nbs
+  
+df_temp1 = unique(df_temp1)
+df_temp1
+```
+
+
+
+```{r echo=FALSE}
+#sum(df2$Nb_personnes_concernees) # 880
+
+df_temp1$Duree_Usage = factor(df_temp1$Duree_Usage,levels=liste)
+df_temp1$Remplacement <- factor(df_temp1$Remplacement, levels = c("1", "2", "3", "4", "5", "6", "7"), 
+                           labels = c("Dans moins d’un mois", "Dans 1 à 6 mois", "Dans 6 à 12 mois", "Dans 1 an à 2 ans", "Dans 2 ans ou plus", "Je n’ai pas envisagé de le remplacer", "Je ne sais pas"))
+
+# Créer le graphique
+p <- ggplot(df_temp1, aes(y = Remplacement, x = Duree_Usage, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "turquoise4") +
+  theme_minimal() +
+  labs(title = "Intention de remplacement en fonction de la durée d'usage (téléphone occasion)",
+       x = "Durée d'usage",
+       y = "Intention de remplacement",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "turquoise4"),
+        axis.title.x = element_text(face = "bold", colour = "turquoise4"),
+        axis.title.y = element_text(face = "bold", colour = "turquoise4"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# Rendre le graphique interactif
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
+```
+
+
+#### **2 ) Intention de remplacement en fonction de la durée d'usage (tous types de téléphones confondus)**
+
+```{r include=FALSE}
+############### Téléphone non d'occassion
+
+# Initialisation des variables
+usage = c()
+liste = c("Moins de 6 mois","Entre 6 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Entre 3 et 5 ans","Plus de 5 ans","Je ne sais pas")
+
+# Filtrage et préparation des données
+var = data[ data$ETATSMARTPHONE != 2, c("DATEOBTENTIONSMART_1", "DATEOBTENTIONSMART_2", "INTENTION_REMPLACEMENT", "ETATSMARTPHONE")]
+
+# Remplacer les valeurs 99 par 6
+var[var$DATEOBTENTIONSMART_2 == 99, "DATEOBTENTIONSMART_2"] = 6
+
+# Calcul de la durée d'usage
+for (u in 1:nrow(var)) {
+  mois = var[u, "DATEOBTENTIONSMART_2"]
+  annee = var[u, "DATEOBTENTIONSMART_1"]
+  date_debut = ISOdate(annee, mois, 1)
+  date_fin = ISOdate(2023, 11, 1) # Utilisation de l'année et du mois actuels pour la date de fin
+  diff = as.numeric(difftime(date_fin, date_debut, units = "days"))
+  
+  if (diff < 168) {
+    usage = c(usage, liste[1])
+  } else if (diff >= 168 && diff < 365) {
+    usage = c(usage, liste[2])
+  } else if (diff >= 365 && diff < 730) {
+    usage = c(usage, liste[3])
+  } else if (diff >= 730 && diff < 1095) {
+    usage = c(usage, liste[4])
+  } else if (diff >= 1095 && diff < 1825) {
+    usage = c(usage, liste[5])
+  } else if (diff >= 1825) {
+    usage = c(usage, liste[6])
+  }
+}
+
+# Ajout de la nouvelle colonne au dataframe
+var$Duree_Usage = usage
+
+# Initialiser les durées d'usage uniques
+Usage <- sort(unique(var$Duree_Usage))
+
+# Obtenir tous les niveaux de INTENTION_REMPLACEMENT
+all_levels <- sort(unique(var$INTENTION_REMPLACEMENT))
+
+# Créer une liste pour stocker les résultats
+result_list <- list()
+
+# Remplir la liste dans une boucle for
+for (i in Usage) {
+  # Filtrer les données pour la durée d'usage en cours
+  variable <- var[var$Duree_Usage == i & var$ETATSMARTPHONE != 2, "INTENTION_REMPLACEMENT"]
+  
+  # Créer une table de fréquences avec tous les niveaux et remplacer les niveaux manquants par zéro
+  freq_table <- table(factor(variable, levels = all_levels))
+  
+  # Convertir en DataFrame
+  df_temp <- data.frame(
+    Remplacement = names(freq_table),
+    Nb_personnes_concernees = as.numeric(freq_table),
+    Duree_Usage = i
+  )
+  
+  # Ajouter le DataFrame temporaire à la liste
+  result_list[[as.character(i)]] <- df_temp
+}
+
+# Combiner tous les DataFrames en un seul
+df2 <- do.call(rbind, result_list)
+
+# Filtrer les données pour exclure les points où la valeur est zéro
+df2 <- df2[df2$Nb_personnes_concernees > 0, ]
+
+# Réordonner les niveaux de la colonne Remplacement
+df2$Remplacement <- factor(df2$Remplacement, levels = c("1", "2", "3", "4", "5", "6", "7"), 
+                           labels = c("Dans moins d’un mois", "Dans 1 à 6 mois", "Dans 6 à 12 mois", "Dans 1 an à 2 ans", "Dans 2 ans ou plus", "Je n’ai pas envisagé de le remplacer", "Je ne sais pas"))
+
+# Afficher le dataframe final
+print(df2)
+
+```
+
+```{r include=FALSE}
+df_fin = rbind(df2,df_temp1)
+
+nbs = c()
+for (i in 1:nrow(df_fin)){
+   u = df_fin[i,"Duree_Usage"]
+   r = df_fin[i,"Remplacement"]
+   don <- df_fin[df_fin$Remplacement==r & df_fin$Duree_Usage==u,]
+   nbs = c(nbs,sum(don$Nb_personnes_concernees))
+     }
+
+df_fin$Nb_personnes_concernees = nbs
+df_fin = unique(df_fin)
+df_fin
+
+```
+
+```{r echo=FALSE}
+df_fin$Duree_Usage = factor(df_fin$Duree_Usage,levels=liste)
+
+# Créer le graphique
+p <- ggplot(df_fin, aes(y = Remplacement, x = Duree_Usage, size = Nb_personnes_concernees)) +
+  geom_point(alpha = 0.7, col = "turquoise4") +
+  theme_minimal() +
+  labs(title = "Intention de remplacement en fonction de la durée d'usage",
+       x = "Durée d'usage",
+       y = "Intention de remplacement",
+       size = "Nb de personne(s) concernée(s)") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold", colour = "turquoise4"),
+        axis.title.x = element_text(face = "bold", colour = "turquoise4"),
+        axis.title.y = element_text(face = "bold", colour = "turquoise4"),  
+        axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+# Rendre le graphique interactif
+p_interactif <- ggplotly(p, tooltip = c("x", "y", "size"))
+
+# Afficher le graphique interactif
+p_interactif
+```
+
+
+```{r include=FALSE }
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A1")
+print(indice_colonne) # 106
+
+indice_colonne <- which(names(data) == "REPARATION_A1")
+print(indice_colonne) # 81
+
+indice_colonne <- which(names(data) == "GENE_PROBLEMES_A25")
+print(indice_colonne) # 80
+
+indice_colonne <- which(names(data) == "REPARATION_A25")
+print(indice_colonne) #105
+
+81-31
+
+```

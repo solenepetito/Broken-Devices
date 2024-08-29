@@ -15,6 +15,9 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Cette commande permet de se mettre directement dans le dossier du fichier 
+getwd()
 ```
 
 ```{r include=FALSE}
@@ -154,12 +157,12 @@ qualification smartphone*
 ```{r include=FALSE}
 # Import des données
 
-data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
 # Exporter la base de données en format Excel
-write.xlsx(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/database.xlsx")
+write.xlsx(data, file = "data/database.xlsx")
 
-Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
 
 # nombre d'observations
 nb_obs <- nrow(data) # 968 

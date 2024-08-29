@@ -15,6 +15,9 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Cette commande permet de se mettre directement dans le dossier du fichier 
+getwd()
 ```
 
 ```{r include=FALSE}
@@ -155,12 +158,12 @@ print(matrice_cat)
 ```{r include=FALSE}
 # Import des données
 
-data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
+data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
 # Exporter la base de données en format Excel
-write.xlsx(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/database.xlsx")
+write.xlsx(data, file = "data/database.xlsx")
 
-Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
 
 # nombre d'observations
 nb_obs <- nrow(data) # 968 
@@ -849,7 +852,7 @@ p_interactif
 
 ### **IV ) Catégorie de dysfonctionnement**
 
-#### **1 ) Catégorie de dysfonctionnementet temps de cohabitation en fonction du degrés de gêne**
+#### **1 ) Catégorie de dysfonctionnement et temps de cohabitation en fonction du degrés de gêne**
 
 **Code couleurs :**
 
@@ -1204,6 +1207,7 @@ p3 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
 p3_interactif <- ggplotly(p3)
 ```
 
+
 ```{r echo=FALSE}
 subplot(
   p2_interactif, p3_interactif,
@@ -1300,6 +1304,8 @@ p5 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
 p5_interactif <- ggplotly(p5)
 ```
 
+
+
 ```{r echo=FALSE}
 subplot(
   p4_interactif, p5_interactif,
@@ -1394,6 +1400,8 @@ p7 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = GÊNE)) +
 
 p7_interactif <- ggplotly(p7)
 ```
+
+
 
 ```{r echo=FALSE}
 subplot(
@@ -1505,26 +1513,6 @@ subplot(
     xaxis2 = list(domain = c(0.55, 1)),  # Déplacer le deuxième graphique vers la droite
     yaxis2 = list(showticklabels = FALSE))
 ```
-
-```{r}
-subplot(
-  p_interactif, p1_interactif, p2_interactif, p3_interactif, p4_interactif,
-  p5_interactif, p6_interactif, p7_interactif, p8_interactif, p9_interactif,
-  nrows = 5, 
-  shareX = TRUE,   # Partager l'axe X entre les sous-graphes
-  shareY = TRUE,   # Partager l'axe Y entre les sous-graphes
-  titleX = TRUE,
-  titleY = TRUE,
-  widths = c(0.45, 0.45)  # Largeurs des colonnes ; doit être égal au nombre de colonnes
-) %>%
-  layout(
-    margin = list(l = 50, r = 50, t = 100, b = 50),  # Ajuster les marges autour des graphiques
-    xaxis = list(domain = c(0, 1)),  # Couvrir l'ensemble de la largeur disponible
-    xaxis2 = list(domain = c(0, 1)),  # Ajuster pour chaque sous-graphe (si nécessaire)
-    yaxis = list(domain = c(0, 1))    # Couvrir l'ensemble de la hauteur disponible
-  )
-```
-
 
 #### **2 ) Degrès de gêne en fonction de la catégorie 1**
 

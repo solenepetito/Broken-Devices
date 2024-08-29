@@ -15,6 +15,8 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+# Cette commande permet de se mettre directement dans le dossier du fichier 
 getwd()
 ```
 
@@ -99,9 +101,9 @@ label_RIDENTIFICATION_PROBLEME = c("Problem with the screen", "Touch sensitivity
 ```{r}
 # Import des données
 
-data <- readRDS("/home/solene_petito/Bureau/Stage/Broken_devices/data/data.rds") # base de données sur laquelle on va appliquer tous les changements
+data <- readRDS("data/data.rds") # base de données sur laquelle on va appliquer tous les changements
 
-Broken_Devices_Data <- read.csv("/home/solene_petito/Bureau/Stage/Broken_devices/data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
+Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
 
 # nombre d'observations
 nb_obs <- nrow(data) # 1005 
@@ -1316,7 +1318,7 @@ print(df_combined)
 Pour les semaines à venir, il sera préférable de travailler sur cette nouvelle base de données pour laquelle on a formatté de nombreuses variables. On l'exporte donc : 
 
 ```{r}
-saveRDS(data, file = "/home/solene_petito/Bureau/Stage/Broken_devices/data/data1.rds")
+saveRDS(data, file = "data/data1.rds")
 ```
 
 
