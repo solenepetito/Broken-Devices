@@ -8,8 +8,8 @@ Explication et informations sur les dossiers :
   - Tous ces dossiers comprennent un fichier.RMD (fichier comprenant le code entier), un fichier.html (fichier de présentation soigné) et un dossier data regroupant les données brutes et modifiés du questionnaire
 
 2 ) Version de R-studio et des librairies utlisées : 
-  - R-studio :
-  - Librairies :
+  - R-studio : RStudio 2023.06.2 
+  - Librairies : Les librairies elles datent de la même version et sont mises à jour régulièrement
 
 3 ) Comment exporter un graphe en SVG su R : 
 
