@@ -118,6 +118,9 @@ label_REPARATION <- c("Yes, and the problem is resolved", "Yes, but the problem 
 ```{r}
 # Import des données
 
+########## Pour la commande qui suit indiquer le chemin où se trouve le dossier data
+setwd("/home/solene_petito/Bureau/Stage/Broken_devices")
+
 data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
 Broken_Devices_Data <- read.csv("data/Broken-Devices-Data1-xlsx.csv",row.names=1) # base de données initiale sur laquelle on pourra se référer pour voir si les chgts ont bien été appliqués
