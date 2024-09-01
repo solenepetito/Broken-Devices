@@ -38,9 +38,25 @@ library(Polychrome)
 library(gridExtra) # afficher les graphes côte à côte
 library(grid)
 
+# Version de chaque libraries 
+
+packageVersion("openxlsx") # 4.2.5.2
+packageVersion("readxl") # 1.4.3
+packageVersion("ggplot2") # 3.4.4
+packageVersion("stringr") # 1.5.0
+packageVersion("tibble") # 3.2.1
+packageVersion("dplyr") # 1.1.3
+packageVersion("plotly") # 4.10.4
+packageVersion("corrplot") # 0.92
+packageVersion("tidyr") # 1.3.0
+packageVersion("RColorBrewer") # 1.1.3
+packageVersion("gridExtra") # 2.3
+packageVersion("grid") # 4.3.1
+
+
 ```
 
-```{r}
+```{r include=FALSE}
 # Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
 
 Count_VCM <- function(variable,nb_de_modalites){
@@ -119,6 +135,9 @@ print
 
 ```{r include=FALSE}
 # Import des données
+
+########## Pour la commande qui suit indiquer le chemin où se trouve le dossier data
+setwd("/home/solene_petito/Bureau/Stage/Broken_devices")
 
 data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
@@ -219,12 +238,9 @@ print(head(don))
 print(nrow(don))
 ```
 
-```{r}
-poids
-```
-
-
 ```{r include=FALSE}
+# Temps de cohabt=itation des personnes n'ayant pas résolu le ou les dysfonctionnements rencontrés
+
 COHAB_non_resolus <- c( 3, 2, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4, 3, 4, 3, 4, 1, 3, 3, 2, 2, 4, 4, 3, 4, 4, 2, 3, 4, 3, 3, 4, 3, 4, 3, 2, 3, 1, 3, 4, 2, 2, 3, 3, 4, 4, 3, 2, 4,2, 3, 3, 3, 2, 3, 3, 3, 4, 3, 4, 2, 3, 3, 2, 4, 4, 3, 4, 2, 4, 3, 4, 3, 3, 3, 4, 2, 3, 4, 3, 3, 4, 3, 4, 4, 4, 4, 4, 2, 3, 2, 2, 4, 3, 3, 2, 3, 3,4, 4, 3, 2, 3, 4, 4, 3, 3, 4, 3, 3, 3, 4, 4, 2, 4, 4, 2, 4, 3, 4, 4, 3, 3, 4, 4, 4, 3, 4, 2, 3, 1, 2, 4, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 4, 3,3, 4, 3, 4, 2, 2, 3, 3, 1, 2, 3, 2, 3, 3, 4, 4, 3, 4, 3, 3, 4, 4, 4, 3, 3, 2, 4, 3, 1, 2, 3, 4, 2, 4, 3, 4, 4, 4, 3, 3, 4, 3, 3, 2, 3, 2, 4, 4, 4,3, 4, 3, 3, 1, 3, 2, 4, 4, 3, 2, 4, 3, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3, 3, 2, 4, 3, 3, 4, 2, 2, 4, 3, 3, 3, 4, 1, 4, 4, 4, 3, 3, 4, 3, 4, 2, 3, 4, 3,4,3 ,4 ,4 ,4 ,4 ,4, 3, 4, 3, 4, 2, 3, 4, 3, 3, 3, 3, 4, 4, 2, 4, 4, 4, 3, 2, 3, 4, 4, 4, 3, 3, 2, 3, 4, 3, 4, 4, 4, 3, 2, 4, 4, 1, 3, 2, 4, 4, 3,2, 4, 4, 3, 4, 4, 4, 4, 3, 2, 4, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3)
 
 nb_non_resolus <- length(COHAB_non_resolus) # 316
@@ -297,15 +313,15 @@ nrow(don)
 nrow(don2)
 ```
 
-```{r}
+
+```{r include=FALSE}
+# Calcul du temps de cohabitation moyen 
+
 table_ponderee <- xtabs(Poids ~ Cohab, data = don)
 
 # Afficher la table pondérée
 print(table_ponderee)
-```
 
-
-```{r include=FALSE}
 label_COHABITATION = c("Dès que j’ai décelé le dysfonctionnement","Moins d’un mois","Entre 1 et 6 mois","Entre 6 mois et 2 ans","Plus de deux ans","Je ne sais pas" )
 
 freq = table(don$Cohab)
@@ -317,16 +333,19 @@ moyenne = round(sum(vec1*vec2)/sum(vec2))
 
 print(label_COHABITATION[moyenne])
 
-
 ```
 
-```{r}
+```{r echo=FALSE}
+# Répartition des différents temps de cohabitation avec le nombre de personnes pour chacun d'eux dans un dataframe
+
 df = data.frame(Cohabitation = label_COHABITATION[2:6],Nb_dys=round(vec2), Pourcent = round(vec2*100/sum(vec2)))
 df
 
 ```
 
-```{r}
+Différentes Représentations graphiques du temps de cohabitation :
+
+```{r echo=FALSE}
 df <- data.frame(Cohabitation = factor(label_COHABITATION[2:5],levels=label_COHABITATION),valeurs=round(vec2[1:4]),
   start = c(0, 1, 6, 24),  # Début de l'intervalle en mois
   end = c(1, 6, 24, 48)    # Fin de l'intervalle en mois (Inf pour plus de 2 ans)
@@ -345,7 +364,7 @@ ggplot(df) +
         axis.title.y = element_text(face = "bold",colour="palegreen3")) + scale_y_continuous(labels = function(x) abs(x), breaks = seq(-8000, 8000, by = 2000))
 ```
 
-```{r}
+```{r echo=FALSE}
 df <- data.frame(
   Cohabitation = factor(label_COHABITATION[2:5], levels = label_COHABITATION),
   valeurs = round(vec2[1:4]),
@@ -361,10 +380,8 @@ df <- rbind(df, data.frame(
   end = 48                                  # Mois 48
 ))
 
-
-
  p <- ggplot(df) +
-  geom_line(aes(x = start, y = valeurs), size = 1.5, color = "palegreen3") +  # Tracer une ligne continue sans changer de couleur
+  geom_line(aes(x = start, y = valeurs), linewidth = 1.5, color = "palegreen3") +  # Tracer une ligne continue sans changer de couleur
   scale_x_continuous(breaks = seq(0, 48, by = 6), limits = c(0, 48)) +  # Ajuster les limites et les intervalles de l'axe des x
   scale_y_continuous(
     limits = c(0, 13000),           # Définir les limites de l'axe des ordonnées (par exemple, de 0 à 100)
@@ -392,16 +409,13 @@ p_interactif
 
 ```
 
-```{r}
-df
-```
 
 
 ### **III ) Quand l'appareil a-t-il été endommagé après l'achat ?**
 
 En moyenne l'appareil a été endommagé entre 1 an et 2 ans après l'achat. 
 
-```{r}
+```{r include=FALSE}
 label_RECENCE <- c("Dès la première utilisation","En moins de 3 mois","Entre 3 mois et 1 an","Entre 1 et 2 ans","Entre 2 et 3 ans","Plus de 3 ans","Je ne sais pas")
 
 colonne_deb <- which(names(data) == "RECENCE_PROBLEMES_A1") # 56
@@ -428,7 +442,9 @@ print(label_RECENCE[moyenne]) # "Entre 1 et 2 ans"
 
 ```
 
-```{r}
+```{r echo=FALSE}
+# Répartition des différents temps de recence avec le nombre de personnes pour chacun d'eux
+
 df = data.frame(Recence_dys= label_RECENCE[vec],Nb_dys = matrice[1,], Pourcent = round( matrice[1,]*100/sum(matrice[1,])))
 
 df
@@ -459,7 +475,7 @@ df <- rbind(df, data.frame(
 
 
 p <- ggplot(df) +
-  geom_line(aes(x = start, y = valeurs), size = 1.5, color = "palegreen3") +  # Tracer une ligne continue
+  geom_line(aes(x = start, y = valeurs), linewidth = 1.5, color = "palegreen3") +  # Tracer une ligne continue
   scale_x_continuous(breaks = seq(0, 48, by = 3), limits = c(0, 48)) +  # Ajuster les limites et les intervalles de l'axe des x
   scale_y_continuous(
     limits = c(0, 13000),           # Définir les limites de l'axe des ordonnées
@@ -513,7 +529,7 @@ df
 
 Les dommages en question ont surtout un impact sur la navigation web (12% des dysfonctionnements rencontrés), sur l'usage global du smartphone (11.5%) et sur les jeux (11%).
 
-```{r}
+```{r echo=FALSE}
 label_IMPACT <- c("Usage global du smartphone","Communication ","Réseaux sociaux ","Cartes et guidage GPS","Jeux","Navigation web","Streaming musique et vidéo","Outils de productivité ","Logiciels et applications professionnelles dédiées","Photo, vidéo et autres activités de création","Identification bancaire, paiement sans contact","Tickets dématérialisés ","Courses et achats en ligne","Autre","Aucun")
 
 var = data[data$RIMPACT_PB!="","RIMPACT_PB"]
@@ -750,7 +766,7 @@ label[moy]
 ```
 
 
-```{r}
+```{r echo=FALSE}
 res = xtabs(poids_fin ~ cohab_remplacement)
 vec1 = as.numeric(names(res))
 vec2 = as.numeric(res)

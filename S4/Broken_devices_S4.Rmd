@@ -897,7 +897,7 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-```{r}
+```{r include=FALSE}
 df <- data.frame(Cohabitation = Categorie, Nb_dys =round(don2[,1]), Pourcent=round(don2[,1]*100/sum(don2[,1])))
 df
 ```
