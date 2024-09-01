@@ -44,6 +44,25 @@ ggplot(df, aes(x = x, y = y)) +
 # Fermer le dispositif SVG
 dev.off()
 
+4 ) Explication des fichiers du dossier data : 
+
+-  Broken-Devices-Data1-xlsx.csv : Base de données brutes fournie en début de stage au format CSV
+
+-  Broken-Devices-Data1-xlsx.xlsx : Base de données brutes fournie en début de stage au format XLSX
+
+-  data.rds : Base de données brutes fournie en début de stage au format RDS (format de base de données propre à R-studio)
+
+-  data1.rds : Base de données nettoyée et formatée au format RDS
+
+-  database.xlsx : Base de données nettoyée et formatée au format XLSX
+
+
+
+
+
+
+
+
 
 
 
