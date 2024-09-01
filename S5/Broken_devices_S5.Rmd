@@ -140,10 +140,6 @@ nb_obs <- nrow(data) # 968
 nb_var <- ncol(data) # 164
 ```
 
-```{r include=FALSE}
-View(data)
-View(Broken_Devices_Data)
-```
 
 ### **I ) Degrés de gêne par temps de cohabitation de ceux qui n'ont pas réparé**
 
@@ -219,7 +215,7 @@ for (i in val){
 mat = round(mat)
 # Définir une fonction de normalisation
 normalize <- function(x) {
-  return(round(x*100/total))
+  return(round(x*100/total,2))
 }
 
 # Transposer le résultat pour obtenir la même structure que la matrice originale
@@ -227,11 +223,6 @@ normalized_mat <- t(apply(mat[2:5,], 1, normalize))
 print(normalized_mat)
 
 ```
-
-```{r}
-mat
-```
-
 
 ```{r include=FALSE}
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
@@ -268,15 +259,6 @@ p1_interactif
 
 ```
 
-```{r}
-df <- df_combined %>% 
-  arrange( Categorie,Gêne)
-
-df
-
-```
-
-
 ```{r include=FALSE}
 Categorie <- factor(label_COHAB_2, levels = label_COHAB_2)
 gene_levels <- c("Plutôt pas gênant", "Plutôt gênant", "Très gênant")
@@ -302,22 +284,13 @@ p2 <- ggplot(df_combined, aes(x = Categorie, y = valeurs, fill = Gêne)) +
   theme(plot.title = element_text(hjust = 0.5, face = "bold",colour="#1f77b4"),
         axis.title.x = element_text( face = "bold",colour="#1f77b4"), 
         axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-        axis.title.y = element_text(face = "bold",colour="#1f77b4")) 
+        axis.title.y = element_text(face = "bold",colour="#1f77b4"),legend.position="none") 
 
 p2_interactif <- ggplotly(p2)
 
 # Afficher le graphique interactif
 p2_interactif 
 ```
-
-```{r}
-df <- df_combined %>% 
-  arrange( Categorie,Gêne)
-
-df
-```
-
-
 
 ```{r echo=FALSE}
 p1_interactif <- ggplotly(p1)
@@ -353,6 +326,20 @@ subplot(
   )
 
 ```
+
+```{r includ=FALSE}
+library(ggplot2)
+library(cowplot)  # Ou library(patchwork)
+
+# Combiner les graphiques côte à côte
+combined_plot <- plot_grid(p2,p1, ncol = 2,nrow=1, align = "hv",axis = "tb")
+
+# Enregistrer en SVG
+svg("DG.svg", width = 15, height = 10)
+print(combined_plot)
+dev.off()
+```
+
 
 Le premier graphe présente les degrés de gêne pour chaque temps de
 cohabitation pour 316 dysfonctionnements, et le deuxième graphe met tous
