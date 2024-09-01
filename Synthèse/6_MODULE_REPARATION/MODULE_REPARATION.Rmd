@@ -156,6 +156,9 @@ print(matrice_cat)
 ```{r include=FALSE}
 # Import des données
 
+########## Pour la commande qui suit indiquer le chemin où se trouve le dossier data
+setwd("/home/solene_petito/Bureau/Stage/Broken_devices")
+
 data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
 # Exporter la base de données en format Excel

@@ -43,35 +43,6 @@ library(grid)
 ```{r include=FALSE}
 ############### MODULE 2 : Création de fonctions
 
-# fonction func1 qui prend en entrée un jeu de données (don) et le nom d'une colonne de type Cri (Caratère répétitive) de ce jeu de données (colonne), sous forme de chaine de caractères et sans préciser de numéro à la fin de celle-ci  : ex : "COHABITATION_DYSFONCTION_A" ou "GENE_PROBLEMES_A". Elle renvoit en sortie une matrice a 2 lignes et 25 colonnes, indiquant en ligne 1 le type de dysfonctionnement, et en ligne 2 une modalité moyenne calculée pour la variable donnée en entrée pour chaque type de dysfonctionnements.
-
-func1 <- function (don,colonne){
-  matrice <- matrix(0,nrow=2,ncol=25)
-  matrice[1,] <- c(1:25)
-  df = don[which(don$RIDENTIFICATION_PROBLEMES!="27"),]
-  variable=df$RIDENTIFICATION_PROBLEMES
-  for (pb in 1:25){
-    vec=c()
-    for (i in 1:length(variable)){
-      ligne=str_extract_all(variable[i], ".{2}")[[1]]
-      ligne=sub("^0+", "", ligne)
-      if (pb %in% ligne){
-        num=as.character(pb)
-        nom_colonne=paste0(colonne,num)
-        valeur=df[i,nom_colonne]
-        if(!is.null(valeur) && !is.na(valeur)){
-          vec=c(vec,valeur)
-        }
-      }
-    }
-    if (length(vec) > 0) {
-    matrice[2, pb] <- round(mean(vec))
-  } else {
-    matrice[2, pb] <- 0
-  }
-  }
-  return(matrice)
-}
 ##########################################
 
 # Création d'une fonction **Count_VCM** (VCM = Variable à choix multiples) permettant d'afficher pour les variables à choix multiples UNIQUEMENT, le nombre de fois où chaque modalité est renseignée dans toute la colonne. Elle prend en entrée une variable à choix multiple (*variable*), issue de la base de données, et son nombre total de modalités (*nb_de_modalites*), et renvoit une matrice indiquant en ligne 1 le numéro de la modalité, et en ligne 2 le nombre de fois où les répondants l'on choisit.
@@ -158,6 +129,9 @@ print(matrice_cat)
 ```{r include=FALSE}
 # Import des données
 
+########## Pour la commande qui suit indiquer le chemin où se trouve le dossier data
+setwd("/home/solene_petito/Bureau/Stage/Broken_devices")
+
 data <- readRDS("data/data1.rds") # base de données sur laquelle on va appliquer tous les changements
 
 # Exporter la base de données en format Excel
@@ -197,18 +171,6 @@ for (i in 1 :ncol(df)){
 ```
 
 ### **I ) Temps de cohabitation de ceux qui ont tenté de résoudre le ou les dysfonctionnements rencontrés mais qui n'ont pas réussi**
-
-```{r}
-matrice_REP
-```
-
-
-```{r include=FALSE}
-pbs= Count_VCM(data$RIDENTIFICATION_PROBLEMES,26)
-nb_total_pbs <- sum(pbs[2,])
-print(nb_total_pbs) #832
-```
-
 
 ```{r include=FALSE}
 # Initialisation des vecteurs pour stocker les valeurs de recence, année, et mois
@@ -395,8 +357,8 @@ p_interactif <- ggplotly(p)
 p_interactif 
 ```
 
-
-```{r}
+### **II ) Temps de cohabitation et catégorie de dysfonctionnement en fonction du degrès de gêne**
+```{r include=FALSE}
 ### Création d'un dataframe avec 4 colonnes : le numéro du dys, la catégorie du dys, le degre de gêne du dys et le temps de cohabitation du dys :
 
 # dys qui ont été résolus
@@ -455,6 +417,8 @@ print(nrow(don))
 ```
 
 ```{r include=FALSE}
+# on ajoute +1 au temps de cohabitation des personnes n'ayant pas resolu pour qu'il puisse dans les memes valeurs que les personnes ayant résolu
+
 COHAB_non_resolus <- vec + 1
 COHAB_non_resolus
 
@@ -475,7 +439,7 @@ moyenne_ponderee <- sum(v * p) / sum(p)
 print(label_COHABITATION[round(moyenne_ponderee)])
 ```
 
-```{r}
+```{r include=FALSE}
 # Tableaux de valeurs SANS poondération
 res = table(v)
 res
@@ -1087,7 +1051,7 @@ p9_interactif <- ggplotly(p9)
 ```
 
 
-```{r}
+```{r include=FALSE}
 # Tableaux de valeurs 
 
 df <- df_combined %>% arrange(Categorie,desc(GÊNE))
@@ -1120,6 +1084,8 @@ subplot(
 ```
 
 ```{r include=FALSE}
+# Exporter le graphe en SVG
+
 # Charger les bibliothèques nécessaires
 library(ggplot2)
 library(cowplot)  # Ou library(patchwork)
