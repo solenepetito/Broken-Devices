@@ -1,4 +1,4 @@
-Explication et informations sur les dossiers : 
+Explications et informations sur les dossiers : 
 
 1 ) Organisation des fichiers : 
   - Les dossiers S... présentent le travail effectué chaque semaine depuis le début du stage
@@ -43,3 +43,8 @@ ggplot(df, aes(x = x, y = y)) +
 
 # Fermer le dispositif SVG
 dev.off()
+
+
+
+
+
